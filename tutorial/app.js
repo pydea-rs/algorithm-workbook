@@ -58,10 +58,22 @@
   }
   function openSettings() {
     syncSettingsUI();
-    document.getElementById("settings-modal").classList.remove("hidden");
+    const m = document.getElementById("settings-modal");
+    m.classList.remove("closing");
+    m.classList.remove("hidden");
   }
   function closeSettings() {
-    document.getElementById("settings-modal").classList.add("hidden");
+    const m = document.getElementById("settings-modal");
+    if (m.classList.contains("hidden")) return;
+    if (document.body.dataset.motion === "reduced") {
+      m.classList.add("hidden");
+      return;
+    }
+    m.classList.add("closing");
+    setTimeout(() => {
+      m.classList.remove("closing");
+      m.classList.add("hidden");
+    }, 200);
   }
   function resetPrefs() {
     state.prefs = Object.assign({}, DEFAULT_PREFS);
@@ -164,9 +176,21 @@
     const t = $("#toast");
     t.className = "toast " + (kind === "good" ? "good" : kind === "bad" ? "bad" : "");
     t.textContent = msg;
-    t.classList.remove("hidden");
+    t.classList.remove("hidden", "leaving");
     clearTimeout(toast._t);
-    toast._t = setTimeout(() => t.classList.add("hidden"), ms);
+    clearTimeout(toast._tHide);
+    const reduced = document.body.dataset.motion === "reduced";
+    toast._t = setTimeout(() => {
+      if (reduced) {
+        t.classList.add("hidden");
+        return;
+      }
+      t.classList.add("leaving");
+      toast._tHide = setTimeout(() => {
+        t.classList.add("hidden");
+        t.classList.remove("leaving");
+      }, 240);
+    }, ms);
   }
 
   // ----------------------------------------------------------------
@@ -555,6 +579,14 @@ hard 60-minute cap. If you're not done after 60, finish for learning's sake but 
     // Track per-question state for the scoreboard.
     const passSet = new Set();
     const attemptSet = new Set();
+    const bump = (node) => {
+      if (document.body.dataset.motion === "reduced") return;
+      node.classList.remove("bump");
+      // Force reflow so re-adding restarts the animation
+      void node.offsetWidth;
+      node.classList.add("bump");
+      setTimeout(() => node.classList.remove("bump"), 520);
+    };
     chosen.forEach((qid, idx) => {
       const card = questionCard(qid, idx + 1, {
         hideTopicTags: true,   // Exam: hide topic tags so the family isn't telegraphed.
@@ -562,12 +594,14 @@ hard 60-minute cap. If you're not done after 60, finish for learning's sake but 
           if (!passSet.has(qid)) {
             passSet.add(qid);
             counters.solved.textContent = String(passSet.size);
+            bump(counters.solved);
           }
         },
         onAttempt: () => {
           if (!attemptSet.has(qid)) {
             attemptSet.add(qid);
             counters.attempted.textContent = String(attemptSet.size);
+            bump(counters.attempted);
           }
         },
       });
@@ -620,11 +654,17 @@ hard 60-minute cap. If you're not done after 60, finish for learning's sake but 
       actions.appendChild(tryBtn);
 
       const runner = buildRunnerPanel(qid, hooks);
-      runner.classList.add("hidden");
+      runner.classList.add("collapsed");
       tryBtn.onclick = () => {
-        runner.classList.toggle("hidden");
-        if (!runner.classList.contains("hidden")) {
-          runner.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        const willOpen = runner.classList.contains("collapsed");
+        runner.classList.toggle("collapsed");
+        tryBtn.textContent = willOpen ? "Hide workbench" : "Try in workbench";
+        if (willOpen) {
+          // Wait for the open animation to settle before scrolling so
+          // the runner's final position is what the smooth scroll targets.
+          setTimeout(() => {
+            runner.scrollIntoView({ behavior: "smooth", block: "nearest" });
+          }, 220);
         }
       };
 
@@ -856,20 +896,27 @@ hard 60-minute cap. If you're not done after 60, finish for learning's sake but 
                                     : "FAIL"}`;
       const item = el("div", { class: "tc-item" });
       const row = el("div", { class: "tc-row " + kind });
+      // Per-row stagger index — picked up by CSS animation-delay.
+      row.style.setProperty("--i", String(i));
       row.appendChild(el("div", { class: "tc-status", text: symbol }));
       row.appendChild(el("div", { class: "tc-label", text: label }));
 
-      const detail = el("div", { class: "tc-detail hidden" });
-      detail.appendChild(buildDiff(r));
+      // Smooth collapse: an inner wrapper handles overflow; toggling
+      // `.collapsed` on the outer animates grid-template-rows from 1fr → 0fr.
+      const detail = el("div", { class: "tc-detail collapsed" });
+      const detailInner = el("div");
+      detailInner.appendChild(buildDiff(r));
+      detail.appendChild(detailInner);
 
       const revealBtn = el("button", {
         class: "tc-reveal",
         text: kind === "pass" ? "Show case" : "Reveal diff",
         onclick: () => {
-          detail.classList.toggle("hidden");
-          revealBtn.textContent = detail.classList.contains("hidden")
-            ? (kind === "pass" ? "Show case" : "Reveal diff")
-            : "Hide";
+          const willOpen = detail.classList.contains("collapsed");
+          detail.classList.toggle("collapsed");
+          revealBtn.textContent = willOpen
+            ? "Hide"
+            : (kind === "pass" ? "Show case" : "Reveal diff");
         },
       });
       row.appendChild(revealBtn);
@@ -973,10 +1020,24 @@ hard 60-minute cap. If you're not done after 60, finish for learning's sake but 
       el("button", { class: "btn ghost", text: "Close", onclick: closeAnswerModal }),
     ]));
 
-    $("#answer-modal").classList.remove("hidden");
+    const m = $("#answer-modal");
+    m.classList.remove("closing");
+    m.classList.remove("hidden");
   }
 
-  function closeAnswerModal() { $("#answer-modal").classList.add("hidden"); }
+  function closeAnswerModal() {
+    const m = $("#answer-modal");
+    if (m.classList.contains("hidden")) return;
+    if (document.body.dataset.motion === "reduced") {
+      m.classList.add("hidden");
+      return;
+    }
+    m.classList.add("closing");
+    setTimeout(() => {
+      m.classList.remove("closing");
+      m.classList.add("hidden");
+    }, 200);
+  }
 
   // ----------------------------------------------------------------
   // Boot
