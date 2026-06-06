@@ -40,6 +40,12 @@
       <div id="crumbs"></div>
       <div class="topbar-actions">
         <span id="pyodide-status" class="status-pill status-idle">Python: not loaded</span>
+        <button id="settings-btn" class="icon-btn" aria-label="Open settings" title="Customize appearance">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+        </button>
       </div>
     </header>
 
@@ -65,6 +71,85 @@
         Looking at the answer before attempting will hurt your learning.
       </div>
       <div class="modal-body" id="modal-body"></div>
+    </div>
+  </div>
+
+  <!-- ============== SETTINGS MODAL ============== -->
+  <div id="settings-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+    <div class="modal-backdrop" data-close-settings></div>
+    <div class="modal-panel modal-panel-small">
+      <div class="modal-header">
+        <h3 id="settings-title">Customize</h3>
+        <button class="modal-close" data-close-settings aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body settings-body">
+
+        <div class="setting-row">
+          <div class="setting-label">
+            <div class="setting-title">Theme</div>
+            <div class="setting-hint">Background palette</div>
+          </div>
+          <div class="seg-group" role="radiogroup" aria-label="Theme">
+            <button class="seg" data-pref="theme" data-value="dark" role="radio">Dark</button>
+            <button class="seg" data-pref="theme" data-value="midnight" role="radio">Midnight</button>
+            <button class="seg" data-pref="theme" data-value="light" role="radio">Light</button>
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-label">
+            <div class="setting-title">Accent</div>
+            <div class="setting-hint">Highlights, primary buttons</div>
+          </div>
+          <div class="swatch-group" role="radiogroup" aria-label="Accent color">
+            <button class="swatch" data-pref="accent" data-value="purple"  style="--sw:#7c5cff" role="radio" aria-label="Purple"></button>
+            <button class="swatch" data-pref="accent" data-value="cyan"    style="--sw:#22d3ee" role="radio" aria-label="Cyan"></button>
+            <button class="swatch" data-pref="accent" data-value="emerald" style="--sw:#10b981" role="radio" aria-label="Emerald"></button>
+            <button class="swatch" data-pref="accent" data-value="amber"   style="--sw:#f59e0b" role="radio" aria-label="Amber"></button>
+            <button class="swatch" data-pref="accent" data-value="rose"    style="--sw:#f43f5e" role="radio" aria-label="Rose"></button>
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-label">
+            <div class="setting-title">Editor font size</div>
+            <div class="setting-hint">Workbench &amp; code blocks</div>
+          </div>
+          <div class="seg-group" role="radiogroup" aria-label="Editor font size">
+            <button class="seg" data-pref="codeSize" data-value="sm" role="radio">S</button>
+            <button class="seg" data-pref="codeSize" data-value="md" role="radio">M</button>
+            <button class="seg" data-pref="codeSize" data-value="lg" role="radio">L</button>
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-label">
+            <div class="setting-title">Density</div>
+            <div class="setting-hint">Spacing between elements</div>
+          </div>
+          <div class="seg-group" role="radiogroup" aria-label="Density">
+            <button class="seg" data-pref="density" data-value="comfortable" role="radio">Comfortable</button>
+            <button class="seg" data-pref="density" data-value="compact" role="radio">Compact</button>
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-label">
+            <div class="setting-title">Animations</div>
+            <div class="setting-hint">Disable if you prefer reduced motion</div>
+          </div>
+          <div class="seg-group" role="radiogroup" aria-label="Animations">
+            <button class="seg" data-pref="motion" data-value="full" role="radio">On</button>
+            <button class="seg" data-pref="motion" data-value="reduced" role="radio">Off</button>
+          </div>
+        </div>
+
+        <div class="settings-footer">
+          <button id="settings-reset" class="btn ghost small">Reset to defaults</button>
+          <button class="btn primary small" data-close-settings>Done</button>
+        </div>
+
+      </div>
     </div>
   </div>
 

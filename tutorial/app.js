@@ -9,6 +9,15 @@
   "use strict";
 
   const STORAGE_KEY = "odoo_prep_progress_v1";
+  const PREFS_KEY = "odoo_prep_prefs_v1";
+
+  const DEFAULT_PREFS = {
+    theme: "dark",
+    accent: "purple",
+    codeSize: "md",
+    density: "comfortable",
+    motion: "full",
+  };
 
   // ----------------------------------------------------------------
   // State + persistence
@@ -17,7 +26,68 @@
     solved: loadProgress(),     // Set of question ids
     activeView: null,           // {kind, id} of current view
     examSeed: null,             // Stable random seed for the final exam
+    prefs: loadPrefs(),         // User customization
   };
+
+  function loadPrefs() {
+    try {
+      const raw = localStorage.getItem(PREFS_KEY);
+      const parsed = raw ? JSON.parse(raw) : {};
+      return Object.assign({}, DEFAULT_PREFS, parsed);
+    } catch (_) {
+      return Object.assign({}, DEFAULT_PREFS);
+    }
+  }
+  function savePrefs() {
+    try { localStorage.setItem(PREFS_KEY, JSON.stringify(state.prefs)); } catch (_) {}
+  }
+  function applyPrefs() {
+    const b = document.body;
+    b.dataset.theme = state.prefs.theme;
+    b.dataset.accent = state.prefs.accent;
+    b.dataset.density = state.prefs.density;
+    b.dataset.motion = state.prefs.motion;
+    b.dataset.codeSize = state.prefs.codeSize;
+  }
+  function syncSettingsUI() {
+    document.querySelectorAll("#settings-modal [data-pref]").forEach((el) => {
+      const pref = el.dataset.pref;
+      const value = el.dataset.value;
+      el.classList.toggle("active", state.prefs[pref] === value);
+    });
+  }
+  function openSettings() {
+    syncSettingsUI();
+    document.getElementById("settings-modal").classList.remove("hidden");
+  }
+  function closeSettings() {
+    document.getElementById("settings-modal").classList.add("hidden");
+  }
+  function resetPrefs() {
+    state.prefs = Object.assign({}, DEFAULT_PREFS);
+    savePrefs();
+    applyPrefs();
+    syncSettingsUI();
+    toast("Defaults restored.", "good");
+  }
+  function bindSettingsModal() {
+    document.getElementById("settings-btn").addEventListener("click", openSettings);
+    document.querySelectorAll("#settings-modal [data-close-settings]").forEach((b) =>
+      b.addEventListener("click", closeSettings)
+    );
+    document.querySelectorAll("#settings-modal [data-pref]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const pref = btn.dataset.pref;
+        const value = btn.dataset.value;
+        if (state.prefs[pref] === value) return;
+        state.prefs[pref] = value;
+        savePrefs();
+        applyPrefs();
+        syncSettingsUI();
+      });
+    });
+    document.getElementById("settings-reset").addEventListener("click", resetPrefs);
+  }
 
   function loadProgress() {
     try {
@@ -621,6 +691,8 @@ hard 60-minute cap. If you're not done after 60, finish for learning's sake but 
     runBtn.onclick = async () => {
       results.innerHTML = "";
       log.classList.remove("show");
+      wrap.classList.remove("perfect");
+      covText.classList.remove("perfect");
       runBtn.disabled = true;
       const orig = runBtn.textContent;
       runBtn.innerHTML = `<span class="spinner"></span> Running…`;
@@ -630,8 +702,12 @@ hard 60-minute cap. If you're not done after 60, finish for learning's sake but 
         renderTestResults(results, covBar, covText, out);
         const passed = out.filter((r) => r.passed).length;
         const total = out.length;
-        if (passed === total) {
+        if (passed === total && total > 0) {
           markSolved(qid);
+          wrap.classList.add("perfect");
+          covText.classList.add("perfect");
+          // Briefly remove the glow class so it can be re-applied next time
+          setTimeout(() => wrap.classList.remove("perfect"), 1500);
           toast(`All ${total} tests passed!`, "good", 2400);
           if (hooks.onPass) hooks.onPass();
         } else {
@@ -666,6 +742,7 @@ hard 60-minute cap. If you're not done after 60, finish for learning's sake but 
       const label = `Test ${i + 1}: ${kind === "pass" ? "PASS"
                                     : kind === "error" ? "ERROR"
                                     : "FAIL"}`;
+      const item = el("div", { class: "tc-item" });
       const row = el("div", { class: "tc-row " + kind });
       row.appendChild(el("div", { class: "tc-status", text: symbol }));
       row.appendChild(el("div", { class: "tc-label", text: label }));
@@ -684,12 +761,9 @@ hard 60-minute cap. If you're not done after 60, finish for learning's sake but 
         },
       });
       row.appendChild(revealBtn);
-      container.appendChild(row);
-
-      // The detail row spans the full width below the tc-row.
-      const detailWrap = el("div", { class: "tc-row " + kind, style: "background:transparent;border-color:transparent;padding:0" });
-      detailWrap.appendChild(detail);
-      container.appendChild(detailWrap);
+      item.appendChild(row);
+      item.appendChild(detail);
+      container.appendChild(item);
     });
   }
 
@@ -716,6 +790,42 @@ hard 60-minute cap. If you're not done after 60, finish for learning's sake but 
   // ----------------------------------------------------------------
   // Answer modal
   // ----------------------------------------------------------------
+  // Code block with a hover-revealed copy button.
+  function codeBlock(source) {
+    const wrap = el("div", { class: "pre-wrap" });
+    const copyBtn = el("button", { class: "copy-btn", text: "Copy" });
+    copyBtn.addEventListener("click", async () => {
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(source);
+        } else {
+          // Fallback: hidden textarea + execCommand
+          const ta = document.createElement("textarea");
+          ta.value = source;
+          ta.style.position = "fixed"; ta.style.opacity = "0";
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand("copy");
+          document.body.removeChild(ta);
+        }
+        copyBtn.textContent = "Copied!";
+        copyBtn.classList.add("copied");
+        setTimeout(() => {
+          copyBtn.textContent = "Copy";
+          copyBtn.classList.remove("copied");
+        }, 1400);
+      } catch (_) {
+        copyBtn.textContent = "Copy failed";
+        setTimeout(() => { copyBtn.textContent = "Copy"; }, 1400);
+      }
+    });
+    const pre = el("pre");
+    pre.appendChild(el("code", { text: source }));
+    wrap.appendChild(copyBtn);
+    wrap.appendChild(pre);
+    return wrap;
+  }
+
   function openAnswerModal(qid) {
     const q = window.QUESTIONS[qid];
     $("#modal-title").textContent = `Answer — ${q.id} ${q.title}`;
@@ -726,10 +836,7 @@ hard 60-minute cap. If you're not done after 60, finish for learning's sake but 
     body.appendChild(el("p", { html: q.hint }));
 
     body.appendChild(el("h4", { text: q.type === "sql" ? "SQL Solution" : "Reference Solution" }));
-    const pre = el("pre");
-    const code = el("code", { text: q.solution });
-    pre.appendChild(code);
-    body.appendChild(pre);
+    body.appendChild(codeBlock(q.solution));
 
     if (q.explanation) {
       body.appendChild(el("h4", { text: "Why this works" }));
@@ -763,20 +870,32 @@ hard 60-minute cap. If you're not done after 60, finish for learning's sake but 
   // Boot
   // ----------------------------------------------------------------
   function init() {
+    applyPrefs();
     buildNav();
     updateProgressUI();
     updateNavCheckmarks();
     setActiveNav();
+    bindSettingsModal();
 
     $("#modal-close").addEventListener("click", closeAnswerModal);
-    $(".modal-backdrop").addEventListener("click", closeAnswerModal);
+    // Answer-modal backdrop (the .modal-backdrop INSIDE #answer-modal)
+    $("#answer-modal .modal-backdrop").addEventListener("click", closeAnswerModal);
     document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") closeAnswerModal();
+      if (e.key === "Escape") {
+        closeAnswerModal();
+        closeSettings();
+      }
     });
 
     $("#menu-toggle").addEventListener("click", () =>
       document.body.classList.toggle("menu-open")
     );
+    // Tap anywhere outside sidebar (mobile) to close it
+    document.addEventListener("click", (e) => {
+      if (!document.body.classList.contains("menu-open")) return;
+      if (e.target.closest("#sidebar") || e.target.closest("#menu-toggle")) return;
+      document.body.classList.remove("menu-open");
+    });
 
     $("#reset-progress").addEventListener("click", () => {
       if (!confirm("Wipe all progress? This cannot be undone.")) return;
