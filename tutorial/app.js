@@ -265,17 +265,44 @@
   // ----------------------------------------------------------------
   // Routing
   // ----------------------------------------------------------------
+  // Track pending navigation so rapid clicks don't pile up animations.
+  let _navToken = 0;
   function navigate(kind, id) {
+    const token = ++_navToken;
     state.activeView = { kind, id };
     setActiveNav();
     setCrumbs();
+
     const root = $("#view-container");
-    root.innerHTML = "";
-    root.scrollTop = 0;
-    if (kind === "welcome") root.appendChild(renderWelcome());
-    else if (kind === "module") root.appendChild(renderModule(id));
-    else if (kind === "practice") root.appendChild(renderPracticeSet(id));
-    else if (kind === "exam") root.appendChild(renderExam());
+    const motion = document.body.dataset.motion;
+    const animate = motion !== "reduced";
+
+    const swap = () => {
+      // Cancelled by a newer navigate?
+      if (token !== _navToken) return;
+      root.innerHTML = "";
+      root.scrollTop = 0;
+      if (kind === "welcome") root.appendChild(renderWelcome());
+      else if (kind === "module") root.appendChild(renderModule(id));
+      else if (kind === "practice") root.appendChild(renderPracticeSet(id));
+      else if (kind === "exam") root.appendChild(renderExam());
+      // Trigger enter animation (drop any leftover class first).
+      root.classList.remove("leaving");
+      if (animate) {
+        root.classList.remove("entering");
+        // force reflow before re-adding so the animation restarts
+        void root.offsetWidth;
+        root.classList.add("entering");
+      }
+    };
+
+    if (animate && root.firstChild) {
+      root.classList.add("leaving");
+      setTimeout(swap, 200);  // matches viewOut duration
+    } else {
+      swap();
+    }
+
     document.body.classList.remove("menu-open");
   }
 
@@ -661,10 +688,42 @@ hard 60-minute cap. If you're not done after 60, finish for learning's sake but 
     const q = window.QUESTIONS[qid];
     const wrap = el("div", { class: "runner" });
 
-    wrap.appendChild(el("div", { class: "runner-header" }, [
-      el("div", { class: "runner-signature", text: q.signature }),
-      el("div", { html: `<span class="status-pill status-idle">${q.tests.length} test cases</span>` }),
-    ]));
+    // Available languages for this question.
+    const langs = [{ id: "python", label: "Python" }];
+    if (q.js) langs.push({ id: "javascript", label: "JavaScript" });
+    let currentLang = langs[0].id;     // start in Python
+
+    // Helpers to return language-specific bits.
+    function impl() {
+      return currentLang === "javascript" ? q.js : q;
+    }
+    function langStarter()    { return impl().starter || ""; }
+    function langSignature()  { return impl().signature || ""; }
+    function langFunctionName() { return impl().functionName || ""; }
+
+    const sigEl = el("div", { class: "runner-signature", text: langSignature() });
+    const header = el("div", { class: "runner-header" });
+    header.appendChild(sigEl);
+
+    // Language switcher (segmented control), only shown if >1 language.
+    const langSwitch = el("div", { class: "lang-switch" });
+    if (langs.length > 1) {
+      langs.forEach((L) => {
+        const b = el("button", {
+          class: "lang-seg" + (L.id === currentLang ? " active" : ""),
+          text: L.label,
+          "data-lang": L.id,
+        });
+        b.onclick = () => switchLang(L.id);
+        langSwitch.appendChild(b);
+      });
+      header.appendChild(langSwitch);
+    } else {
+      header.appendChild(el("div", {
+        html: `<span class="status-pill status-idle">${q.tests.length} test cases</span>`,
+      }));
+    }
+    wrap.appendChild(header);
 
     const editor = el("textarea", {
       class: "editor",
@@ -672,7 +731,31 @@ hard 60-minute cap. If you're not done after 60, finish for learning's sake but 
       autocorrect: "off",
       autocapitalize: "off",
     });
-    editor.value = q.starter || "";
+    editor.value = langStarter();
+
+    // Stash per-language draft so flipping back doesn't lose work.
+    const drafts = { python: langs.includes("python") ? langStarter() : "" };
+    if (q.js) drafts.javascript = q.js.starter || "";
+    drafts[currentLang] = editor.value;
+
+    function switchLang(next) {
+      if (next === currentLang) return;
+      drafts[currentLang] = editor.value;     // save current draft
+      currentLang = next;
+      editor.value = drafts[currentLang] || langStarter();
+      sigEl.textContent = langSignature();
+      // Toggle active state
+      [...langSwitch.children].forEach((b) => {
+        b.classList.toggle("active", b.dataset.lang === currentLang);
+      });
+      // Clear previous results when switching language
+      results.innerHTML = "";
+      log.classList.remove("show");
+      covBar.firstChild.style.width = "0%";
+      covText.textContent = "Coverage: —";
+      covText.classList.remove("perfect");
+      wrap.classList.remove("perfect");
+    }
     // Tab key inserts 4 spaces inside the textarea.
     editor.addEventListener("keydown", (e) => {
       if (e.key === "Tab") {
@@ -706,9 +789,11 @@ hard 60-minute cap. If you're not done after 60, finish for learning's sake but 
     wrap.appendChild(results);
 
     resetBtn.onclick = () => {
-      if (editor.value === q.starter) return;
+      const starterNow = langStarter();
+      if (editor.value === starterNow) return;
       if (!confirm("Reset editor to starter code?")) return;
-      editor.value = q.starter || "";
+      editor.value = starterNow;
+      drafts[currentLang] = starterNow;
     };
 
     runBtn.onclick = async () => {
@@ -721,7 +806,11 @@ hard 60-minute cap. If you're not done after 60, finish for learning's sake but 
       runBtn.innerHTML = `<span class="spinner"></span> Running…`;
       try {
         if (hooks.onAttempt) hooks.onAttempt();
-        const out = await window.Runner.runTests(editor.value, q.functionName, q.tests);
+        drafts[currentLang] = editor.value;   // persist latest draft
+        const fnName = langFunctionName();
+        const out = (currentLang === "javascript")
+          ? await window.Runner.runTestsJs(editor.value, fnName, q.tests)
+          : await window.Runner.runTests(editor.value, fnName, q.tests);
         renderTestResults(results, covBar, covText, out);
         const passed = out.filter((r) => r.passed).length;
         const total = out.length;
@@ -963,7 +1052,100 @@ hard 60-minute cap. If you're not done after 60, finish for learning's sake but 
       toast("Progress reset.", "good");
     });
 
+    initCardSpotlight();
+    initCursorRing();
+    initClickPulse();
+
     navigate("welcome", null);
+  }
+
+  // ----------------------------------------------------------------
+  // Pointer FX
+  // ----------------------------------------------------------------
+
+  /** Card spotlight: write the pointer position into CSS vars on the
+   *  hovered card so its ::after gradient can follow the cursor. */
+  function initCardSpotlight() {
+    const SELECTOR = ".q-card, .card";
+    let last = null;
+    document.addEventListener("pointermove", (e) => {
+      const card = e.target.closest && e.target.closest(SELECTOR);
+      if (card !== last) {
+        if (last) {
+          last.style.removeProperty("--mx");
+          last.style.removeProperty("--my");
+        }
+        last = card;
+      }
+      if (card) {
+        const rect = card.getBoundingClientRect();
+        card.style.setProperty("--mx", (e.clientX - rect.left) + "px");
+        card.style.setProperty("--my", (e.clientY - rect.top) + "px");
+      }
+    }, { passive: true });
+  }
+
+  /** Cursor-follower ring with lerp smoothing. */
+  function initCursorRing() {
+    // Touch and reduced motion → no ring.
+    if (matchMedia("(pointer: coarse)").matches) return;
+    // Note: data-motion="reduced" hides via CSS, so we still build it
+    // and let CSS decide visibility — that way toggling Animations On
+    // brings it back without a reload.
+    const ring = document.createElement("div");
+    ring.className = "cursor-ring";
+    document.body.appendChild(ring);
+
+    const HOVER_SELECTOR =
+      'button, a, .nav-item, .q-card, .card, .mcq-option, ' +
+      '.swatch, .seg, .tag, .tc-reveal, .copy-btn, [role="button"], [role="link"]';
+
+    let tx = -9999, ty = -9999;
+    let x = -9999, y = -9999;
+    let visible = false;
+
+    document.addEventListener("pointermove", (e) => {
+      tx = e.clientX; ty = e.clientY;
+      if (!visible) { ring.classList.add("visible"); visible = true; }
+      if (e.target.closest && e.target.closest(HOVER_SELECTOR)) {
+        ring.classList.add("hovering");
+      } else {
+        ring.classList.remove("hovering");
+      }
+    }, { passive: true });
+
+    document.addEventListener("pointerdown", () => ring.classList.add("clicking"));
+    document.addEventListener("pointerup",   () => ring.classList.remove("clicking"));
+    document.addEventListener("pointerleave", () => {
+      ring.classList.remove("visible");
+      visible = false;
+    });
+
+    function loop() {
+      // Smooth lerp toward target position.
+      x += (tx - x) * 0.22;
+      y += (ty - y) * 0.22;
+      ring.style.transform = `translate3d(${x}px, ${y}px, 0) translate(-50%, -50%)`;
+      requestAnimationFrame(loop);
+    }
+    requestAnimationFrame(loop);
+  }
+
+  /** A brief expanding ring at every click — feels tactile. */
+  function initClickPulse() {
+    if (matchMedia("(pointer: coarse)").matches) return;
+    document.addEventListener("click", (e) => {
+      // Respect the reduced-motion setting at runtime.
+      if (document.body.dataset.motion === "reduced") return;
+      // Skip clicks inside the editor (would be visually noisy while typing-by-click).
+      if (e.target && e.target.classList && e.target.classList.contains("editor")) return;
+      const p = document.createElement("div");
+      p.className = "click-pulse";
+      p.style.left = e.clientX + "px";
+      p.style.top  = e.clientY + "px";
+      document.body.appendChild(p);
+      setTimeout(() => p.remove(), 700);
+    }, { passive: true });
   }
 
   // Wait for DOM

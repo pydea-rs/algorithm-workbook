@@ -120,11 +120,23 @@ body[data-theme="light"] {
 }
 
 /* ---- Accent variants ---- */
+body[data-accent="indigo"] {
+  --accent: #6366f1;
+  --accent-2: #818cf8;
+  --accent-glow: rgba(99, 102, 241, 0.28);
+  --accent-soft: rgba(99, 102, 241, 0.12);
+}
 body[data-accent="cyan"] {
   --accent: #22d3ee;
   --accent-2: #38bdf8;
   --accent-glow: rgba(34, 211, 238, 0.28);
   --accent-soft: rgba(34, 211, 238, 0.12);
+}
+body[data-accent="teal"] {
+  --accent: #14b8a6;
+  --accent-2: #2dd4bf;
+  --accent-glow: rgba(20, 184, 166, 0.28);
+  --accent-soft: rgba(20, 184, 166, 0.12);
 }
 body[data-accent="emerald"] {
   --accent: #10b981;
@@ -132,17 +144,35 @@ body[data-accent="emerald"] {
   --accent-glow: rgba(16, 185, 129, 0.28);
   --accent-soft: rgba(16, 185, 129, 0.12);
 }
+body[data-accent="lime"] {
+  --accent: #84cc16;
+  --accent-2: #a3e635;
+  --accent-glow: rgba(132, 204, 22, 0.28);
+  --accent-soft: rgba(132, 204, 22, 0.12);
+}
 body[data-accent="amber"] {
   --accent: #f59e0b;
   --accent-2: #fbbf24;
   --accent-glow: rgba(245, 158, 11, 0.28);
   --accent-soft: rgba(245, 158, 11, 0.12);
 }
+body[data-accent="orange"] {
+  --accent: #fb7c3a;
+  --accent-2: #fb923c;
+  --accent-glow: rgba(251, 124, 58, 0.30);
+  --accent-soft: rgba(251, 124, 58, 0.12);
+}
 body[data-accent="rose"] {
   --accent: #f43f5e;
   --accent-2: #fb7185;
   --accent-glow: rgba(244, 63, 94, 0.28);
   --accent-soft: rgba(244, 63, 94, 0.12);
+}
+body[data-accent="pink"] {
+  --accent: #ec4899;
+  --accent-2: #f472b6;
+  --accent-glow: rgba(236, 72, 153, 0.28);
+  --accent-soft: rgba(236, 72, 153, 0.12);
 }
 
 /* ---- Density: Compact (visibly tighter across the whole UI) ---- */
@@ -950,6 +980,35 @@ body[data-density="compact"] .test-results { margin-top: 10px; }
   font-size: var(--code-size-small);
   color: var(--accent-2);
   word-break: break-all;
+  flex: 1;
+  min-width: 0;
+}
+
+/* Language toggle (Python / JavaScript) */
+.lang-switch {
+  display: inline-flex;
+  background: var(--bg-2);
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  padding: 2px;
+  gap: 2px;
+  flex: 0 0 auto;
+}
+.lang-seg {
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  padding: 5px 11px;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 6px;
+  transition: all var(--t-fast);
+}
+.lang-seg:hover { color: var(--text); }
+.lang-seg.active {
+  background: var(--accent);
+  color: white;
+  box-shadow: 0 3px 10px -3px var(--accent-glow);
 }
 .editor {
   width: 100%;
@@ -1261,7 +1320,10 @@ body[data-theme="light"] .seg.active { color: white; }
 /* Swatch (color) picker */
 .swatch-group {
   display: inline-flex;
+  flex-wrap: wrap;
   gap: 8px;
+  max-width: 252px;
+  justify-content: flex-end;
 }
 .swatch {
   width: 28px; height: 28px;
@@ -1481,6 +1543,132 @@ body[data-theme="light"] .seg.active { color: white; }
   font-size: 12px;
   color: var(--text-mute);
   background: var(--bg-1);
+}
+
+/* ===================== POINTER EFFECTS ================== */
+
+/* Soft accent-tinted spotlight that follows the cursor over cards.
+   `--mx`/`--my` are set in JS on `pointermove`. */
+.q-card, .card {
+  position: relative;
+}
+.q-card::after,
+.card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: radial-gradient(
+    260px circle at var(--mx, -200px) var(--my, -200px),
+    var(--accent-soft),
+    transparent 55%
+  );
+  opacity: 0;
+  transition: opacity 280ms var(--ease-out);
+  z-index: 0;
+}
+.q-card:hover::after,
+.card:hover::after { opacity: 1; }
+/* Keep card content above the spotlight overlay. */
+.q-card > *,
+.card > * { position: relative; z-index: 1; }
+/* The "solved ✓" badge sits above the spotlight too. */
+.q-card.solved::before { z-index: 2; }
+
+/* Cursor-follower ring — a tiny light circle that lags the cursor.
+   Built in JS (.cursor-ring). Hidden on touch & reduced-motion. */
+.cursor-ring {
+  position: fixed;
+  top: 0; left: 0;
+  width: 28px; height: 28px;
+  border: 1.5px solid var(--accent);
+  border-radius: 50%;
+  pointer-events: none;
+  transform: translate3d(-9999px, -9999px, 0);
+  z-index: 9999;
+  opacity: 0;
+  mix-blend-mode: difference;
+  transition: opacity 240ms,
+              width 200ms var(--ease-out),
+              height 200ms var(--ease-out),
+              border-color var(--t-fast);
+  will-change: transform;
+}
+.cursor-ring.visible { opacity: 0.55; }
+.cursor-ring.hovering {
+  width: 44px; height: 44px;
+  opacity: 0.85;
+}
+.cursor-ring.clicking {
+  width: 16px; height: 16px;
+  opacity: 1;
+}
+@media (pointer: coarse) { .cursor-ring { display: none; } }
+body[data-motion="reduced"] .cursor-ring { display: none; }
+
+/* Click pulse — a brief expanding ring at the click point. */
+.click-pulse {
+  position: fixed;
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--accent);
+  pointer-events: none;
+  transform: translate(-50%, -50%) scale(0.4);
+  animation: pulseExpand 620ms var(--ease-out) forwards;
+  z-index: 9998;
+  mix-blend-mode: difference;
+}
+@keyframes pulseExpand {
+  0%   { transform: translate(-50%, -50%) scale(0.4); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(3.2); opacity: 0; }
+}
+body[data-motion="reduced"] .click-pulse { display: none; }
+
+/* ===================== PAGE TRANSITIONS ================ */
+#view-container.leaving {
+  animation: viewOut 200ms var(--ease) forwards;
+  pointer-events: none;
+}
+@keyframes viewOut {
+  to { opacity: 0; transform: translateY(-6px); filter: blur(2px); }
+}
+/* Slightly richer enter animation than the base viewIn. */
+#view-container.entering {
+  animation: viewEnter 380ms var(--ease-out);
+}
+@keyframes viewEnter {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.992);
+    filter: blur(3px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+
+/* ===================== MODAL STAGGER =================== */
+/* Stagger immediate children of the modal body when the modal opens. */
+.modal:not(.hidden) .modal-body > * {
+  animation: modalChildIn 320ms var(--ease-out) both;
+}
+.modal:not(.hidden) .modal-body > *:nth-child(1) { animation-delay: 60ms; }
+.modal:not(.hidden) .modal-body > *:nth-child(2) { animation-delay: 110ms; }
+.modal:not(.hidden) .modal-body > *:nth-child(3) { animation-delay: 160ms; }
+.modal:not(.hidden) .modal-body > *:nth-child(4) { animation-delay: 210ms; }
+.modal:not(.hidden) .modal-body > *:nth-child(5) { animation-delay: 260ms; }
+.modal:not(.hidden) .modal-body > *:nth-child(6) { animation-delay: 310ms; }
+.modal:not(.hidden) .modal-body > *:nth-child(n+7) { animation-delay: 360ms; }
+@keyframes modalChildIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+/* Settings rows have their own subtler stagger */
+.modal:not(.hidden) .settings-body .setting-row {
+  animation: modalChildIn 280ms var(--ease-out) both;
 }
 
 /* ===================== UTILITIES ======================== */

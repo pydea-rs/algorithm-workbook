@@ -8,6 +8,7 @@ Built from the KIMI Masterclass written guide and the Extended Question Bank in 
 - **Final Exam** that draws 12 random questions from a held-back pool of 13 (topic tags hidden)
 - **57 coding/SQL questions** with hints, reference solutions, and live test runners
 - **Python 3 in the browser** via Pyodide — no server, no install
+- **JavaScript** workbench too — switch language per question in the runner panel
 - **Customisable** theme, accent, density, code-text size, animations — saved in `localStorage`
 
 ## How to open
@@ -72,8 +73,9 @@ tutorial/
 ├── styles.css        # Theming via CSS variables + animations
 ├── app.js            # Controller: nav, routing, modals, exam, progress
 ├── content.js        # 8 tutorial modules (HTML body blocks + MCQs)
-├── questions.js      # All 57 questions with test cases + solutions
-├── runner.js         # Pyodide loader + test harness
+├── questions.js      # All 57 questions: Python tests + reference solutions
+├── questions-js.js   # JavaScript implementations for the 47 coding questions
+├── runner.js         # Pyodide loader + Python harness + native JS harness
 └── README.md         # This file
 ```
 
@@ -101,14 +103,31 @@ clear it.
 
 ## What the workbench does (and doesn't)
 
-- ✅ Runs your Python function against hidden test cases.
+- ✅ Runs your code (Python OR JavaScript) against hidden test cases.
 - ✅ Shows **only pass/fail and coverage %** by default — to see the input/expected/actual diff,
   click **Reveal diff** on a failing case.
-- ✅ Handles linked-list and binary-tree problems: helper builders are injected into the Python
-  runtime so you can write functions that take `ListNode` / `TreeNode` objects directly.
-- ✅ Counts a question as solved (and persists it) when every test passes.
+- ✅ Handles linked-list and binary-tree problems: helper builders are injected into both
+  runtimes so you can write functions that take `ListNode` / `TreeNode` objects directly.
+- ✅ Counts a question as solved (and persists it) when every test passes — in either language.
 - ❌ Does **not** run SQL. SQL questions show the schema, hint, and reference query in the modal —
   you should run the query in a real DB or SQL playground if you want to test it.
+
+### Python vs JavaScript — which to pick
+
+Each coding question has a **language toggle** at the top-right of its workbench. Switch any time;
+your code per language is preserved on the toggle for that question.
+
+|  | Python | JavaScript |
+|---|---|---|
+| Runtime | Pyodide (WebAssembly) | native `new Function()` |
+| First run | 5–10 s while Pyodide loads | instant |
+| Subsequent runs | fast | instant |
+| Function names | `snake_case` | `camelCase` (idiomatic JS) |
+| Infinite-loop safety | Pyodide may freeze the tab; refresh recovers | JS will freeze the tab; refresh recovers |
+| Class-based questions (e.g. Q50 Trie) | Python `class Trie:` | JS `class Trie {}` |
+
+If you're prepping for the actual Odoo first-step, **stick with Python** — that's what the
+assessment uses. JavaScript is a bonus track for cross-language learning.
 
 ## Limitations / known quirks
 
@@ -121,6 +140,11 @@ clear it.
   Practice Sets instead.
 - Light theme uses adjusted syntax-highlight colours; if you find any code block hard to read
   under one of the themes, the **Code text size** setting can help.
+- **JS infinite loops freeze the tab** (the JS runner uses `new Function()` for speed, which
+  is synchronous and not cancellable). Refresh recovers — progress is in localStorage.
+- The JS runner is fast but does **not** match Python's heap (`heapq`) or bisect — Q40 (Kth
+  Largest) ships an `O(n log n)` sort version in JS instead of `O(n log k)` heap. The
+  reference solution in the answer modal mentions this.
 
 ## Source content
 

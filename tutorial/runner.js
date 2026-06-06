@@ -329,10 +329,182 @@ def _tree_to_level(root):
     return lines[lines.length - 1] || "Unknown error";
   }
 
+  // =================================================================
+  //                       JAVASCRIPT RUNNER
+  // =================================================================
+  // Runs user JS synchronously in a fresh `Function`-scoped sandbox.
+  // Pros: no Pyodide load, instant; same equality semantics.
+  // Cons: NO infinite-loop timeout (Function calls block the main
+  // thread). Users with infinite loops must refresh — progress
+  // survives in localStorage.
+
+  const HELPERS_JS = `
+class TreeNode {
+  constructor(val=0, left=null, right=null) {
+    this.val = val; this.left = left; this.right = right;
+  }
+}
+class ListNode {
+  constructor(val=0, next=null) {
+    this.val = val; this.next = next;
+  }
+}
+function _build_tree(arr) {
+  if (!arr || !arr.length || arr[0] === null) return null;
+  const root = new TreeNode(arr[0]);
+  const q = [root];
+  let i = 1;
+  while (q.length && i < arr.length) {
+    const node = q.shift();
+    if (i < arr.length && arr[i] !== null) {
+      node.left = new TreeNode(arr[i]); q.push(node.left);
+    }
+    i++;
+    if (i < arr.length && arr[i] !== null) {
+      node.right = new TreeNode(arr[i]); q.push(node.right);
+    }
+    i++;
+  }
+  return root;
+}
+function _find_node(root, val) {
+  if (root === null) return null;
+  if (root.val === val) return root;
+  return _find_node(root.left, val) || _find_node(root.right, val);
+}
+function _build_list(arr) {
+  if (!arr || !arr.length) return null;
+  const head = new ListNode(arr[0]);
+  let cur = head;
+  for (let i = 1; i < arr.length; i++) {
+    cur.next = new ListNode(arr[i]); cur = cur.next;
+  }
+  return head;
+}
+function _build_list_with_cycle(arr, pos) {
+  if (!arr || !arr.length) return null;
+  const head = new ListNode(arr[0]);
+  let cur = head;
+  const nodes = [head];
+  for (let i = 1; i < arr.length; i++) {
+    cur.next = new ListNode(arr[i]); cur = cur.next; nodes.push(cur);
+  }
+  if (pos >= 0 && pos < nodes.length) cur.next = nodes[pos];
+  return head;
+}
+function _linked_to_list(head) {
+  const out = [];
+  const seen = new Set();
+  let cur = head, n = 0;
+  while (cur !== null && cur !== undefined && n < 10000) {
+    if (seen.has(cur)) { out.push('CYCLE@' + cur.val); break; }
+    seen.add(cur);
+    out.push(cur.val);
+    cur = cur.next;
+    n++;
+  }
+  return out;
+}
+function _tree_to_level(root) {
+  if (!root) return [];
+  const out = [];
+  const q = [root];
+  while (q.length) {
+    const node = q.shift();
+    if (node === null) { out.push(null); continue; }
+    out.push(node.val);
+    q.push(node.left); q.push(node.right);
+  }
+  while (out.length && out[out.length - 1] === null) out.pop();
+  return out;
+}
+`;
+
+  /**
+   * Run JS tests for a single question.
+   * @param {string} userCode - Source defining the target function or class.
+   * @param {string} functionName - Top-level name the harness will call.
+   * @param {Array}  testCases - {args, expected, equality?, prepareJs?, transformJs?, skipCall?}
+   */
+  async function runTestsJs(userCode, functionName, testCases) {
+    const results = [];
+
+    for (let i = 0; i < testCases.length; i++) {
+      const tc = testCases[i];
+      const equality = tc.equality || "exact";
+      const prepareCode = tc.prepareJs || "";
+      const transformCode = tc.transformJs || "";
+      const skipCall = !!tc.skipCall;
+
+      // Build the test script. JSON-serialise args so the test gets a
+      // FRESH copy each run (important for in-place mutators like Q12/Q23).
+      const argsLiteral = JSON.stringify(tc.args);
+      const callLine = skipCall ? "" : `result = ${functionName}(...args);`;
+      const script = `
+"use strict";
+${HELPERS_JS}
+${userCode}
+var args = JSON.parse(${JSON.stringify(argsLiteral)});
+var result;
+${prepareCode}
+${callLine}
+${transformCode}
+return result === undefined ? null : result;
+`;
+
+      let actual = null;
+      let err = null;
+      try {
+        const rawResult = new Function(script)();
+        // Drop class instances (TreeNode/ListNode) to plain JSON so equality
+        // works the same way as on Python's JSON round-trip.
+        actual = JSON.parse(JSON.stringify(rawResult, makeReplacer()));
+      } catch (e) {
+        err = stripJsError(e);
+      }
+
+      const passed = !err && checkEquality(actual, tc.expected, equality);
+      results.push({
+        passed,
+        error: err,
+        input: tc.args,
+        expected: tc.expected,
+        actual,
+        equality,
+      });
+    }
+
+    return results;
+  }
+
+  // Cycle-safe JSON replacer (prevents stringify on a TreeNode/ListNode
+  // cycle from throwing). We don't expect cycles in answers, but a
+  // returned cyclic list would crash without this.
+  function makeReplacer() {
+    const seen = new WeakSet();
+    return (key, value) => {
+      if (value && typeof value === "object") {
+        if (seen.has(value)) return undefined;
+        seen.add(value);
+      }
+      return value;
+    };
+  }
+
+  function stripJsError(e) {
+    const msg = (e && e.message) ? e.message : String(e);
+    // For ReferenceError on the function name, give a friendlier message.
+    if (/is not defined/.test(msg) && /^[A-Z]/.test(msg)) {
+      return msg.replace(/^.*?(\w+) is not defined.*$/, "$1 is not defined");
+    }
+    return msg.split("\n")[0];
+  }
+
   // ---------- Public API ----------
   global.Runner = {
     ensurePyodide,
-    runTests,
+    runTests,        // Python via Pyodide
+    runTestsJs,      // JavaScript native
     checkEquality,
     deepEqual,
     setStatus,

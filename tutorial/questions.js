@@ -191,9 +191,9 @@ def validate_html_advanced(html: str) -> bool:
       "Compress consecutive identical characters as char+count. Return the compressed " +
       "string only if it is <strong>strictly shorter</strong>; otherwise return the original.",
     examples:
-      'Input:  "aabcccccaaa"  -> "aabcccccaaa"   (compressed "a2b1c5a3" is same length)\n' +
-      'Input:  "aaabbc"       -> "a3b2c1"\n' +
-      'Input:  "abc"          -> "abc"           (compressed is longer)\n' +
+      'Input:  "aabcccccaaa"  -> "a2b1c5a3"     (compressed 8 < original 11)\n' +
+      'Input:  "aaabbc"       -> "aaabbc"       (compressed "a3b2c1" is same length, NOT shorter)\n' +
+      'Input:  "abc"          -> "abc"          (compressed "a1b1c1" is longer)\n' +
       'Input:  "aaaaaa"       -> "a6"\n' +
       'Input:  ""             -> ""',
     hint: "Scan left to right; emit on character change; do not forget the final run.",
@@ -222,13 +222,15 @@ def validate_html_advanced(html: str) -> bool:
       "The classic bug here is forgetting the final run: the loop only emits on change, " +
       "so the last group must be appended after the loop ends.",
     tests: [
-      { args: ["aabcccccaaa"], expected: "aabcccccaaa" },
-      { args: ["aaabbc"], expected: "a3b2c1" },
-      { args: ["abc"], expected: "abc" },
-      { args: ["aaaaaa"], expected: "a6" },
+      // "aabcccccaaa" (11 chars) compresses to "a2b1c5a3" (8 chars) — strictly shorter, so we return compressed.
+      { args: ["aabcccccaaa"], expected: "a2b1c5a3" },
+      // "aaabbc" (6 chars) compresses to "a3b2c1" (6 chars) — NOT strictly shorter, return original.
+      { args: ["aaabbc"], expected: "aaabbc" },
+      { args: ["abc"], expected: "abc" },        // a1b1c1 (6) is longer than abc (3)
+      { args: ["aaaaaa"], expected: "a6" },      // a6 (2) shorter than aaaaaa (6)
       { args: [""], expected: "" },
-      { args: ["a"], expected: "a" },
-      { args: ["aabb"], expected: "aabb" }, // compressed a2b2 is same length
+      { args: ["a"], expected: "a" },            // a1 (2) longer than a (1)
+      { args: ["aabb"], expected: "aabb" },      // a2b2 (4) same as aabb (4)
     ],
   },
 
