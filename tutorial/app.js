@@ -10,6 +10,9 @@
 
   const STORAGE_KEY = "odoo_prep_progress_v1";
   const PREFS_KEY = "odoo_prep_prefs_v1";
+  const TIMING_KEY = "odoo_prep_timing_v1";
+  const DRAFTS_KEY = "odoo_prep_drafts_v1";
+  const EXAM_HISTORY_KEY = "odoo_prep_exam_history_v1";
 
   const DEFAULT_PREFS = {
     theme: "dark",
@@ -23,11 +26,26 @@
   // State + persistence
   // ----------------------------------------------------------------
   const state = {
-    solved: loadProgress(),     // Set of question ids
-    activeView: null,           // {kind, id} of current view
-    examSeed: null,             // Stable random seed for the final exam
-    prefs: loadPrefs(),         // User customization
+    solved: loadProgress(),                              // Set of question ids
+    activeView: null,                                    // {kind, id} of current view
+    examSeed: null,                                      // Stable random seed for the final exam
+    prefs: loadPrefs(),                                  // User customization
+    timing: loadJSON(TIMING_KEY, {}),                    // qid -> {bestSec, lastSec, attempts:[{sec,date,rating}]}
+    drafts: loadJSON(DRAFTS_KEY, {}),                    // qid -> {python:"…", javascript:"…"}
+    examHistory: loadJSON(EXAM_HISTORY_KEY, { sessions: [] }),  // recorded final-exam sessions
   };
+
+  function loadJSON(key, fallback) {
+    try {
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : fallback;
+    } catch (_) {
+      return fallback;
+    }
+  }
+  function saveJSON(key, value) {
+    try { localStorage.setItem(key, JSON.stringify(value)); } catch (_) {}
+  }
 
   function loadPrefs() {
     try {
@@ -131,9 +149,76 @@
   }
   function resetProgress() {
     state.solved.clear();
+    state.timing = {};
+    state.drafts = {};
+    state.examHistory = { sessions: [] };
     saveProgress();
+    saveJSON(TIMING_KEY, state.timing);
+    saveJSON(DRAFTS_KEY, state.drafts);
+    saveJSON(EXAM_HISTORY_KEY, state.examHistory);
     updateProgressUI();
     updateNavCheckmarks();
+  }
+
+  // ----------------------------------------------------------------
+  // Timing model + rating
+  // ----------------------------------------------------------------
+  // q.time looks like "12-15 min", "20 min", or "5-8 min".
+  function parseTimeBudget(str) {
+    if (!str) return { min: 10, max: 20 };
+    const m = /(\d+)(?:\s*-\s*(\d+))?\s*min/i.exec(str);
+    if (!m) return { min: 10, max: 20 };
+    const lo = parseInt(m[1], 10);
+    const hi = m[2] ? parseInt(m[2], 10) : lo;
+    return { min: lo, max: hi };
+  }
+  function rateTime(sec, budget) {
+    const mins = sec / 60;
+    if (mins <= budget.min / 2)     return { key: "lightning", label: "Lightning" };
+    if (mins <= budget.min)         return { key: "fast",      label: "Fast" };
+    if (mins <= budget.max)         return { key: "on-pace",   label: "On pace" };
+    if (mins <= budget.max * 1.5)   return { key: "over",      label: "Over budget" };
+    return                                 { key: "slow",      label: "Slow" };
+  }
+  function formatMMSS(sec) {
+    sec = Math.max(0, Math.floor(sec));
+    const m = Math.floor(sec / 60), s = sec % 60;
+    return String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
+  }
+  function recordSolveTime(qid, sec) {
+    const q = window.QUESTIONS[qid];
+    const budget = parseTimeBudget(q && q.time);
+    const rating = rateTime(sec, budget).key;
+    const entry = { sec, date: new Date().toISOString(), rating };
+    const rec = state.timing[qid] || { bestSec: null, lastSec: null, attempts: [] };
+    rec.attempts.push(entry);
+    // Cap stored history to avoid unbounded growth (last 50 attempts/question)
+    if (rec.attempts.length > 50) rec.attempts = rec.attempts.slice(-50);
+    rec.lastSec = sec;
+    rec.bestSec = rec.bestSec == null ? sec : Math.min(rec.bestSec, sec);
+    state.timing[qid] = rec;
+    saveJSON(TIMING_KEY, state.timing);
+  }
+  function recordExamSession(record) {
+    state.examHistory.sessions = state.examHistory.sessions || [];
+    state.examHistory.sessions.push(record);
+    if (state.examHistory.sessions.length > 20) {
+      state.examHistory.sessions = state.examHistory.sessions.slice(-20);
+    }
+    saveJSON(EXAM_HISTORY_KEY, state.examHistory);
+  }
+
+  // ----------------------------------------------------------------
+  // Code drafts (per qid, per language)
+  // ----------------------------------------------------------------
+  function getDraft(qid, lang) {
+    return (state.drafts[qid] && state.drafts[qid][lang]) || "";
+  }
+  function setDraft(qid, lang, code) {
+    const d = state.drafts[qid] = state.drafts[qid] || {};
+    if (d[lang] === code) return;
+    d[lang] = code;
+    saveJSON(DRAFTS_KEY, state.drafts);
   }
 
   // ----------------------------------------------------------------
@@ -381,9 +466,20 @@
   <li>SQL questions show the schema, hint, and solution in a modal — no runner.</li>
   <li>The <strong>Show answer</strong> button is locked behind a "did you really try?" warning.</li>
 </ul>
+<h2>Time yourself</h2>
+<ul>
+  <li>Every practice-set question has a <strong>Start timer</strong> chip. Click it before
+  you begin; it auto-stops the first time all tests pass and rates you against the
+  question's time budget (Lightning → Fast → On pace → Over budget → Slow).</li>
+  <li>The <strong>Final Exam</strong> uses a single global timer. Click <em>Start exam</em>
+  on the banner; it auto-finishes when every question passes, or hit <em>Finish exam</em>
+  whenever you want to record your session.</li>
+</ul>
 <h2>Your progress is saved locally</h2>
-<p>Solved questions persist via <code>localStorage</code>. Use the <strong>Reset</strong> button
-in the sidebar to wipe and start over.</p>
+<p>Everything persists in <code>localStorage</code> — solved set, timer history per question,
+exam sessions, and the code you've written in each editor (auto-saved as you type, restored
+when you reopen the workbench). Use the <strong>Reset</strong> button in the sidebar to wipe
+all of it and start fresh.</p>
 ` }),
       el("div", { class: "btn-row" }, [
         el("button", {
@@ -538,6 +634,10 @@ in the sidebar to wipe and start over.</p>
 
     const wrap = el("div", { class: "view-narrow" });
 
+    // Exam timer: one clock for the whole exam, displayed above the scoreboard.
+    const examTimer = makeExamTimer(chosen);
+    wrap.appendChild(examTimer.node);
+
     const sb = el("div", { class: "exam-scoreboard" });
     const counters = {
       attempted: el("div", { class: "stat-val", text: "0" }),
@@ -590,12 +690,14 @@ hard 60-minute cap. If you're not done after 60, finish for learning's sake but 
     chosen.forEach((qid, idx) => {
       const card = questionCard(qid, idx + 1, {
         hideTopicTags: true,   // Exam: hide topic tags so the family isn't telegraphed.
+        examMode: true,        // Suppress per-question timer; the global exam timer governs.
         onPass: () => {
           if (!passSet.has(qid)) {
             passSet.add(qid);
             counters.solved.textContent = String(passSet.size);
             bump(counters.solved);
           }
+          examTimer.markPass(qid);
         },
         onAttempt: () => {
           if (!attemptSet.has(qid)) {
@@ -603,12 +705,228 @@ hard 60-minute cap. If you're not done after 60, finish for learning's sake but 
             counters.attempted.textContent = String(attemptSet.size);
             bump(counters.attempted);
           }
+          examTimer.markAttempt(qid);
         },
       });
       wrap.appendChild(card);
     });
 
     return wrap;
+  }
+
+  // ----------------------------------------------------------------
+  // Per-question timer widget (practice sets only)
+  //
+  // Returns { node, onAllPass(), isRunning() }. The runner calls
+  // onAllPass() the first time every test passes; we stop the clock,
+  // record the time, and freeze the chip into a rating display.
+  // ----------------------------------------------------------------
+  function makeQuestionTimer(qid) {
+    const wrap = el("div", { class: "q-timer idle" });
+    const startBtn = el("button", { class: "btn small timer-start", text: "Start timer" });
+    const liveLabel = el("span", { class: "timer-live hidden", text: "00:00" });
+    const stopBtn = el("button", { class: "btn ghost small timer-stop hidden", text: "Cancel" });
+    const result = el("div", { class: "timer-result hidden" });
+    wrap.appendChild(startBtn);
+    wrap.appendChild(liveLabel);
+    wrap.appendChild(stopBtn);
+    wrap.appendChild(result);
+
+    let startTs = null;
+    let tickHandle = null;
+    let recordedThisRun = false;
+
+    function renderBest() {
+      const t = state.timing[qid];
+      if (!t || t.bestSec == null) {
+        result.classList.add("hidden");
+        return;
+      }
+      const q = window.QUESTIONS[qid];
+      const r = rateTime(t.bestSec, parseTimeBudget(q && q.time));
+      const last = t.attempts[t.attempts.length - 1];
+      result.innerHTML =
+        `<span class="rating ${r.key}">${r.label}</span>` +
+        `<span class="timer-best">best ${formatMMSS(t.bestSec)}</span>` +
+        `<span class="timer-meta">${t.attempts.length} attempt${t.attempts.length === 1 ? "" : "s"}</span>`;
+      result.title = t.attempts.slice(-5).map((a) => {
+        const r2 = rateTime(a.sec, parseTimeBudget(q && q.time));
+        return `${formatMMSS(a.sec)}  ${r2.label}  ${new Date(a.date).toLocaleString()}`;
+      }).join("\n");
+      result.classList.remove("hidden");
+    }
+    renderBest();
+
+    function tick() {
+      const sec = Math.floor((Date.now() - startTs) / 1000);
+      liveLabel.textContent = formatMMSS(sec);
+    }
+    function start() {
+      if (startTs) return;
+      startTs = Date.now();
+      recordedThisRun = false;
+      wrap.classList.remove("idle", "done");
+      wrap.classList.add("running");
+      startBtn.classList.add("hidden");
+      liveLabel.classList.remove("hidden");
+      stopBtn.classList.remove("hidden");
+      result.classList.add("hidden");
+      liveLabel.textContent = "00:00";
+      tick();
+      tickHandle = setInterval(tick, 1000);
+    }
+    function cancel() {
+      if (!startTs) return;
+      clearInterval(tickHandle);
+      tickHandle = null;
+      startTs = null;
+      wrap.classList.remove("running");
+      wrap.classList.add("idle");
+      liveLabel.classList.add("hidden");
+      stopBtn.classList.add("hidden");
+      startBtn.classList.remove("hidden");
+      startBtn.textContent = "Start timer";
+      renderBest();
+    }
+    function onAllPass() {
+      // First all-pass within this run records the time; further passes are no-ops.
+      if (!startTs || recordedThisRun) return;
+      const sec = Math.floor((Date.now() - startTs) / 1000);
+      recordedThisRun = true;
+      clearInterval(tickHandle);
+      tickHandle = null;
+      startTs = null;
+      wrap.classList.remove("running");
+      wrap.classList.add("done");
+      liveLabel.classList.add("hidden");
+      stopBtn.classList.add("hidden");
+      startBtn.classList.remove("hidden");
+      startBtn.textContent = "Restart timer";
+      recordSolveTime(qid, sec);
+      renderBest();
+      const q = window.QUESTIONS[qid];
+      const r = rateTime(sec, parseTimeBudget(q && q.time));
+      toast(`Solved in ${formatMMSS(sec)} — ${r.label}`, "good", 3200);
+    }
+
+    startBtn.onclick = start;
+    stopBtn.onclick = cancel;
+
+    return {
+      node: wrap,
+      onAllPass,
+      isRunning: () => startTs != null,
+    };
+  }
+
+  // ----------------------------------------------------------------
+  // Exam timer (one clock for the whole final exam)
+  //
+  // markPass(qid) is called by each question card when all its tests
+  // pass; when every chosen question has been marked, the timer
+  // auto-finishes and records the session.
+  // ----------------------------------------------------------------
+  function makeExamTimer(chosenQids) {
+    const banner = el("div", { class: "exam-timer-banner idle" });
+    const left = el("div", { class: "etb-left" });
+    const title = el("div", { class: "etb-title", text: "Exam timer" });
+    const sub = el("div", { class: "etb-sub", text: "Click Start exam to begin the clock." });
+    left.appendChild(title);
+    left.appendChild(sub);
+    const live = el("div", { class: "etb-live", text: "00:00" });
+    const startBtn = el("button", { class: "btn primary etb-start", text: "▶ Start exam" });
+    const endBtn = el("button", { class: "btn etb-end hidden", text: "Finish exam" });
+    banner.appendChild(left);
+    banner.appendChild(live);
+    banner.appendChild(startBtn);
+    banner.appendChild(endBtn);
+
+    let startTs = null, tickHandle = null;
+    const perQ = {};
+    let attemptedSet = new Set();
+    let finished = false;
+
+    function renderLast() {
+      const sessions = (state.examHistory && state.examHistory.sessions) || [];
+      if (!sessions.length) {
+        sub.textContent = "Click Start exam to begin the clock.";
+        return;
+      }
+      const last = sessions[sessions.length - 1];
+      sub.innerHTML =
+        `Last attempt: <strong>${formatMMSS(last.totalSec)}</strong> · ` +
+        `${last.passed}/${last.total} passed · ` +
+        `${new Date(last.date).toLocaleString()}`;
+    }
+    renderLast();
+
+    function tick() {
+      live.textContent = formatMMSS((Date.now() - startTs) / 1000);
+    }
+    function start() {
+      if (startTs) return;
+      startTs = Date.now();
+      finished = false;
+      for (const k in perQ) delete perQ[k];
+      attemptedSet = new Set();
+      banner.classList.remove("idle", "done");
+      banner.classList.add("running");
+      startBtn.classList.add("hidden");
+      endBtn.classList.remove("hidden");
+      sub.textContent = "Clock is running. Auto-stops when all questions pass.";
+      live.textContent = "00:00";
+      tick();
+      tickHandle = setInterval(tick, 1000);
+    }
+    function finish() {
+      if (!startTs || finished) return;
+      finished = true;
+      const totalSec = Math.floor((Date.now() - startTs) / 1000);
+      clearInterval(tickHandle);
+      tickHandle = null;
+      banner.classList.remove("running");
+      banner.classList.add("done");
+      startBtn.classList.remove("hidden");
+      startBtn.textContent = "▶ Start new attempt";
+      endBtn.classList.add("hidden");
+      const passed = Object.keys(perQ).length;
+      recordExamSession({
+        date: new Date().toISOString(),
+        totalSec,
+        passed,
+        attempted: attemptedSet.size,
+        total: chosenQids.length,
+        perQ: Object.assign({}, perQ),
+      });
+      renderLast();
+      toast(
+        `Exam finished: ${formatMMSS(totalSec)} · ${passed}/${chosenQids.length} passed`,
+        passed === chosenQids.length ? "good" : "info",
+        4500
+      );
+      startTs = null;
+    }
+    function markAttempt(qid) {
+      if (!startTs) return;
+      attemptedSet.add(qid);
+    }
+    function markPass(qid) {
+      if (!startTs || perQ[qid] != null) return;
+      perQ[qid] = Math.floor((Date.now() - startTs) / 1000);
+      if (Object.keys(perQ).length >= chosenQids.length) finish();
+    }
+
+    startBtn.onclick = start;
+    endBtn.onclick = () => {
+      if (confirm("Finish the exam now and record this session?")) finish();
+    };
+
+    return {
+      node: banner,
+      markPass,
+      markAttempt,
+      isRunning: () => startTs != null,
+    };
   }
 
   // ----------------------------------------------------------------
@@ -647,13 +965,25 @@ hard 60-minute cap. If you're not done after 60, finish for learning's sake but 
     // Actions
     const actions = el("div", { class: "q-actions" });
     if (q.type === "python") {
+      // Per-question timer chip (practice sets only; the exam has one global timer).
+      const timer = hooks.examMode ? null : makeQuestionTimer(qid);
+      if (timer) actions.appendChild(timer.node);
+
       const tryBtn = el("button", {
         class: "btn primary",
         text: "Try in workbench",
       });
       actions.appendChild(tryBtn);
 
-      const runner = buildRunnerPanel(qid, hooks);
+      // Merge the caller's hooks with the timer's auto-record on all-pass.
+      const runnerHooks = {
+        onAttempt: () => { if (hooks.onAttempt) hooks.onAttempt(); },
+        onPass: () => {
+          if (timer) timer.onAllPass();
+          if (hooks.onPass) hooks.onPass();
+        },
+      };
+      const runner = buildRunnerPanel(qid, runnerHooks);
       runner.classList.add("collapsed");
       tryBtn.onclick = () => {
         const willOpen = runner.classList.contains("collapsed");
@@ -771,18 +1101,30 @@ hard 60-minute cap. If you're not done after 60, finish for learning's sake but 
       autocorrect: "off",
       autocapitalize: "off",
     });
-    editor.value = langStarter();
+    // Load persisted draft if present, otherwise start with the question's starter code.
+    editor.value = getDraft(qid, currentLang) || langStarter();
 
-    // Stash per-language draft so flipping back doesn't lose work.
-    const drafts = { python: langs.includes("python") ? langStarter() : "" };
-    if (q.js) drafts.javascript = q.js.starter || "";
+    // Stash per-language draft so flipping back doesn't lose work mid-session.
+    const drafts = {};
     drafts[currentLang] = editor.value;
+    if (q.js) {
+      const otherLang = currentLang === "python" ? "javascript" : "python";
+      drafts[otherLang] = getDraft(qid, otherLang) || (otherLang === "javascript" ? (q.js.starter || "") : (q.starter || ""));
+    }
+
+    // Debounced persist of the active editor draft.
+    let draftSaveT = null;
+    function persistDraftSoon() {
+      clearTimeout(draftSaveT);
+      draftSaveT = setTimeout(() => setDraft(qid, currentLang, editor.value), 500);
+    }
 
     function switchLang(next) {
       if (next === currentLang) return;
-      drafts[currentLang] = editor.value;     // save current draft
+      drafts[currentLang] = editor.value;
+      setDraft(qid, currentLang, editor.value);    // persist current before swap
       currentLang = next;
-      editor.value = drafts[currentLang] || langStarter();
+      editor.value = drafts[currentLang] || getDraft(qid, currentLang) || langStarter();
       sigEl.textContent = langSignature();
       // Toggle active state
       [...langSwitch.children].forEach((b) => {
@@ -804,8 +1146,10 @@ hard 60-minute cap. If you're not done after 60, finish for learning's sake but 
         const v = editor.value;
         editor.value = v.slice(0, start) + "    " + v.slice(end);
         editor.selectionStart = editor.selectionEnd = start + 4;
+        persistDraftSoon();
       }
     });
+    editor.addEventListener("input", persistDraftSoon);
     wrap.appendChild(editor);
 
     // Toolbar
@@ -834,6 +1178,7 @@ hard 60-minute cap. If you're not done after 60, finish for learning's sake but 
       if (!confirm("Reset editor to starter code?")) return;
       editor.value = starterNow;
       drafts[currentLang] = starterNow;
+      setDraft(qid, currentLang, starterNow);
     };
 
     runBtn.onclick = async () => {
@@ -847,6 +1192,7 @@ hard 60-minute cap. If you're not done after 60, finish for learning's sake but 
       try {
         if (hooks.onAttempt) hooks.onAttempt();
         drafts[currentLang] = editor.value;   // persist latest draft
+        setDraft(qid, currentLang, editor.value);  // also write to localStorage immediately
         const fnName = langFunctionName();
         const out = (currentLang === "javascript")
           ? await window.Runner.runTestsJs(editor.value, fnName, q.tests)

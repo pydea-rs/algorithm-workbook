@@ -1547,6 +1547,138 @@ body[data-theme="light"] .seg.active { color: white; }
 }
 .exam-scoreboard .spacer { flex: 1; }
 
+/* ===================== TIMERS ============================= */
+/* Per-question timer chip (lives in the q-actions row).
+   Three states drive its look: .idle, .running, .done. */
+.q-timer {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 4px 4px 4px;
+  background: var(--bg-2);
+  border: 1px solid var(--border-soft);
+  border-radius: 999px;
+  transition: border-color 200ms var(--ease-out), box-shadow 200ms var(--ease-out);
+}
+.q-timer.running {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.q-timer.done {
+  border-color: var(--good);
+  box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.10);
+}
+.q-timer .timer-live {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  padding: 0 8px;
+  letter-spacing: 0.6px;
+}
+.q-timer.running .timer-live {
+  color: var(--accent);
+  animation: timerPulse 1.6s ease-in-out infinite;
+}
+@keyframes timerPulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.65; }
+}
+body[data-motion="reduced"] .q-timer.running .timer-live { animation: none; }
+
+.q-timer .timer-result {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 0 10px 0 4px;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+.q-timer .timer-best {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+.q-timer .timer-meta { color: var(--text-mute); font-size: 11.5px; }
+
+/* Rating badges share these tokens, but each gets its own hue. */
+.rating {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+  background: color-mix(in srgb, currentColor 12%, transparent);
+}
+.rating.lightning { color: #fbbf24; }
+.rating.fast      { color: #4ade80; }
+.rating.on-pace   { color: var(--accent-2); }
+.rating.over      { color: #fb923c; }
+.rating.slow      { color: var(--bad); }
+
+/* Compact button override inside the chip — undo the default btn shadow */
+.q-timer .btn.small { padding: 4px 10px; font-size: 12px; box-shadow: none; }
+
+/* ===== Exam timer banner ===== */
+.exam-timer-banner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 18px;
+  margin: 0 0 14px;
+  background: linear-gradient(135deg,
+    color-mix(in srgb, var(--accent) 14%, var(--bg-1)),
+    var(--bg-1));
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  position: relative;
+  overflow: hidden;
+  animation: bannerSlideIn 420ms var(--ease-out) both;
+}
+.exam-timer-banner.running {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent-soft), 0 8px 24px -12px var(--accent-glow);
+}
+.exam-timer-banner.done {
+  border-color: var(--good);
+}
+.exam-timer-banner .etb-left { flex: 1; min-width: 0; }
+.exam-timer-banner .etb-title {
+  font-size: 13px; letter-spacing: 1px; text-transform: uppercase;
+  color: var(--text-mute); margin-bottom: 2px;
+}
+.exam-timer-banner .etb-sub {
+  color: var(--text-dim); font-size: 13px;
+}
+.exam-timer-banner .etb-sub strong {
+  color: var(--text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-variant-numeric: tabular-nums;
+}
+.exam-timer-banner .etb-live {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: 30px;
+  font-weight: 600;
+  letter-spacing: 1.2px;
+  color: var(--text);
+  padding: 0 6px;
+  min-width: 110px;
+  text-align: right;
+}
+.exam-timer-banner.running .etb-live {
+  color: var(--accent);
+  animation: timerPulse 1.8s ease-in-out infinite;
+}
+body[data-motion="reduced"] .exam-timer-banner.running .etb-live { animation: none; }
+.exam-timer-banner.done .etb-live { color: var(--good); }
+
+@media (max-width: 700px) {
+  .exam-timer-banner { flex-wrap: wrap; }
+  .exam-timer-banner .etb-live { font-size: 24px; min-width: 90px; }
+}
+
 /* ===================== MCQ ============================= */
 .mcq {
   background: var(--bg-1);
