@@ -1,0 +1,268 @@
+{
+  "generated": "2026-06-06T23:16:48Z",
+  "folders": [
+    {
+      "name": "bracketCount",
+      "kind": "code",
+      "files": [
+        {
+          "name": "main.cpp",
+          "ext": "cpp",
+          "kind": "code",
+          "size": 415
+        },
+        {
+          "name": "main.go",
+          "ext": "go",
+          "kind": "code",
+          "size": 301
+        }
+      ]
+    },
+    {
+      "name": "climb-stairs",
+      "kind": "code",
+      "files": [
+        {
+          "name": "index.js",
+          "ext": "js",
+          "kind": "code",
+          "size": 148
+        },
+        {
+          "name": "main.py",
+          "ext": "py",
+          "kind": "code",
+          "size": 137
+        }
+      ]
+    },
+    {
+      "name": "complete-brackets",
+      "kind": "mixed",
+      "files": [
+        {
+          "name": "bracket-perm-opt.py",
+          "ext": "py",
+          "kind": "code",
+          "size": 731
+        },
+        {
+          "name": "bracket-perm.py",
+          "ext": "py",
+          "kind": "code",
+          "size": 890
+        },
+        {
+          "name": "perm.cpp",
+          "ext": "cpp",
+          "kind": "code",
+          "size": 708
+        },
+        {
+          "name": "question.md",
+          "ext": "md",
+          "kind": "markdown",
+          "size": 67
+        }
+      ]
+    },
+    {
+      "name": "doc",
+      "kind": "mixed",
+      "files": [
+        {
+          "name": "KIMI-Odoo_Coderbyte_Assessment_Complete_Guide.pdf",
+          "ext": "pdf",
+          "kind": "pdf",
+          "size": 45576
+        },
+        {
+          "name": "KIMI-Odoo_Coderbyte_Masterclass_FINAL.pdf",
+          "ext": "pdf",
+          "kind": "pdf",
+          "size": 67834
+        },
+        {
+          "name": "KIMI-Odoo_Coderbyte_Masterclass_FULL.md",
+          "ext": "md",
+          "kind": "markdown",
+          "size": 58558
+        },
+        {
+          "name": "Odoo_Coderbyte_Question_Bank.md",
+          "ext": "md",
+          "kind": "markdown",
+          "size": 41077
+        },
+        {
+          "name": "Odoo_Coderbyte_Question_Bank_Extended.md",
+          "ext": "md",
+          "kind": "markdown",
+          "size": 109270
+        }
+      ]
+    },
+    {
+      "name": "idioticSwitch",
+      "kind": "code",
+      "files": [
+        {
+          "name": "index.js",
+          "ext": "js",
+          "kind": "code",
+          "size": 402
+        }
+      ]
+    },
+    {
+      "name": "interesting",
+      "kind": "markdown",
+      "files": [
+        {
+          "name": "hash-tables-how-dict-works.md",
+          "ext": "md",
+          "kind": "markdown",
+          "size": 7284
+        }
+      ]
+    },
+    {
+      "name": "intersections",
+      "kind": "mixed",
+      "files": [
+        {
+          "name": "main.py",
+          "ext": "py",
+          "kind": "code",
+          "size": 482
+        },
+        {
+          "name": "q.md",
+          "ext": "md",
+          "kind": "markdown",
+          "size": 65
+        }
+      ]
+    },
+    {
+      "name": "longest",
+      "kind": "code",
+      "files": [
+        {
+          "name": "main.cpp",
+          "ext": "cpp",
+          "kind": "code",
+          "size": 737
+        }
+      ]
+    },
+    {
+      "name": "minWindow",
+      "kind": "mixed",
+      "files": [
+        {
+          "name": "main.py",
+          "ext": "py",
+          "kind": "code",
+          "size": 703
+        },
+        {
+          "name": "question.md",
+          "ext": "md",
+          "kind": "markdown",
+          "size": 69
+        }
+      ]
+    },
+    {
+      "name": "questionMarkCount",
+      "kind": "mixed",
+      "files": [
+        {
+          "name": "Main.java",
+          "ext": "java",
+          "kind": "code",
+          "size": 1183
+        },
+        {
+          "name": "q.py",
+          "ext": "py",
+          "kind": "code",
+          "size": 468
+        },
+        {
+          "name": "question.md",
+          "ext": "md",
+          "kind": "markdown",
+          "size": 59
+        }
+      ]
+    },
+    {
+      "name": "taling-zeros",
+      "kind": "code",
+      "files": [
+        {
+          "name": "index.js",
+          "ext": "js",
+          "kind": "code",
+          "size": 273
+        },
+        {
+          "name": "main.py",
+          "ext": "py",
+          "kind": "code",
+          "size": 317
+        }
+      ]
+    },
+    {
+      "name": "targetIndices",
+      "kind": "code",
+      "files": [
+        {
+          "name": "index.js",
+          "ext": "js",
+          "kind": "code",
+          "size": 225
+        },
+        {
+          "name": "main.py",
+          "ext": "py",
+          "kind": "code",
+          "size": 208
+        }
+      ]
+    },
+    {
+      "name": "treePair",
+      "kind": "code",
+      "files": [
+        {
+          "name": "tree.py",
+          "ext": "py",
+          "kind": "code",
+          "size": 662
+        }
+      ]
+    },
+    {
+      "name": "tutorial",
+      "kind": "tutorial",
+      "entry": "tutorial/index.html"
+    },
+    {
+      "name": "unique-index",
+      "kind": "code",
+      "files": [
+        {
+          "name": "main.py",
+          "ext": "py",
+          "kind": "code",
+          "size": 326
+        }
+      ]
+    }
+  ]
+}

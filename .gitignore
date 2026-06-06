@@ -1,2 +1,4 @@
 others/
 *.out
+.claude
+__pycache__/
