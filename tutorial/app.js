@@ -1020,12 +1020,61 @@ hard 60-minute cap. If you're not done after 60, finish for learning's sake but 
 
       card.appendChild(actions);
       card.appendChild(runner);
+    } else if (q.sqlSchema && q.tests && q.tests.length) {
+      // SQL flow with a real workbench (sql.js SQLite WASM)
+      const timer = hooks.examMode ? null : makeQuestionTimer(qid);
+      if (timer) actions.appendChild(timer.node);
+
+      const tryBtn = el("button", { class: "btn primary", text: "Try in workbench" });
+      actions.appendChild(tryBtn);
+
+      const runnerHooks = {
+        onAttempt: () => { if (hooks.onAttempt) hooks.onAttempt(); },
+        onPass: () => {
+          if (timer) timer.onAllPass();
+          if (hooks.onPass) hooks.onPass();
+        },
+      };
+      const sqlPanel = buildSqlRunnerPanel(qid, runnerHooks);
+      sqlPanel.classList.add("collapsed");
+      tryBtn.onclick = () => {
+        const willOpen = sqlPanel.classList.contains("collapsed");
+        sqlPanel.classList.toggle("collapsed");
+        tryBtn.textContent = willOpen ? "Hide workbench" : "Try in workbench";
+        if (willOpen) {
+          setTimeout(() => {
+            sqlPanel.scrollIntoView({ behavior: "smooth", block: "nearest" });
+          }, 220);
+        }
+      };
+
+      actions.appendChild(el("button", {
+        class: "btn",
+        text: "Hint",
+        onclick: () => toast("Hint: " + q.hint, "info", 4500),
+      }));
+      actions.appendChild(el("button", {
+        class: "btn ghost",
+        text: "Show answer",
+        onclick: () => openAnswerModal(qid),
+      }));
+      const markBtn = el("button", {
+        class: "btn ghost small",
+        text: state.solved.has(qid) ? "Mark unsolved" : "Mark solved",
+        onclick: () => {
+          if (state.solved.has(qid)) { unmarkSolved(qid); card.classList.remove("solved"); markBtn.textContent = "Mark solved"; }
+          else { markSolved(qid); card.classList.add("solved"); markBtn.textContent = "Mark unsolved"; }
+        },
+      });
+      actions.appendChild(markBtn);
+
+      card.appendChild(actions);
+      card.appendChild(sqlPanel);
     } else {
-      // SQL flow
+      // SQL flow (no fixture authored — answer-only)
       card.appendChild(el("div", { class: "note-soft",
-        text: "SQL questions show the reference answer in a modal; the in-browser workbench " +
-              "doesn't run SQL. Read the hint, write your query mentally (or in a separate editor), " +
-              "then compare." }));
+        text: "This SQL question doesn't have a runnable fixture yet — read the hint, write your " +
+              "query in a separate editor, then compare with the reference answer." }));
       actions.appendChild(el("button", {
         class: "btn",
         text: "Hint",
@@ -1222,6 +1271,235 @@ hard 60-minute cap. If you're not done after 60, finish for learning's sake but 
     };
 
     return wrap;
+  }
+
+  // ----------------------------------------------------------------
+  // SQL workbench panel
+  //
+  // Reuses the .runner shell but:
+  //   - shows the fixture schema in a collapsible block
+  //   - one editor (no language switcher)
+  //   - runs via Runner.runSql() against the question's sqlSchema
+  //   - results are rendered as side-by-side result-set tables
+  // ----------------------------------------------------------------
+  function buildSqlRunnerPanel(qid, hooks = {}) {
+    const q = window.QUESTIONS[qid];
+    const wrap = el("div", { class: "runner sql-runner" });
+
+    const header = el("div", { class: "runner-header" });
+    header.appendChild(el("div", { class: "runner-signature", text: "SQLite — write your query below" }));
+    header.appendChild(el("div", {
+      html: `<span class="status-pill status-idle">${q.tests.length} test case${q.tests.length === 1 ? "" : "s"}</span>`,
+    }));
+    wrap.appendChild(header);
+
+    // Collapsible schema/fixture preview
+    const schemaWrap = el("div", { class: "sql-schema" });
+    const schemaBtn = el("button", { class: "sql-schema-toggle", text: "Show fixture schema ▾" });
+    const schemaPre = el("pre", { class: "sql-schema-body collapsed" });
+    schemaPre.textContent = q.sqlSchema || "";
+    schemaBtn.onclick = () => {
+      const willOpen = schemaPre.classList.contains("collapsed");
+      schemaPre.classList.toggle("collapsed");
+      schemaBtn.textContent = willOpen ? "Hide fixture schema ▴" : "Show fixture schema ▾";
+    };
+    schemaWrap.appendChild(schemaBtn);
+    schemaWrap.appendChild(schemaPre);
+    wrap.appendChild(schemaWrap);
+
+    // Editor
+    const editor = el("textarea", {
+      class: "editor",
+      spellcheck: "false",
+      autocorrect: "off",
+      autocapitalize: "off",
+    });
+    editor.value = getDraft(qid, "sql") || q.sqlStarter || "-- Your SQL query here\nSELECT\n";
+
+    let draftSaveT = null;
+    function persistDraftSoon() {
+      clearTimeout(draftSaveT);
+      draftSaveT = setTimeout(() => setDraft(qid, "sql", editor.value), 500);
+    }
+    editor.addEventListener("keydown", (e) => {
+      if (e.key === "Tab") {
+        e.preventDefault();
+        const start = editor.selectionStart, end = editor.selectionEnd;
+        const v = editor.value;
+        editor.value = v.slice(0, start) + "    " + v.slice(end);
+        editor.selectionStart = editor.selectionEnd = start + 4;
+        persistDraftSoon();
+      }
+    });
+    editor.addEventListener("input", persistDraftSoon);
+    wrap.appendChild(editor);
+
+    // Toolbar
+    const toolbar = el("div", { class: "runner-toolbar" });
+    const runBtn = el("button", { class: "btn primary", text: "Run query" });
+    const resetBtn = el("button", { class: "btn", text: "Reset editor" });
+    const covBar = el("div", { class: "coverage-bar" }, [
+      el("div", { class: "coverage-fill" }),
+    ]);
+    const covText = el("div", { class: "coverage-text", text: "Coverage: —" });
+    toolbar.appendChild(runBtn);
+    toolbar.appendChild(resetBtn);
+    toolbar.appendChild(covBar);
+    toolbar.appendChild(covText);
+    wrap.appendChild(toolbar);
+
+    const log = el("pre", { class: "runner-log" });
+    wrap.appendChild(log);
+
+    const results = el("div", { class: "test-results" });
+    wrap.appendChild(results);
+
+    resetBtn.onclick = () => {
+      const starterNow = q.sqlStarter || "-- Your SQL query here\nSELECT\n";
+      if (editor.value === starterNow) return;
+      if (!confirm("Reset editor to starter code?")) return;
+      editor.value = starterNow;
+      setDraft(qid, "sql", starterNow);
+    };
+
+    runBtn.onclick = async () => {
+      results.innerHTML = "";
+      log.classList.remove("show");
+      wrap.classList.remove("perfect");
+      covText.classList.remove("perfect");
+      runBtn.disabled = true;
+      const orig = runBtn.textContent;
+      runBtn.innerHTML = `<span class="spinner"></span> Running…`;
+      try {
+        if (hooks.onAttempt) hooks.onAttempt();
+        setDraft(qid, "sql", editor.value);
+
+        const out = await window.Runner.runSql(editor.value, q.sqlSchema, q.tests);
+        renderSqlResults(results, covBar, covText, out);
+
+        const passed = out.filter((r) => r.passed).length;
+        const total = out.length;
+        if (passed === total && total > 0) {
+          markSolved(qid);
+          wrap.classList.add("perfect");
+          covText.classList.add("perfect");
+          setTimeout(() => wrap.classList.remove("perfect"), 1500);
+          toast(`All ${total} test${total === 1 ? "" : "s"} passed!`, "good", 2400);
+          if (hooks.onPass) hooks.onPass();
+        } else {
+          toast(`${passed} / ${total} passing`, passed > 0 ? "info" : "bad", 2400);
+        }
+      } catch (e) {
+        log.textContent = String(e.message || e);
+        log.classList.add("show");
+        toast("Runner error — see log", "bad", 3500);
+      } finally {
+        runBtn.disabled = false;
+        runBtn.textContent = orig;
+      }
+    };
+
+    return wrap;
+  }
+
+  // Render a SQL-shaped result: actual rows vs expected rows as compact
+  // tables, with the same .tc-row pass/fail/collapse semantics.
+  function renderSqlResults(container, covBar, covText, results) {
+    const total = results.length;
+    const passed = results.filter((r) => r.passed).length;
+    const pct = total === 0 ? 0 : Math.round((passed / total) * 100);
+    covBar.firstChild.style.width = pct + "%";
+    covText.textContent = `Coverage: ${passed}/${total}  (${pct}%)`;
+
+    results.forEach((r, i) => {
+      const kind = r.error ? "error" : (r.passed ? "pass" : "fail");
+      const symbol = kind === "pass" ? "✓" : kind === "error" ? "!" : "✕";
+      const label = `${r.input || "Test " + (i + 1)}: ${
+        kind === "pass" ? "PASS" : kind === "error" ? "ERROR" : "FAIL"
+      }`;
+      const item = el("div", { class: "tc-item" });
+      const row = el("div", { class: "tc-row " + kind });
+      row.style.setProperty("--i", String(i));
+      row.appendChild(el("div", { class: "tc-status", text: symbol }));
+      row.appendChild(el("div", { class: "tc-label", text: label }));
+
+      const detail = el("div", { class: "tc-detail collapsed" });
+      const detailInner = el("div");
+      detailInner.appendChild(buildSqlDiff(r));
+      detail.appendChild(detailInner);
+
+      const revealBtn = el("button", {
+        class: "tc-reveal",
+        text: kind === "pass" ? "Show result" : "Reveal diff",
+        onclick: () => {
+          const willOpen = detail.classList.contains("collapsed");
+          detail.classList.toggle("collapsed");
+          revealBtn.textContent = willOpen
+            ? "Hide"
+            : (kind === "pass" ? "Show result" : "Reveal diff");
+        },
+      });
+      row.appendChild(revealBtn);
+      item.appendChild(row);
+      item.appendChild(detail);
+      container.appendChild(item);
+    });
+  }
+
+  function buildSqlDiff(r) {
+    const box = el("div", { class: "sql-diff" });
+    if (r.error) {
+      const errPre = el("pre", { class: "tc-diff" });
+      errPre.innerHTML =
+        `<span class="bad">SQL error:</span> ${escapeHtml(r.error)}`;
+      box.appendChild(errPre);
+      return box;
+    }
+    const cmpLabel = r.equality === "ordered" ? "order-sensitive" : "set (order ignored)";
+    const meta = el("div", { class: "sql-meta", text: `Compare: ${cmpLabel}` });
+    box.appendChild(meta);
+    box.appendChild(el("div", { class: "sql-pair" }, [
+      el("div", { class: "sql-pair-block" }, [
+        el("div", { class: "sql-pair-title", text: "Expected" }),
+        renderSqlTable(r.expected, "expected"),
+      ]),
+      el("div", { class: "sql-pair-block" }, [
+        el("div", { class: "sql-pair-title", text: "Actual" }),
+        renderSqlTable(r.actual, r.passed ? "expected" : "actual"),
+      ]),
+    ]));
+    return box;
+  }
+
+  function renderSqlTable(rs, kind) {
+    if (!rs || !rs.columns || !rs.columns.length) {
+      return el("div", { class: "sql-empty", text: "(no result set)" });
+    }
+    const tbl = el("table", { class: "sql-table " + (kind || "") });
+    const thead = el("thead");
+    const tr = el("tr");
+    rs.columns.forEach((c) => tr.appendChild(el("th", { text: String(c) })));
+    thead.appendChild(tr);
+    tbl.appendChild(thead);
+    const tbody = el("tbody");
+    (rs.rows || []).slice(0, 50).forEach((row) => {
+      const r = el("tr");
+      row.forEach((v) => r.appendChild(el("td", {
+        text: v === null || v === undefined ? "NULL" : String(v),
+        class: v === null || v === undefined ? "null" : "",
+      })));
+      tbody.appendChild(r);
+    });
+    if ((rs.rows || []).length > 50) {
+      const r = el("tr", { class: "sql-truncated" });
+      r.appendChild(el("td", {
+        text: `… ${rs.rows.length - 50} more row(s) hidden`,
+        colspan: String(rs.columns.length),
+      }));
+      tbody.appendChild(r);
+    }
+    tbl.appendChild(tbody);
+    return tbl;
   }
 
   // ----------------------------------------------------------------

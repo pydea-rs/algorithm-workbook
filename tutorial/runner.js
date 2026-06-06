@@ -500,11 +500,189 @@ return result === undefined ? null : result;
     return msg.split("\n")[0];
   }
 
+  // =================================================================
+  //                            SQL RUNNER
+  // =================================================================
+  // sql.js = SQLite compiled to WebAssembly. Single tiny wasm download,
+  // lazy-loaded on first SQL "Run query". Each test runs against a
+  // fresh in-memory DB seeded from the question's `sqlSchema`.
+
+  const SQLJS_VERSION = "1.10.3";
+  const SQLJS_CDN = `https://cdn.jsdelivr.net/npm/sql.js@${SQLJS_VERSION}/dist/`;
+
+  let sqlEngine = null;            // The initSqlJs() result (a constructor namespace).
+  let sqlLoadingPromise = null;
+
+  function loadSqlJsScript() {
+    return new Promise((resolve, reject) => {
+      if (global.initSqlJs) return resolve();
+      const s = document.createElement("script");
+      s.src = SQLJS_CDN + "sql-wasm.js";
+      s.async = true;
+      s.onload = () => resolve();
+      s.onerror = () =>
+        reject(new Error("Failed to fetch sql.js. Are you offline?"));
+      document.head.appendChild(s);
+    });
+  }
+
+  async function ensureSqlJs() {
+    if (sqlEngine) return sqlEngine;
+    if (sqlLoadingPromise) return sqlLoadingPromise;
+
+    sqlLoadingPromise = (async () => {
+      await loadSqlJsScript();
+      sqlEngine = await global.initSqlJs({
+        locateFile: (file) => SQLJS_CDN + file,
+      });
+      return sqlEngine;
+    })().catch((err) => {
+      sqlLoadingPromise = null;
+      throw err;
+    });
+
+    return sqlLoadingPromise;
+  }
+
+  // Normalize a single SQLite value for comparison:
+  //  - null/undefined collapse to null
+  //  - numeric strings ("3", "0.5") coerce to Number
+  //  - Uint8Array (BLOB) becomes a hex string
+  //  - everything else passes through
+  function normalizeSqlValue(v) {
+    if (v === null || v === undefined) return null;
+    if (typeof v === "number") return v;
+    if (typeof v === "bigint") return Number(v);
+    if (typeof v === "string") {
+      if (/^-?\d+(\.\d+)?$/.test(v.trim())) return Number(v);
+      return v;
+    }
+    if (v instanceof Uint8Array) {
+      return Array.from(v).map((b) => b.toString(16).padStart(2, "0")).join("");
+    }
+    return v;
+  }
+
+  // Compare actual vs expected result sets.
+  //   actual:   { columns:[String], rows:[[any]] }
+  //   expected: same shape
+  //   orderMatters: true  -> rows compared positionally
+  //                 false -> rows compared as a multiset
+  // Columns are matched by NAME (the spec's column order rules everything).
+  function compareSqlResults(actual, expected, orderMatters) {
+    if (!actual || !expected) return false;
+    const ac = (actual.columns || []).map(String);
+    const ec = (expected.columns || []).map(String);
+    if (ac.length !== ec.length) return false;
+    const acSorted = [...ac].sort();
+    const ecSorted = [...ec].sort();
+    if (!acSorted.every((c, i) => c === ecSorted[i])) return false;
+
+    // Reorder actual columns into expected column order.
+    const colIndex = ec.map((c) => ac.indexOf(c));
+    if (colIndex.some((i) => i < 0)) return false;
+    const reorder = (row) => colIndex.map((i) => normalizeSqlValue(row[i]));
+
+    const A = (actual.rows || []).map(reorder);
+    const E = (expected.rows || []).map((r) => r.map(normalizeSqlValue));
+    if (A.length !== E.length) return false;
+
+    const rowEq = (a, b) => {
+      if (a.length !== b.length) return false;
+      for (let i = 0; i < a.length; i++) {
+        if (typeof a[i] === "number" && typeof b[i] === "number") {
+          if (!Number.isFinite(a[i]) || !Number.isFinite(b[i])) {
+            if (a[i] !== b[i]) return false;
+          } else if (Math.abs(a[i] - b[i]) > 1e-9) {
+            return false;
+          }
+        } else if (a[i] !== b[i]) {
+          return false;
+        }
+      }
+      return true;
+    };
+
+    if (orderMatters) {
+      for (let i = 0; i < E.length; i++) {
+        if (!rowEq(A[i], E[i])) return false;
+      }
+      return true;
+    }
+
+    // Multiset compare: match each expected row to a distinct actual row.
+    const used = new Array(A.length).fill(false);
+    for (const er of E) {
+      let found = -1;
+      for (let j = 0; j < A.length; j++) {
+        if (!used[j] && rowEq(A[j], er)) { found = j; break; }
+      }
+      if (found < 0) return false;
+      used[found] = true;
+    }
+    return true;
+  }
+
+  /**
+   * Run the user's SQL against the question's fixture, return per-test results.
+   *
+   * @param {string} userSql   The SQL the user typed.
+   * @param {string} schema    CREATE TABLE + INSERT statements, applied to a fresh DB.
+   * @param {Array}  testCases Each: {name?, expected:{columns,rows}, orderMatters?:bool}
+   * @returns {Promise<Array>} Per-case: {passed, error?, input, expected, actual, equality, kind:"sql"}
+   *
+   * Multi-statement user queries are supported. We use the LAST non-empty
+   * result set as "the answer" (so a user can write `WITH cte AS (...) SELECT ...`
+   * or sandbox queries before their final SELECT).
+   */
+  async function runSql(userSql, schema, testCases) {
+    const SQL = await ensureSqlJs();
+    const results = [];
+
+    for (let i = 0; i < testCases.length; i++) {
+      const tc = testCases[i];
+      const orderMatters = !!tc.orderMatters;
+      let db = null;
+      let actual = null;
+      let err = null;
+
+      try {
+        db = new SQL.Database();
+        const setupSql = (tc.schema && tc.schema.trim()) ? tc.schema : schema;
+        if (setupSql && setupSql.trim()) db.exec(setupSql);
+        const stmts = db.exec(userSql);
+        const nonEmpty = stmts.filter((s) => s && s.columns && s.columns.length);
+        const last = nonEmpty.length ? nonEmpty[nonEmpty.length - 1] : { columns: [], values: [] };
+        actual = { columns: last.columns || [], rows: last.values || [] };
+      } catch (e) {
+        err = (e && e.message) ? e.message : String(e);
+      } finally {
+        if (db) try { db.close(); } catch (_) {}
+      }
+
+      const passed = !err && compareSqlResults(actual, tc.expected, orderMatters);
+      results.push({
+        passed,
+        error: err,
+        input: tc.name || `Test ${i + 1}`,
+        expected: tc.expected,
+        actual,
+        equality: orderMatters ? "ordered" : "unordered",
+        kind: "sql",
+      });
+    }
+
+    return results;
+  }
+
   // ---------- Public API ----------
   global.Runner = {
     ensurePyodide,
     runTests,        // Python via Pyodide
     runTestsJs,      // JavaScript native
+    ensureSqlJs,
+    runSql,          // SQL via sql.js (SQLite WASM)
+    compareSqlResults,
     checkEquality,
     deepEqual,
     setStatus,

@@ -2224,6 +2224,38 @@ GROUP BY s.student_id, s.name
 HAVING COUNT(*) >= 2
 ORDER BY avg_grade DESC
 LIMIT 3;`,
+    sqlSchema:
+`CREATE TABLE students (student_id INTEGER PRIMARY KEY, name TEXT, email TEXT);
+CREATE TABLE enrollments (enrollment_id INTEGER PRIMARY KEY, student_id INTEGER, course_id INTEGER, grade REAL);
+INSERT INTO students VALUES
+  (1,'Alex','alex@x'),(2,'Bea','bea@x'),(3,'Chris','chris@x'),
+  (4,'Dana','dana@x'),(5,'Eve','eve@x');
+INSERT INTO enrollments(student_id,course_id,grade) VALUES
+  (1,1,90),(1,2,85),
+  (2,1,95),
+  (3,1,80),(3,2,70),(3,3,75),
+  (4,1,100),(4,2,99),
+  (5,1,60),(5,2,NULL);`,
+    sqlStarter: "-- Top 3 students by average grade (>= 2 completed courses).\n-- Tables: students(student_id, name, email), enrollments(enrollment_id, student_id, course_id, grade)\nSELECT\n",
+    sqlSolution:
+`SELECT s.student_id, s.name, AVG(e.grade) AS avg_grade
+FROM students s
+JOIN enrollments e ON s.student_id = e.student_id
+WHERE e.grade IS NOT NULL
+GROUP BY s.student_id, s.name
+HAVING COUNT(*) >= 2
+ORDER BY avg_grade DESC
+LIMIT 3;`,
+    tests: [
+      {
+        name: "Top 3 by average grade",
+        orderMatters: true,
+        expected: {
+          columns: ["student_id", "name", "avg_grade"],
+          rows: [[4, "Dana", 99.5], [1, "Alex", 87.5], [3, "Chris", 75]],
+        },
+      },
+    ],
   },
 
   Q08: {
@@ -2255,6 +2287,35 @@ JOIN Users ud ON t.driver_id = ud.users_id AND ud.banned = 'No'
 WHERE t.request_at BETWEEN '2013-10-01' AND '2013-10-03'
 GROUP BY t.request_at
 ORDER BY t.request_at;`,
+    sqlSchema:
+`CREATE TABLE Trips (id INTEGER PRIMARY KEY, client_id INTEGER, driver_id INTEGER, city_id INTEGER, status TEXT, request_at TEXT);
+CREATE TABLE Users (users_id INTEGER PRIMARY KEY, banned TEXT, role TEXT);
+INSERT INTO Users VALUES
+  (1,'No','client'),(2,'Yes','client'),
+  (3,'No','driver'),(4,'Yes','driver');
+INSERT INTO Trips VALUES
+  (1,1,3,1,'completed','2013-10-01'),
+  (2,1,3,1,'cancelled_by_driver','2013-10-01'),
+  (3,2,3,1,'completed','2013-10-01'),
+  (4,1,4,1,'completed','2013-10-01'),
+  (5,1,3,1,'completed','2013-10-02'),
+  (6,1,3,1,'cancelled_by_client','2013-10-03'),
+  (7,1,3,1,'completed','2013-10-03');`,
+    sqlStarter: "-- Daily cancellation rate (Day, Cancellation Rate) for unbanned client AND unbanned driver,\n-- 2013-10-01..03, status 'cancelled%' counts as cancelled.\nSELECT\n",
+    tests: [
+      {
+        name: "Daily cancellation rate 2013-10-01..03",
+        orderMatters: true,
+        expected: {
+          columns: ["Day", "Cancellation Rate"],
+          rows: [
+            ["2013-10-01", 0.5],
+            ["2013-10-02", 0],
+            ["2013-10-03", 0.5],
+          ],
+        },
+      },
+    ],
   },
 
   Q11: {
@@ -2272,6 +2333,18 @@ ORDER BY t.request_at;`,
 FROM Person
 GROUP BY email
 HAVING COUNT(*) > 1;`,
+    sqlSchema:
+`CREATE TABLE Person (id INTEGER PRIMARY KEY, email TEXT);
+INSERT INTO Person VALUES
+  (1,'a@b.com'),(2,'c@d.com'),(3,'a@b.com'),(4,'e@f.com'),(5,'a@b.com');`,
+    sqlStarter: "-- Return emails that appear more than once.\n-- Table: Person(id, email)\nSELECT\n",
+    tests: [
+      {
+        name: "Duplicate emails",
+        orderMatters: false,
+        expected: { columns: ["email"], rows: [["a@b.com"]] },
+      },
+    ],
   },
 
   Q15: {
@@ -2295,6 +2368,31 @@ FROM (
 ) e
 JOIN Department d ON e.departmentId = d.id
 WHERE e.rnk <= 3;`,
+    sqlSchema:
+`CREATE TABLE Department (id INTEGER PRIMARY KEY, name TEXT);
+CREATE TABLE Employee (id INTEGER PRIMARY KEY, name TEXT, salary INTEGER, departmentId INTEGER);
+INSERT INTO Department VALUES (1,'Eng'),(2,'Sales');
+INSERT INTO Employee VALUES
+  (1,'Alice',100,1),(2,'Bob',90,1),(3,'Carol',90,1),(4,'Dan',80,1),(5,'Eve',70,1),
+  (6,'Faye',60,2),(7,'Greg',50,2);`,
+    sqlStarter: "-- Employees in the TOP 3 unique salaries of their department.\n-- Tables: Employee(id, name, salary, departmentId), Department(id, name)\nSELECT\n",
+    tests: [
+      {
+        name: "Top 3 distinct salaries per department",
+        orderMatters: false,
+        expected: {
+          columns: ["Department", "Employee", "Salary"],
+          rows: [
+            ["Eng", "Alice", 100],
+            ["Eng", "Bob", 90],
+            ["Eng", "Carol", 90],
+            ["Eng", "Dan", 80],
+            ["Sales", "Faye", 60],
+            ["Sales", "Greg", 50],
+          ],
+        },
+      },
+    ],
   },
 
   Q16: {
@@ -2320,8 +2418,30 @@ WHERE e.rnk <= 3;`,
 )
 SELECT id, company, salary
 FROM ranked
-WHERE rn IN (FLOOR((cnt + 1) / 2), FLOOR(cnt / 2) + 1)
+WHERE rn IN (FLOOR((cnt + 1) / 2.0), FLOOR(cnt / 2.0) + 1)
 ORDER BY company, rn;`,
+    sqlSchema:
+`CREATE TABLE Employee (id INTEGER PRIMARY KEY, company TEXT, salary INTEGER);
+INSERT INTO Employee VALUES
+  (1,'A',1000),(2,'A',2000),(3,'A',3000),
+  (4,'B',1500),(5,'B',2500),
+  (6,'C',500);`,
+    sqlStarter: "-- Median-salary row(s) per company.\n-- Odd n -> one row; even n -> two rows. Table: Employee(id, company, salary).\nWITH\n",
+    tests: [
+      {
+        name: "Median per company",
+        orderMatters: true,
+        expected: {
+          columns: ["id", "company", "salary"],
+          rows: [
+            [2, "A", 2000],
+            [4, "B", 1500],
+            [5, "B", 2500],
+            [6, "C", 500],
+          ],
+        },
+      },
+    ],
   },
 
   Q24: {
@@ -2345,6 +2465,24 @@ WHERE o.id IS NULL;
 SELECT name AS Customers
 FROM Customers c
 WHERE NOT EXISTS (SELECT 1 FROM Orders o WHERE o.customerId = c.id);`,
+    sqlSchema:
+`CREATE TABLE Customers (id INTEGER PRIMARY KEY, name TEXT);
+CREATE TABLE Orders (id INTEGER PRIMARY KEY, customerId INTEGER);
+INSERT INTO Customers VALUES (1,'Joe'),(2,'Henry'),(3,'Sam'),(4,'Max');
+INSERT INTO Orders VALUES (1,3),(2,1);`,
+    sqlStarter: "-- Customers with no orders. Return a single column 'Customers'.\n-- Tables: Customers(id, name), Orders(id, customerId)\nSELECT\n",
+    sqlSolution:
+`SELECT c.name AS Customers
+FROM Customers c
+LEFT JOIN Orders o ON c.id = o.customerId
+WHERE o.id IS NULL;`,
+    tests: [
+      {
+        name: "Customers with no orders",
+        orderMatters: false,
+        expected: { columns: ["Customers"], rows: [["Henry"], ["Max"]] },
+      },
+    ],
   },
 
   Q28: {
@@ -2371,6 +2509,29 @@ SELECT (
     ORDER BY salary DESC
     LIMIT 1 OFFSET 1
 ) AS SecondHighestSalary;`,
+    sqlSchema:
+`CREATE TABLE Employee (id INTEGER PRIMARY KEY, salary INTEGER);
+INSERT INTO Employee VALUES (1,100),(2,200),(3,300);`,
+    sqlStarter: "-- Return the second highest salary (single column 'SecondHighestSalary').\n-- If there isn't one, return NULL. Table: Employee(id, salary)\nSELECT\n",
+    sqlSolution:
+`SELECT MAX(salary) AS SecondHighestSalary
+FROM Employee
+WHERE salary < (SELECT MAX(salary) FROM Employee);`,
+    tests: [
+      {
+        name: "Three distinct salaries",
+        orderMatters: false,
+        expected: { columns: ["SecondHighestSalary"], rows: [[200]] },
+      },
+      {
+        name: "Only one salary -> NULL",
+        orderMatters: false,
+        schema:
+`CREATE TABLE Employee (id INTEGER PRIMARY KEY, salary INTEGER);
+INSERT INTO Employee VALUES (1,100);`,
+        expected: { columns: ["SecondHighestSalary"], rows: [[null]] },
+      },
+    ],
   },
 
   Q32: {
@@ -2387,7 +2548,34 @@ SELECT (
 `SELECT w1.id
 FROM Weather w1
 JOIN Weather w2 ON w1.recordDate = DATE_ADD(w2.recordDate, INTERVAL 1 DAY)
+WHERE w1.temperature > w2.temperature;
+
+-- Portable (SQLite):
+SELECT w1.id
+FROM Weather w1
+JOIN Weather w2 ON w1.recordDate = date(w2.recordDate, '+1 day')
 WHERE w1.temperature > w2.temperature;`,
+    sqlSchema:
+`CREATE TABLE Weather (id INTEGER PRIMARY KEY, recordDate TEXT, temperature INTEGER);
+INSERT INTO Weather VALUES
+  (1,'2015-01-01',10),
+  (2,'2015-01-02',25),
+  (3,'2015-01-03',20),
+  (4,'2015-01-04',30),
+  (5,'2015-02-01',50);`,
+    sqlStarter: "-- IDs whose temperature is higher than YESTERDAY's record.\n-- Table: Weather(id, recordDate TEXT, temperature INTEGER)\n-- Hint: SQLite has date(d, '+1 day') for date math.\nSELECT\n",
+    sqlSolution:
+`SELECT w1.id
+FROM Weather w1
+JOIN Weather w2 ON w1.recordDate = date(w2.recordDate, '+1 day')
+WHERE w1.temperature > w2.temperature;`,
+    tests: [
+      {
+        name: "Days with rising temperature",
+        orderMatters: false,
+        expected: { columns: ["id"], rows: [[2], [4]] },
+      },
+    ],
   },
 
   Q52: {
@@ -2405,6 +2593,18 @@ WHERE w1.temperature > w2.temperature;`,
 FROM Employee e
 JOIN Employee m ON e.managerId = m.id
 WHERE e.salary > m.salary;`,
+    sqlSchema:
+`CREATE TABLE Employee (id INTEGER PRIMARY KEY, name TEXT, salary INTEGER, managerId INTEGER);
+INSERT INTO Employee VALUES
+  (1,'Joe',70000,3),(2,'Henry',80000,4),(3,'Sam',60000,NULL),(4,'Max',90000,NULL);`,
+    sqlStarter: "-- Employees earning strictly more than their manager.\n-- Return single column 'Employee'. Table: Employee(id, name, salary, managerId)\nSELECT\n",
+    tests: [
+      {
+        name: "Joe earns more than mgr Sam",
+        orderMatters: false,
+        expected: { columns: ["Employee"], rows: [["Joe"]] },
+      },
+    ],
   },
 
   Q53: {
@@ -2432,6 +2632,26 @@ SELECT DISTINCT l1.num AS ConsecutiveNums
 FROM Logs l1
 JOIN Logs l2 ON l2.id = l1.id + 1 AND l2.num = l1.num
 JOIN Logs l3 ON l3.id = l1.id + 2 AND l3.num = l1.num;`,
+    sqlSchema:
+`CREATE TABLE Logs (id INTEGER PRIMARY KEY, num INTEGER);
+INSERT INTO Logs VALUES (1,1),(2,1),(3,1),(4,2),(5,1),(6,2),(7,2);`,
+    sqlStarter: "-- Numbers that appear 3+ times in a row (consecutive id).\n-- Return single column 'ConsecutiveNums', distinct. Table: Logs(id, num)\nSELECT\n",
+    sqlSolution:
+`SELECT DISTINCT num AS ConsecutiveNums
+FROM (
+    SELECT num,
+        LAG(num, 1) OVER (ORDER BY id) AS prev1,
+        LAG(num, 2) OVER (ORDER BY id) AS prev2
+    FROM Logs
+) t
+WHERE num = prev1 AND num = prev2;`,
+    tests: [
+      {
+        name: "1 appears 3+ times in a row",
+        orderMatters: false,
+        expected: { columns: ["ConsecutiveNums"], rows: [[1]] },
+      },
+    ],
   },
 
   // ============================================================
