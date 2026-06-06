@@ -318,7 +318,8 @@
   <li><strong>Practice Sets</strong> follow each module. Questions are mixed so you can't tell
   which sub-topic they came from.</li>
   <li><strong>Final Exam</strong> draws 12 random questions from a held-back pool — try it only
-  after you've worked through the practice sets.</li>
+  after you've worked through the practice sets. Topic tags are intentionally hidden in the
+  exam so the algorithm family doesn't telegraph itself.</li>
 </ul>
 <h2>The code workbench</h2>
 <ul>
@@ -426,8 +427,17 @@ in the sidebar to wipe and start over.</p>
     const ps = window.PRACTICE_SETS[psid];
     const wrap = el("div", { class: "view-narrow" });
 
+    const solvedInSet = ps.qids.filter((qid) => state.solved.has(qid)).length;
+    const totalInSet = ps.qids.length;
+
     wrap.appendChild(el("div", { class: "practice-banner" }, [
-      el("h2", { text: ps.title }),
+      el("div", { class: "practice-banner-head" }, [
+        el("h2", { text: ps.title }),
+        el("div", {
+          class: "ps-progress-chip" + (solvedInSet === totalInSet ? " complete" : ""),
+          html: `<strong>${solvedInSet}</strong> / ${totalInSet} solved`,
+        }),
+      ]),
       el("p", {
         class: "lead",
         text:
@@ -505,14 +515,22 @@ in the sidebar to wipe and start over.</p>
 <p>Twelve questions drawn from a pool that was deliberately held back from the Practice Sets.
 Topics are mixed across all eight modules. <strong>Work each problem to completion before
 revealing the answer.</strong> Coverage updates live as you pass tests.</p>
+<div class="callout tip" style="margin-top:14px">
+  <div class="callout-title">Topic tags are hidden</div>
+  Only difficulty and time-estimate are shown next to each question — the algorithm family
+  (DP, Sliding Window, BFS, ...) is intentionally withheld so the problem statement is your
+  only clue, just like the real assessment.
+</div>
 <p class="note-soft">Tip: simulate the real test — give yourself 5 minutes per question and a
 hard 60-minute cap. If you're not done after 60, finish for learning's sake but score honestly.</p>
 ` }));
 
-    // Track per-question pass for the scoreboard.
+    // Track per-question state for the scoreboard.
     const passSet = new Set();
+    const attemptSet = new Set();
     chosen.forEach((qid, idx) => {
       const card = questionCard(qid, idx + 1, {
+        hideTopicTags: true,   // Exam: hide topic tags so the family isn't telegraphed.
         onPass: () => {
           if (!passSet.has(qid)) {
             passSet.add(qid);
@@ -520,8 +538,10 @@ hard 60-minute cap. If you're not done after 60, finish for learning's sake but 
           }
         },
         onAttempt: () => {
-          counters.attempted.textContent =
-            String(Math.max(passSet.size, +counters.attempted.textContent + 1));
+          if (!attemptSet.has(qid)) {
+            attemptSet.add(qid);
+            counters.attempted.textContent = String(attemptSet.size);
+          }
         },
       });
       wrap.appendChild(card);
@@ -550,7 +570,10 @@ hard 60-minute cap. If you're not done after 60, finish for learning's sake but 
     head.appendChild(el("div", { class: "q-title", text: `${idx}. ${q.title}` }));
     const tags = el("div", { class: "q-tags" });
     tags.appendChild(el("span", { class: difficultyTag(q.difficulty), text: q.difficulty }));
-    (q.tags || []).forEach((t) => tags.appendChild(el("span", { class: "tag", text: t })));
+    // In exam mode, suppress topic tags — they telegraph the algorithm family.
+    if (!hooks.hideTopicTags) {
+      (q.tags || []).forEach((t) => tags.appendChild(el("span", { class: "tag", text: t })));
+    }
     tags.appendChild(el("span", { class: "tag", text: q.time }));
     if (q.type === "sql") tags.appendChild(el("span", { class: "tag", text: "SQL" }));
     head.appendChild(tags);
@@ -876,6 +899,43 @@ hard 60-minute cap. If you're not done after 60, finish for learning's sake but 
     updateNavCheckmarks();
     setActiveNav();
     bindSettingsModal();
+
+    // Clicking the Python status pill preloads Pyodide on demand.
+    const statusPill = document.getElementById("pyodide-status");
+    if (statusPill) {
+      statusPill.style.cursor = "pointer";
+      statusPill.title = "Click to load Python now (otherwise it loads on your first Run)";
+      statusPill.setAttribute("role", "button");
+      statusPill.setAttribute("tabindex", "0");
+      const triggerPreload = async () => {
+        if (statusPill.classList.contains("status-loading") ||
+            statusPill.classList.contains("status-ready")) return;
+        try {
+          await window.Runner.ensurePyodide();
+          toast("Python is ready.", "good");
+        } catch (_) {
+          toast("Failed to load Python — check your internet connection.", "bad");
+        }
+      };
+      statusPill.addEventListener("click", triggerPreload);
+      statusPill.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); triggerPreload(); }
+      });
+    }
+
+    // Clicking the sidebar brand returns to Welcome.
+    const brand = document.querySelector(".brand");
+    if (brand) {
+      brand.style.cursor = "pointer";
+      brand.setAttribute("role", "link");
+      brand.setAttribute("tabindex", "0");
+      brand.addEventListener("click", () => navigate("welcome", null));
+      brand.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault(); navigate("welcome", null);
+        }
+      });
+    }
 
     $("#modal-close").addEventListener("click", closeAnswerModal);
     // Answer-modal backdrop (the .modal-backdrop INSIDE #answer-modal)

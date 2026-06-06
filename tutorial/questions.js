@@ -2432,6 +2432,230 @@ JOIN Logs l2 ON l2.id = l1.id + 1 AND l2.num = l1.num
 JOIN Logs l3 ON l3.id = l1.id + 2 AND l3.num = l1.num;`,
   },
 
+  // ============================================================
+  // NEW (added in revision pass) — DP / Array / Two-Pointer / LL
+  // ============================================================
+
+  Q54: {
+    id: "Q54",
+    title: "Maximum Subarray (Kadane's Algorithm)",
+    difficulty: "Medium",
+    time: "12-15 min",
+    tags: ["DP", "Array", "Kadane"],
+    type: "python",
+    statement:
+      "Given an integer array <code>nums</code>, find the contiguous subarray (with at least " +
+      "one element) that has the largest sum and return that sum.",
+    examples:
+      'Input:  [-2,1,-3,4,-1,2,1,-5,4]  -> 6   (subarray [4,-1,2,1])\n' +
+      'Input:  [1]                       -> 1\n' +
+      'Input:  [5,4,-1,7,8]              -> 23\n' +
+      'Input:  [-3,-2,-1,-5]             -> -1  (best is the single element -1)',
+    hint:
+      "Kadane: at every index i, the best sum ending at i either extends the previous best " +
+      "or starts fresh at nums[i] — take the larger. Track the running maximum across all i.",
+    functionName: "max_subarray",
+    signature: "max_subarray(nums: list[int]) -> int",
+    starter:
+      "def max_subarray(nums):\n" +
+      "    # your code here\n" +
+      "    pass\n",
+    solution:
+`def max_subarray(nums):
+    cur = best = nums[0]
+    for x in nums[1:]:
+        cur = max(x, cur + x)
+        best = max(best, cur)
+    return best`,
+    explanation:
+      "O(n) time, O(1) space. Foundational DP: <code>dp[i] = max(nums[i], dp[i-1] + nums[i])</code>, " +
+      "answer = max(dp). The classic gotcha is initialising <code>cur = best = 0</code> — it " +
+      "fails on all-negative arrays because the right answer is the largest single element.",
+    tests: [
+      { args: [[-2,1,-3,4,-1,2,1,-5,4]], expected: 6 },
+      { args: [[1]], expected: 1 },
+      { args: [[5,4,-1,7,8]], expected: 23 },
+      { args: [[-1]], expected: -1 },
+      { args: [[-3,-2,-1,-5]], expected: -1 },
+      { args: [[2,3,-2,4]], expected: 7 },
+      { args: [[-2,-1]], expected: -1 },
+    ],
+  },
+
+  Q55: {
+    id: "Q55",
+    title: "Best Time to Buy and Sell Stock",
+    difficulty: "Easy",
+    time: "10-12 min",
+    tags: ["Array", "One-Pass", "DP"],
+    type: "python",
+    statement:
+      "<code>prices[i]</code> is the price of a stock on day i. Choose ONE day to buy and a " +
+      "LATER day to sell to maximise profit. Return the max profit, or 0 if no profit is possible.",
+    examples:
+      'Input:  [7,1,5,3,6,4]  -> 5   (buy at 1 on day 2, sell at 6 on day 5)\n' +
+      'Input:  [7,6,4,3,1]    -> 0   (price only falls)\n' +
+      'Input:  [2,4,1]        -> 2',
+    hint:
+      "Walk left-to-right tracking the minimum price seen so far. At each day, the best sale " +
+      "from today is <code>price - min_so_far</code>.",
+    functionName: "max_profit",
+    signature: "max_profit(prices: list[int]) -> int",
+    starter:
+      "def max_profit(prices):\n" +
+      "    # your code here\n" +
+      "    pass\n",
+    solution:
+`def max_profit(prices):
+    if not prices: return 0
+    best = 0
+    lo = prices[0]
+    for p in prices[1:]:
+        if p < lo:
+            lo = p
+        elif p - lo > best:
+            best = p - lo
+    return best`,
+    explanation:
+      "O(n) one-pass, O(1) space. Same shape as Kadane on diffs: the answer is the maximum of " +
+      "<code>prices[i] - min(prices[0..i-1])</code>.",
+    tests: [
+      { args: [[7,1,5,3,6,4]], expected: 5 },
+      { args: [[7,6,4,3,1]], expected: 0 },
+      { args: [[1]], expected: 0 },
+      { args: [[2,4,1]], expected: 2 },
+      { args: [[3,2,6,5,0,3]], expected: 4 },
+      { args: [[]], expected: 0 },
+    ],
+  },
+
+  Q56: {
+    id: "Q56",
+    title: "3Sum",
+    difficulty: "Medium",
+    time: "20-25 min",
+    tags: ["Array", "Two Pointers", "Sorting"],
+    type: "python",
+    statement:
+      "Given an integer array, return all <strong>unique</strong> triplets " +
+      "<code>[a, b, c]</code> from <code>nums</code> with <code>a + b + c == 0</code>. The " +
+      "solution set must not contain duplicate triplets.",
+    examples:
+      'Input:  [-1,0,1,2,-1,-4]  -> [[-1,-1,2],[-1,0,1]]\n' +
+      'Input:  [0,1,1]           -> []\n' +
+      'Input:  [0,0,0]           -> [[0,0,0]]',
+    hint:
+      "Sort first. For each i, run a two-pointer on the suffix. Skip duplicates at i AND after " +
+      "every successful triplet on both pointers to avoid generating the same triplet twice.",
+    functionName: "three_sum",
+    signature: "three_sum(nums: list[int]) -> list[list[int]]",
+    starter:
+      "def three_sum(nums):\n" +
+      "    # your code here\n" +
+      "    pass\n",
+    solution:
+`def three_sum(nums):
+    nums.sort()
+    out = []
+    n = len(nums)
+    for i in range(n - 2):
+        if nums[i] > 0: break
+        if i > 0 and nums[i] == nums[i - 1]: continue
+        l, r = i + 1, n - 1
+        while l < r:
+            s = nums[i] + nums[l] + nums[r]
+            if s == 0:
+                out.append([nums[i], nums[l], nums[r]])
+                l += 1; r -= 1
+                while l < r and nums[l] == nums[l - 1]: l += 1
+                while l < r and nums[r] == nums[r + 1]: r -= 1
+            elif s < 0:
+                l += 1
+            else:
+                r -= 1
+    return out`,
+    explanation:
+      "O(n²) time after the O(n log n) sort, O(1) extra space (output excluded). The dedup " +
+      "logic is what trips most candidates — without it you'll get repeated triplets when the " +
+      "same value appears multiple times.",
+    tests: [
+      { args: [[-1,0,1,2,-1,-4]],
+        expected: [[-1,-1,2],[-1,0,1]], equality: "sorted-list" },
+      { args: [[0,1,1]], expected: [], equality: "sorted-list" },
+      { args: [[0,0,0]], expected: [[0,0,0]], equality: "sorted-list" },
+      { args: [[-2,0,1,1,2]],
+        expected: [[-2,0,2],[-2,1,1]], equality: "sorted-list" },
+      { args: [[1,2,-2,-1]], expected: [], equality: "sorted-list" },
+    ],
+  },
+
+  Q57: {
+    id: "Q57",
+    title: "Add Two Numbers (Linked List)",
+    difficulty: "Medium",
+    time: "15-18 min",
+    tags: ["Linked List", "Math", "Carry"],
+    type: "python",
+    statement:
+      "You are given two non-empty linked lists representing two non-negative integers. The " +
+      "digits are stored in <strong>reverse order</strong> (one digit per node). Add the two " +
+      "numbers and return the sum as a linked list in the same reverse order.",
+    examples:
+      'Input:  l1=[2,4,3], l2=[5,6,4]                    -> [7,0,8]\n' +
+      '         (342 + 465 = 807, stored reversed)\n' +
+      'Input:  l1=[0], l2=[0]                            -> [0]\n' +
+      'Input:  l1=[9,9,9,9,9,9,9], l2=[9,9,9,9]          -> [8,9,9,9,0,0,0,1]',
+    hint:
+      "Walk both lists in lockstep with a running <code>carry</code>. Loop while either list " +
+      "has nodes OR carry > 0. Use a dummy head so you don't special-case the first append.",
+    functionName: "add_two_numbers",
+    signature: "add_two_numbers(l1: ListNode, l2: ListNode) -> ListNode",
+    starter:
+      "def add_two_numbers(l1, l2):\n" +
+      "    # your code here\n" +
+      "    pass\n",
+    solution:
+`def add_two_numbers(l1, l2):
+    dummy = ListNode()
+    tail = dummy
+    carry = 0
+    while l1 or l2 or carry:
+        a = l1.val if l1 else 0
+        b = l2.val if l2 else 0
+        s = a + b + carry
+        carry, digit = divmod(s, 10)
+        tail.next = ListNode(digit)
+        tail = tail.next
+        if l1: l1 = l1.next
+        if l2: l2 = l2.next
+    return dummy.next`,
+    explanation:
+      "O(max(m, n)). The <code>or carry</code> in the loop condition is the trick that handles " +
+      "the carry-only final node (e.g., [9] + [1] needs a trailing [1] in the output).",
+    tests: [
+      { args: [[2,4,3], [5,6,4]],
+        prepare: "args = [_build_list(args[0]), _build_list(args[1])]",
+        transform: "result = _linked_to_list(result)",
+        expected: [7,0,8] },
+      { args: [[0], [0]],
+        prepare: "args = [_build_list(args[0]), _build_list(args[1])]",
+        transform: "result = _linked_to_list(result)",
+        expected: [0] },
+      { args: [[9,9,9,9,9,9,9], [9,9,9,9]],
+        prepare: "args = [_build_list(args[0]), _build_list(args[1])]",
+        transform: "result = _linked_to_list(result)",
+        expected: [8,9,9,9,0,0,0,1] },
+      { args: [[1], [9,9]],
+        prepare: "args = [_build_list(args[0]), _build_list(args[1])]",
+        transform: "result = _linked_to_list(result)",
+        expected: [0,0,1] },
+      { args: [[5], [5]],
+        prepare: "args = [_build_list(args[0]), _build_list(args[1])]",
+        transform: "result = _linked_to_list(result)",
+        expected: [0,1] },
+    ],
+  },
+
 };
 
 // ----------------------------------------------------------------
@@ -2446,14 +2670,14 @@ window.PRACTICE_SETS = {
   PS4: { module: "M4", title: "Practice Set 4 — Graphs & Search",
          qids: ["Q05","Q19","Q23","Q48","Q49"] },
   PS5: { module: "M5", title: "Practice Set 5 — Arrays, Two-Pointers, Sliding Windows",
-         qids: ["Q25","Q29","Q33","Q34","Q46"] },
+         qids: ["Q25","Q29","Q33","Q34","Q46","Q55"] },
   PS6: { module: "M6", title: "Practice Set 6 — Math, Bit Ops, Binary Search",
          qids: ["Q22","Q27","Q30","Q44","Q45"] },
   PS7: { module: "M7", title: "Practice Set 7 — Trees, Linked Lists, Heap, Trie",
-         qids: ["Q35","Q36","Q37","Q39","Q40","Q50"] },
+         qids: ["Q35","Q36","Q37","Q39","Q40","Q50","Q57"] },
   PS8: { module: "M8", title: "Practice Set 8 — DP, Backtracking, Greedy",
-         qids: ["Q42","Q43","Q47","Q51"] },
+         qids: ["Q42","Q43","Q47","Q51","Q54"] },
 };
 
-// Final exam pool (held-back questions across all topics)
-window.FINAL_EXAM_POOL = ["Q02","Q06","Q08","Q15","Q16","Q17","Q18","Q20","Q26","Q31","Q38","Q53"];
+// Final exam pool (held-back questions across all topics). The exam draws min(12, pool.length).
+window.FINAL_EXAM_POOL = ["Q02","Q06","Q08","Q15","Q16","Q17","Q18","Q20","Q26","Q31","Q38","Q53","Q56"];
