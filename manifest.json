@@ -1,5 +1,5 @@
 {
-  "generated": "2026-06-06T23:16:48Z",
+  "generated": "2026-06-07T02:05:44Z",
   "folders": [
     {
       "name": "bracketCount",
@@ -68,6 +68,24 @@
       ]
     },
     {
+      "name": "compress-string",
+      "kind": "code",
+      "files": [
+        {
+          "name": "index.js",
+          "ext": "js",
+          "kind": "code",
+          "size": 360
+        },
+        {
+          "name": "main.py",
+          "ext": "py",
+          "kind": "code",
+          "size": 481
+        }
+      ]
+    },
+    {
       "name": "doc",
       "kind": "mixed",
       "files": [
@@ -100,6 +118,18 @@
           "ext": "md",
           "kind": "markdown",
           "size": 109270
+        }
+      ]
+    },
+    {
+      "name": "eval",
+      "kind": "code",
+      "files": [
+        {
+          "name": "main.py",
+          "ext": "py",
+          "kind": "code",
+          "size": 963
         }
       ]
     },
@@ -176,6 +206,18 @@
       ]
     },
     {
+      "name": "palindrome",
+      "kind": "code",
+      "files": [
+        {
+          "name": "main.py",
+          "ext": "py",
+          "kind": "code",
+          "size": 299
+        }
+      ]
+    },
+    {
       "name": "questionMarkCount",
       "kind": "mixed",
       "files": [
@@ -196,6 +238,18 @@
           "ext": "md",
           "kind": "markdown",
           "size": 59
+        }
+      ]
+    },
+    {
+      "name": "reverse-polish-not",
+      "kind": "code",
+      "files": [
+        {
+          "name": "main.py",
+          "ext": "py",
+          "kind": "code",
+          "size": 875
         }
       ]
     },
@@ -261,6 +315,30 @@
           "ext": "py",
           "kind": "code",
           "size": 326
+        }
+      ]
+    },
+    {
+      "name": "valid-blocks",
+      "kind": "code",
+      "files": [
+        {
+          "name": "main.py",
+          "ext": "py",
+          "kind": "code",
+          "size": 307
+        }
+      ]
+    },
+    {
+      "name": "validate-tags",
+      "kind": "code",
+      "files": [
+        {
+          "name": "main.py",
+          "ext": "py",
+          "kind": "code",
+          "size": 736
         }
       ]
     }
