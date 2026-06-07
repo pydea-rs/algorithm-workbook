@@ -547,41 +547,143 @@ without collapsing. Use them when you need rank, running totals, or "median per 
         html: `
 <div class="hero">
   <h1>Module 4 — Graphs &amp; Search</h1>
-  <p>Almost every "shortest", "reachable", "fewest steps" problem is a graph problem. Build the
-  right representation, pick BFS or DFS based on what you want, and the rest is bookkeeping.</p>
+  <p>Almost every "shortest", "reachable", "fewest steps" problem is a graph problem in disguise.
+  This module teaches you to <em>see</em> the graph, build it cheaply, and pick the right
+  traversal — BFS when distance matters, DFS when it doesn't, Union-Find when you only care
+  about grouping. The algorithms are short. The art is recognition.</p>
 </div>
 
-<h2>Graph representations</h2>
-<p>You have two choices. Pick <strong>adjacency list</strong> 99% of the time.</p>
+<h2>What a graph actually is</h2>
+<p>Strip away the formalism: a graph is just "things, and which of those things are connected to
+which." The "things" are <strong>vertices</strong> (sometimes called nodes); the connections
+are <strong>edges</strong>. That's the whole structure.</p>
+
+<p>The reason this matters is that an enormous number of seemingly unrelated problems have the
+exact same shape underneath:</p>
+<ul>
+  <li><strong>Friends on a social network.</strong> People are vertices; friendships are edges.
+      "Are Alice and Bob connected through mutual friends?" is a reachability question.</li>
+  <li><strong>Cities and roads.</strong> Cities are vertices; roads are edges. "What's the
+      fewest cities I pass through to get from A to B?" is shortest-path on an unweighted graph.</li>
+  <li><strong>Course prerequisites.</strong> Courses are vertices; "X must be taken before Y"
+      is a directed edge from X to Y. "In what order can I take all courses?" is topological sort.</li>
+  <li><strong>A maze.</strong> Each empty cell is a vertex; each pair of orthogonally-adjacent
+      empty cells shares an edge. "Can I escape, and in how few steps?" is BFS on a grid.</li>
+  <li><strong>A web of HTML pages.</strong> Pages are vertices; hyperlinks are directed edges.
+      "What pages are reachable from the homepage?" is DFS or BFS from the homepage.</li>
+</ul>
+
+<p>If a problem talks about "connections", "neighbours", "next steps", "moves", "transitions",
+or "prerequisites", your first instinct should be: <em>this is a graph problem</em>. Half the
+battle in interviews is noticing that.</p>
+
+<h3>Vocabulary you'll need (just enough)</h3>
+<ul>
+  <li><strong>Directed</strong> vs <strong>undirected.</strong> An undirected edge between A and
+      B means you can travel both ways (friendship, two-way road). A directed edge A→B means
+      one-way (Twitter follow, course prerequisite).</li>
+  <li><strong>Weighted</strong> vs <strong>unweighted.</strong> Weighted edges carry a number
+      (driving time between cities, cost of a flight). Unweighted edges are all "one step".</li>
+  <li><strong>Degree.</strong> The number of edges touching a vertex. "How many friends Alice
+      has" is her degree in the friendship graph.</li>
+  <li><strong>Path.</strong> A sequence of edges from one vertex to another.</li>
+  <li><strong>Cycle.</strong> A path that starts and ends at the same vertex.</li>
+  <li><strong>DAG</strong> (Directed Acyclic Graph). A directed graph with no cycles —
+      prerequisite chains are DAGs, because circular prerequisites are unsolvable.</li>
+</ul>
+
+<p>Almost every Coderbyte-style graph problem you'll see is either <em>unweighted</em> (BFS-shaped)
+or a <em>DAG</em> (topological sort). Weighted graphs need <em>Dijkstra's algorithm</em>, which
+is out of scope for the first-step assessment — if you see one, you've misread the problem.</p>
+
+<h2>Graph representations — how the graph lives in memory</h2>
+<p>You have a graph "in your head". But to compute on it you have to store it somehow. Two ways:</p>
+
+<h3>Adjacency matrix — a giant grid of yes/no</h3>
+<p>Imagine a V×V table where cell <code>[i][j]</code> is <code>1</code> if there's an edge from
+i to j, else <code>0</code>. Concrete example with 4 vertices (0..3) and edges (0,1), (0,2),
+(1,3), (2,3):</p>
+<pre><code>      0  1  2  3
+   0 [0, 1, 1, 0]
+   1 [1, 0, 0, 1]
+   2 [1, 0, 0, 1]
+   3 [0, 1, 1, 0]</code></pre>
+<p>Checking "is there an edge from 0 to 3?" is just <code>matrix[0][3]</code> — instantaneous.
+But the matrix uses V² cells, which is wasteful when most pairs of vertices aren't connected.
+A graph of 10 000 cities with 30 000 roads needs a 100-million-cell matrix that's 99.97% zeros.</p>
+
+<h3>Adjacency list — a list of neighbours per vertex</h3>
+<p>For each vertex, store just the list of vertices it connects to. Same graph as above:</p>
+<pre><code>0: [1, 2]
+1: [0, 3]
+2: [0, 3]
+3: [1, 2]</code></pre>
+<p>Total storage = V + 2E (each undirected edge contributes one entry to each endpoint's list).
+For the cities-and-roads example that's ≈ 70 000 entries instead of 100 million. The trade-off:
+to check "is there an edge from 0 to 3?" you have to scan vertex 0's list. But you almost never
+need to do that — you traverse, you don't probe.</p>
+
 <table class="tbl">
   <tr><th></th><th>Adjacency matrix</th><th>Adjacency list</th></tr>
   <tr><td>Space</td><td>O(V²)</td><td>O(V + E)</td></tr>
   <tr><td>Edge lookup</td><td>O(1)</td><td>O(deg(v))</td></tr>
-  <tr><td>Iterate neighbours</td><td>O(V)</td><td>O(deg(v))</td></tr>
-  <tr><td>Best for</td><td>Dense graphs</td><td>Sparse graphs (the real world)</td></tr>
+  <tr><td>Iterate a vertex's neighbours</td><td>O(V)</td><td>O(deg(v))</td></tr>
+  <tr><td>Best for</td><td>Dense graphs (E ≈ V²)</td><td>Sparse graphs (E ≪ V²)</td></tr>
 </table>
+
+<p>Real-world graphs are <em>almost always sparse</em>. People have ~100 friends, not millions.
+Cities connect to a handful of others, not all of them. <strong>Use the adjacency list 99% of
+the time.</strong></p>
+
 <pre><code><span class="tok-cmt"># Build an undirected adjacency list from an edge list</span>
 <span class="tok-kw">from</span> collections <span class="tok-kw">import</span> defaultdict
 graph = defaultdict(list)
 <span class="tok-kw">for</span> u, v <span class="tok-kw">in</span> edges:
     graph[u].append(v)
-    graph[v].append(u)</code></pre>
+    graph[v].append(u)        <span class="tok-cmt"># omit this line for a DIRECTED graph</span></code></pre>
 
-<h2>BFS — the breadth-first paradigm</h2>
-<p>BFS visits vertices in waves of equal distance from the source. Start in a queue with the
-source; pop, enqueue unvisited neighbours, repeat. Because dequeues happen FIFO, the first time
-any vertex is reached it is reached by a shortest path (in unweighted graphs).</p>
+<div class="callout tip">
+  <div class="callout-title">Directed vs undirected — one line of code</div>
+  The only difference at build time is whether you push the reverse edge. If the problem says
+  "X is a prerequisite of Y" (one-way), drop the <code>graph[v].append(u)</code> line. If it
+  says "X and Y are friends" (both-ways), keep it. Most graph bugs in interviews trace back to
+  getting this wrong.
+</div>
 
-<h3>The proof, in three lines</h3>
-<p>Induction on distance <em>k</em> from the source.</p>
-<ol>
-  <li><em>Base:</em> source itself, distance 0, enqueued before anything else.</li>
-  <li><em>Inductive step:</em> all vertices at distance <em>k</em> are dequeued before any vertex
-      at distance &gt; <em>k</em>, because BFS exhausts a level before moving on.</li>
-  <li>So when a vertex <em>v</em> at distance <em>k+1</em> is discovered via some neighbour <em>u</em>
-      at distance <em>k</em>, no shorter route can exist — every shorter route would have to pass
-      through a vertex at distance ≤ <em>k</em>, all of which we've already processed.</li>
-</ol>
+<h2>BFS — exploring the graph like ripples in a pond</h2>
+<p>Think about dropping a pebble into still water. A ring spreads outward at constant speed.
+After 1 second, every point at distance 1 has been touched. After 2 seconds, every point at
+distance 2. Distance-3 points are touched at 3 seconds — never sooner, because the wave moves
+at constant speed in every direction. <strong>That is Breadth-First Search.</strong></p>
+
+<p>The mechanics: keep a queue (FIFO — first in, first out). The queue holds "vertices we know
+about but haven't yet looked at". Start by putting the source in the queue. Then repeat: pull
+the front vertex out, look at all its unvisited neighbours, and put each of them on the back
+of the queue. Because the queue is FIFO, the source's neighbours (distance 1) are processed
+before their neighbours' neighbours (distance 2). The wavefront sweeps outward one ring at a time.</p>
+
+<h3>Walking through it on a small graph</h3>
+<p>Consider this graph (undirected), and let's BFS from vertex <code>A</code>:</p>
+<pre><code>     A
+    / \\
+   B   C
+   |   |
+   D   E
+    \\ /
+     F</code></pre>
+<p>Queue contents at each step (we mark a vertex visited the moment we put it in the queue):</p>
+<table class="tbl">
+  <tr><th>Step</th><th>Queue (front → back)</th><th>Just dequeued</th><th>Visited set</th></tr>
+  <tr><td>0</td><td>[A]</td><td>—</td><td>{A}</td></tr>
+  <tr><td>1</td><td>[B, C]</td><td>A</td><td>{A, B, C}</td></tr>
+  <tr><td>2</td><td>[C, D]</td><td>B</td><td>{A, B, C, D}</td></tr>
+  <tr><td>3</td><td>[D, E]</td><td>C</td><td>{A, B, C, D, E}</td></tr>
+  <tr><td>4</td><td>[E, F]</td><td>D</td><td>{A, B, C, D, E, F}</td></tr>
+  <tr><td>5</td><td>[F]</td><td>E</td><td>{A, B, C, D, E, F}</td></tr>
+  <tr><td>6</td><td>[]</td><td>F</td><td>{A, B, C, D, E, F}</td></tr>
+</table>
+<p>Notice the visit order: A, B, C, D, E, F. That's exactly distance 0, then distance 1
+(B and C), then distance 2 (D and E), then distance 3 (F). One ring at a time.</p>
 
 <pre><code><span class="tok-kw">from</span> collections <span class="tok-kw">import</span> deque
 <span class="tok-kw">def</span> <span class="tok-fn">bfs_dist</span>(graph, start, target):
@@ -596,31 +698,44 @@ any vertex is reached it is reached by a shortest path (in unweighted graphs).</
                 seen.add(nxt); q.append((nxt, d + 1))
     <span class="tok-kw">return</span> -1</code></pre>
 
+<h3>Why BFS finds shortest paths — the intuition before the proof</h3>
+<p>The wavefront sweeps outward at constant speed. The first moment vertex <code>v</code> is
+touched, it's touched by the closest part of the wave — by definition. No later wave can have
+reached it sooner; if it could, the closer wave would have already gotten there first. So the
+<em>first</em> time we discover any vertex, we've found a shortest route to it.</p>
+
+<h3>The proof, slightly more formally</h3>
+<p>Induction on distance <em>k</em> from the source.</p>
+<ol>
+  <li><em>Base:</em> the source itself, distance 0, enqueued before anything else.</li>
+  <li><em>Inductive step:</em> all vertices at distance <em>k</em> are dequeued before any vertex
+      at distance &gt; <em>k</em>, because BFS exhausts an entire ring before any element of the
+      next ring is dequeued (FIFO discipline).</li>
+  <li>So when a vertex <em>v</em> at distance <em>k+1</em> is discovered via some neighbour
+      <em>u</em> at distance <em>k</em>, no shorter route can exist — every shorter route would
+      have to pass through a vertex at distance ≤ <em>k</em>, and we've already finished
+      processing all such vertices without having found <em>v</em>.</li>
+</ol>
+
 <div class="callout warn">
   <div class="callout-title">Mark visited at ENQUEUE, not dequeue</div>
-  If you check "visited?" only when dequeuing, the same neighbour gets enqueued by every node
-  that reaches it — your queue blows up. <em>Always</em> add to the visited set the moment you
-  enqueue, including the source.
+  Imagine vertex C has 5 different neighbours that each link back to A. If you only mark A as
+  visited when you <em>dequeue</em> it, every one of those 5 neighbours will enqueue A again,
+  because at enqueue-time A still looks "unvisited". Your queue now contains six copies of A,
+  and each of them re-enqueues A's neighbours, blowing the queue up exponentially. Always add
+  to the visited set the instant you put a vertex in the queue — including the source.
 </div>
 
-<h2>BFS vs DFS — when which</h2>
-<p>DFS goes as deep as possible before backtracking. It uses recursion (or an explicit stack).
-DFS does not respect distance — it can find a 7-edge path to a node before discovering the 2-edge
-one. Use DFS when path length doesn't matter or you need to explore exhaustively.</p>
-<table class="tbl">
-  <tr><th>Use BFS for</th><th>Use DFS for</th></tr>
-  <tr>
-    <td>Shortest path (unweighted)<br/>
-        Minimum number of steps<br/>
-        Level-order traversal<br/>
-        Multi-source spreading (rotting oranges)</td>
-    <td>Topological sort (alternative)<br/>
-        Cycle detection<br/>
-        Connected components<br/>
-        Backtracking / "find any" / "all paths"<br/>
-        Tree problems (Module 7)</td>
-  </tr>
-</table>
+<h2>DFS — exploring like a maze runner</h2>
+<p>Imagine you're in a maze, holding a piece of chalk. The rule: walk forward into any unmarked
+passage, marking every junction you enter. When you hit a dead-end or a junction where all
+passages are marked, back up to the previous junction and try a different passage. Repeat
+until you've explored everything reachable. That is Depth-First Search.</p>
+
+<p>Mechanically, DFS uses a <em>stack</em> instead of a queue — LIFO instead of FIFO. The
+recursion stack of the host language is usually the stack you use, which is why DFS often
+looks like a one-liner:</p>
+
 <pre><code><span class="tok-kw">def</span> <span class="tok-fn">dfs</span>(graph, node, seen):
     seen.add(node)
     <span class="tok-kw">for</span> nxt <span class="tok-kw">in</span> graph[node]:
@@ -628,48 +743,215 @@ one. Use DFS when path length doesn't matter or you need to explore exhaustively
             dfs(graph, nxt, seen)
 </code></pre>
 
-<h2>Grids are graphs</h2>
-<p>A 2D matrix is a graph where each cell is a node and adjacent cells are edges (4-directional
-or 8-directional). The same BFS/DFS algorithms apply with a direction list.</p>
+<p>On the same little graph above (A→{B,C}, B→D, C→E, D→F, E→F), DFS visits:
+<strong>A, B, D, F, C, E</strong>. It plunges all the way down the B-branch (A→B→D→F) before
+ever looking at C. By the time DFS reaches F, it has taken a 3-edge path. But the shortest path
+from A to F is actually 3 edges through either branch — same length here, but in a different
+shape of graph, DFS might find a 7-edge path to a vertex when a 2-edge path exists.</p>
+
+<div class="callout tip">
+  <div class="callout-title">DFS doesn't respect distance</div>
+  This is the single most important fact about DFS: it does not guarantee shortest paths.
+  If your problem says "minimum", "fewest", "shortest" (in an unweighted graph), reach for BFS.
+  DFS is for problems where you need to <em>explore everything</em> or <em>find any path</em>,
+  not the shortest one.
+</div>
+
+<h2>BFS vs DFS — when which</h2>
+<p>This table is the practical decision rule. Memorise the left column especially — it's the
+"distance matters" tell.</p>
+<table class="tbl">
+  <tr><th>Use BFS when…</th><th>Use DFS when…</th></tr>
+  <tr>
+    <td>Shortest path on an unweighted graph<br/>
+        Minimum number of steps to a goal<br/>
+        Level-order traversal (process all distance-k things together)<br/>
+        Multi-source spreading (a wave from many origins at once)</td>
+    <td>You just need to know if something is reachable<br/>
+        Counting connected components (groups of vertices)<br/>
+        Detecting cycles in a directed graph<br/>
+        Topological sort (one of two ways)<br/>
+        Backtracking — "list all solutions"<br/>
+        Most tree problems (Module 7)</td>
+  </tr>
+</table>
+
+<h3>The two-line decision rule</h3>
+<ul>
+  <li>The problem asks "how many steps?" → <strong>BFS</strong>.</li>
+  <li>The problem asks "does there exist?" or "list all" or "are these connected?" →
+      <strong>DFS</strong> (or Union-Find — see below).</li>
+</ul>
+
+<h2>Grids are graphs in disguise</h2>
+<p>A 2D matrix problem looks like an array problem, but it's almost always a graph problem.
+Each cell is a vertex. Each cell shares an edge with its 4 (or sometimes 8) neighbours.
+"Shortest path through a maze", "count islands", "rotting oranges" — all grid problems, all
+graph problems, all solvable by literally the same BFS/DFS code you'd write for a general
+graph, except you walk a direction list instead of looking up an adjacency list.</p>
+
+<p>The direction list trick:</p>
 <pre><code>DIRS_4 = [(0,1),(0,-1),(1,0),(-1,0)]
 DIRS_8 = DIRS_4 + [(1,1),(1,-1),(-1,1),(-1,-1)]
 <span class="tok-kw">for</span> dr, dc <span class="tok-kw">in</span> DIRS_4:
     nr, nc = r + dr, c + dc
     <span class="tok-kw">if</span> 0 &lt;= nr &lt; rows <span class="tok-kw">and</span> 0 &lt;= nc &lt; cols <span class="tok-kw">and</span> ...</code></pre>
 
-<h2>Multi-source BFS</h2>
-<p>Sometimes the spreading wavefront has multiple origins (rotting oranges spreading to fresh
-ones, walls falling at multiple gates). Just enqueue ALL sources at depth 0 and the algorithm
-proceeds identically. The first time a vertex is reached is still by its globally shortest
-distance — now from the <em>nearest</em> source.</p>
+<p>Walked example — <strong>counting islands of land in a binary grid</strong>:</p>
+<pre><code>1 1 0 0 1
+1 0 0 0 1
+0 0 1 1 1
+0 0 0 0 0
+1 1 0 0 0</code></pre>
+<p>Each <code>1</code> is land, each <code>0</code> is water. Two cells are part of the same
+island if they're orthogonally adjacent. You scan every cell. Whenever you see a 1 you haven't
+already painted as part of an island, you start a DFS (or BFS) from it, painting every connected
+1 as "claimed". Then you increment the island counter and move on. In this grid the islands
+are: top-left blob of three cells, top-right vertical pair, middle blob of four cells, bottom-left
+horizontal pair — answer: 4. The traversal does the heavy lifting; the grid is incidental.</p>
 
-<h2>Topological sort &mdash; ordering a DAG</h2>
-<p>Given prerequisites, return an order in which to do them. Equivalent to: linearize a DAG.
-Useful for course scheduling, build dependencies, evaluation order.</p>
-<p><strong>Kahn's algorithm (BFS-flavoured):</strong></p>
-<ol>
-  <li>Compute the in-degree of every vertex.</li>
-  <li>Enqueue all vertices with in-degree 0.</li>
-  <li>Pop, output, decrement the in-degree of all its successors, enqueue those that hit 0.</li>
-  <li>If you couldn't output every vertex, the graph has a cycle.</li>
-</ol>
-<p>It also doubles as a cycle detector — extremely handy for Q48 "Course Schedule".</p>
+<h2>Multi-source BFS — many ripples at once</h2>
+<p>Going back to the pond image: what if you drop <em>several</em> pebbles at once? Each starts
+its own ring, and the rings spread outward at the same speed and combine. The first ring to
+touch any point is by definition the closest origin's ring.</p>
 
-<h2>Union Find (Disjoint Set Union)</h2>
-<p>Union Find tracks equivalence classes under merging. Two operations:</p>
+<p>Algorithmically: <strong>just put all the sources in the queue at depth 0 before you start
+the loop</strong>. Everything else proceeds identically — including the "first visit = shortest"
+guarantee, except now it's the shortest from the <em>nearest</em> source, which is exactly what
+multi-source problems usually want.</p>
+
+<p>Canonical example — <strong>rotting oranges</strong>:</p>
 <ul>
-  <li><code>find(x)</code> — the canonical representative of x's class.</li>
-  <li><code>union(a, b)</code> — merge a's and b's classes.</li>
+  <li>You have a grid of cells. Some are empty (0), some have a fresh orange (1), some have a
+      rotten orange (2).</li>
+  <li>Each minute, every fresh orange that's orthogonally adjacent to a rotten one also rots.</li>
+  <li>Return the minimum number of minutes until every fresh orange is rotten, or -1 if some
+      will never rot.</li>
 </ul>
-<p>With <strong>path compression</strong> (flatten the tree during find) and <strong>union by
-rank</strong> (always attach the shorter tree under the taller), both operations run in nearly
-O(1) — formally O(α(n)), the inverse Ackermann function.</p>
+<p>Naïvely you'd run BFS from each rotten orange separately and take the min — slow.
+Multi-source BFS does it in one pass: enqueue every rotten orange at depth 0, then BFS as usual.
+The answer is the maximum depth assigned to any orange (or -1 if a fresh one is left unreached).</p>
+
+<h2>Topological sort — ordering a DAG</h2>
+<p>The classic setup: you have a list of tasks, some of which depend on others ("you must do A
+before B"), and you want an order in which you can do all tasks without ever violating a
+dependency. Equivalently: take a directed acyclic graph and produce a linear order such that
+every edge goes left-to-right.</p>
+
+<p>Real-world instances:</p>
+<ul>
+  <li><strong>Course scheduling.</strong> CS101 → CS201 → CS301. You can't take CS201 without
+      CS101 first.</li>
+  <li><strong>Build systems.</strong> <code>main.o</code> depends on <code>util.o</code>; the
+      compiler must build util.o first.</li>
+  <li><strong>Spreadsheet recalculation.</strong> If cell C3 = A1 + B2, recompute A1 and B2
+      before touching C3.</li>
+  <li><strong>Package installers.</strong> Install dependencies before the package that needs them.</li>
+</ul>
+
+<h3>Kahn's algorithm — BFS for ordering</h3>
+<p>The intuition: a vertex is "ready to do" if all its prerequisites are done. Initially,
+"ready" means "has no prerequisites at all" — these are the vertices with in-degree 0.
+Process them, mark them done, then check which previously-blocked vertices have just become
+ready (because all their prerequisites are now done), and queue those up. Repeat.</p>
+<ol>
+  <li>Compute the in-degree (number of incoming edges) of every vertex.</li>
+  <li>Enqueue every vertex whose in-degree is 0 — these have no prerequisites.</li>
+  <li>While the queue is non-empty: pop a vertex, append it to the output order, then for each
+      vertex it points to, decrement that vertex's in-degree. If a vertex's in-degree drops to 0,
+      enqueue it (its last prerequisite just finished).</li>
+  <li>If your output contains every vertex, you have a valid order. If it doesn't, the graph
+      has a cycle and no valid order exists — the cycled vertices' in-degrees never reach 0.</li>
+</ol>
+
+<p>Worked example — courses CS101 (no prereqs), CS102 (no prereqs), CS201 (needs 101),
+CS301 (needs 102 and 201):</p>
+<ul>
+  <li>In-degrees: CS101=0, CS102=0, CS201=1, CS301=2.</li>
+  <li>Queue start: [CS101, CS102]. Output: [].</li>
+  <li>Pop CS101 → output [CS101]. Decrement CS201 to 0; enqueue. Queue: [CS102, CS201].</li>
+  <li>Pop CS102 → output [CS101, CS102]. Decrement CS301 to 1. Queue: [CS201].</li>
+  <li>Pop CS201 → output [CS101, CS102, CS201]. Decrement CS301 to 0; enqueue. Queue: [CS301].</li>
+  <li>Pop CS301 → output [CS101, CS102, CS201, CS301]. Queue empty. Done.</li>
+</ul>
+
+<div class="callout good">
+  <div class="callout-title">Free cycle detection</div>
+  Kahn's algorithm is the cleanest way to detect cycles in a directed graph: if you can't
+  output every vertex, the unaccounted ones must be stuck in a cycle (their in-degree never hits
+  zero because each one depends on another stuck vertex). Q48 "Course Schedule" is exactly this
+  test — return False iff Kahn's outputs fewer than V vertices.
+</div>
+
+<h2>Connected components — counting separate groups</h2>
+<p>A <strong>connected component</strong> is a maximal set of vertices you can all reach from
+each other. A graph with two friend cliques that don't know each other has two components.</p>
+
+<p>How to count them: scan every vertex. If it isn't already marked visited, run a DFS (or BFS)
+from it that paints every reachable vertex visited. Increment the counter. Move to the next
+unvisited vertex. The counter ends up equal to the number of components.</p>
+
+<p>This is the same shape as "count islands" on a grid — counting islands is literally counting
+connected components in the cells-with-1 subgraph of the grid graph.</p>
+
+<h2>Union Find — the "are we in the same group?" data structure</h2>
+<p>Sometimes the only thing you ever need to know about a graph is: <em>are these two vertices
+in the same connected component?</em> No paths, no distances, just membership.</p>
+
+<p>You could rebuild the graph and run DFS every time, but if edges arrive one at a time — as in
+streaming problems — that's wasteful. <strong>Union-Find</strong> (also called Disjoint Set
+Union, DSU) is a data structure that maintains components incrementally as edges arrive. Two
+operations:</p>
+<ul>
+  <li><code>find(x)</code> — return a canonical representative ("the leader") of x's group. If
+      <code>find(a) == find(b)</code>, a and b are in the same group.</li>
+  <li><code>union(a, b)</code> — merge a's group with b's. Future <code>find</code>s for either
+      a or b return the same leader.</li>
+</ul>
+
+<h3>How it works under the hood</h3>
+<p>Each element points to a "parent". Following parent pointers eventually lands you at a root —
+that's the group's leader. Initially every element is its own root (everyone in their own group).
+To union two elements, you find both roots and make one root point to the other.</p>
+<pre><code>Initial:    A   B   C   D   E    (5 singletons)
+            ↑   ↑   ↑   ↑   ↑
+            A   B   C   D   E    (parent pointers)
+
+union(A, B):       union(C, D):
+   A                  C
+   ↑                  ↑
+   B                  D
+
+union(B, C):                        union(D, E):
+   A                                   A
+   ↑                                   ↑↖
+   B                                   B  C
+   ↑                                      ↑↖
+   C                                      D  E
+   ↑
+   D</code></pre>
+
+<p>Without optimization, the trees can grow tall and find becomes O(n) in the worst case. Two
+classic tricks fix this:</p>
+
+<h3>Optimization 1: path compression (during find)</h3>
+<p>When you walk up the tree to find the root, flatten the tree as you go — make every node
+along the way point directly to the root. The next find on any of those nodes is O(1).</p>
+
+<h3>Optimization 2: union by rank (during union)</h3>
+<p>When merging two trees, always attach the shorter one under the taller one (so the result
+stays as shallow as possible). "Rank" is just the estimated depth of the tree.</p>
+
+<p>With both optimizations, each operation runs in <strong>essentially O(1)</strong> on
+average — formally O(α(n)), the inverse Ackermann function, which is &le; 4 for any input you'll
+ever see in your lifetime.</p>
+
 <pre><code><span class="tok-kw">def</span> <span class="tok-fn">make_dsu</span>(n):
     parent = list(range(n))
     rank   = [0] * n
     <span class="tok-kw">def</span> <span class="tok-fn">find</span>(x):
         <span class="tok-kw">while</span> parent[x] != x:
-            parent[x] = parent[parent[x]]
+            parent[x] = parent[parent[x]]   <span class="tok-cmt"># path compression (one-step)</span>
             x = parent[x]
         <span class="tok-kw">return</span> x
     <span class="tok-kw">def</span> <span class="tok-fn">union</span>(a, b):
@@ -680,8 +962,41 @@ O(1) — formally O(α(n)), the inverse Ackermann function.</p>
         <span class="tok-kw">if</span> rank[ra] == rank[rb]: rank[ra] += 1
         <span class="tok-kw">return</span> <span class="tok-kw">True</span>
     <span class="tok-kw">return</span> find, union</code></pre>
-<p>Use it for: counting connected components (Q49), Kruskal's MST, "friend circles",
-"accounts merge", any problem where edges arrive online.</p>
+
+<h3>When to use Union-Find instead of BFS/DFS</h3>
+<ul>
+  <li><strong>Counting connected components</strong> (Q49) — every successful <code>union</code>
+      reduces the count by 1; start at n and decrement.</li>
+  <li><strong>Kruskal's MST algorithm</strong> — sort edges by weight; add each edge if it joins
+      two different components (Union-Find tells you that in O(1)).</li>
+  <li><strong>"Friend circles" / "accounts merge"</strong> — you're given edges between equivalent
+      things and asked how many groups result. DSU is built for this.</li>
+  <li><strong>Online edge insertions</strong> — edges arrive one at a time and you need fast
+      "are these connected?" queries between insertions.</li>
+</ul>
+
+<p>For static graphs where you already have all edges, plain DFS works fine and is often simpler.
+DSU shines when edges arrive online <em>or</em> when the problem only asks about membership.</p>
+
+<h2>What to remember walking into a problem</h2>
+<ol>
+  <li><strong>See the graph.</strong> If it talks about steps, connections, transitions, or
+      prerequisites, it's a graph problem.</li>
+  <li><strong>Build the adjacency list.</strong> Three lines: <code>defaultdict(list)</code>,
+      append in both directions for undirected, one direction for directed.</li>
+  <li><strong>Distance matters? → BFS.</strong> Use a deque, mark visited on enqueue, return
+      depth on first reach.</li>
+  <li><strong>Distance doesn't matter? → DFS.</strong> Recursive, mark visited on entry.</li>
+  <li><strong>Ordering with prerequisites? → Kahn's topo sort.</strong> In-degrees + BFS-flavoured
+      loop. Free cycle detection.</li>
+  <li><strong>Only care about membership? → Union-Find.</strong> Path compression + union by rank
+      give near-O(1) operations.</li>
+  <li><strong>Grid? → Same code, direction list, bounds check.</strong></li>
+</ol>
+
+<p>That's the whole module. The algorithms are short; the recognition is the skill. Practice
+Set 4 below will hammer all four — BFS shortest path, DFS reachability, Kahn's ordering, and
+Union-Find component counting.</p>
 `,
       },
     ],
