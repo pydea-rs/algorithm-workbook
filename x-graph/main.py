@@ -7,7 +7,7 @@ def extract_graph(string):
     graph = defaultdict(list)
     for u ,v in rels:
         graph[u].append(v)
-        graph[v].append(u)
+        graph[v].append(u) # omit this line for a DIRECTED graph
     return graph
 
 print(extract_graph(input()))

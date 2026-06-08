@@ -1,5 +1,5 @@
 {
-  "generated": "2026-06-07T02:05:44Z",
+  "generated": "2026-06-08T05:39:06Z",
   "folders": [
     {
       "name": "bracketCount",
@@ -150,10 +150,28 @@
       "kind": "markdown",
       "files": [
         {
+          "name": "algorithm-book-recommendations.md",
+          "ext": "md",
+          "kind": "markdown",
+          "size": 5648
+        },
+        {
+          "name": "database-normalization.md",
+          "ext": "md",
+          "kind": "markdown",
+          "size": 12469
+        },
+        {
           "name": "hash-tables-how-dict-works.md",
           "ext": "md",
           "kind": "markdown",
           "size": 7284
+        },
+        {
+          "name": "sql-joins.md",
+          "ext": "md",
+          "kind": "markdown",
+          "size": 14014
         }
       ]
     },
@@ -294,6 +312,12 @@
       "kind": "code",
       "files": [
         {
+          "name": "defaulttree.py",
+          "ext": "py",
+          "kind": "code",
+          "size": 642
+        },
+        {
           "name": "tree.py",
           "ext": "py",
           "kind": "code",
@@ -339,6 +363,30 @@
           "ext": "py",
           "kind": "code",
           "size": 736
+        }
+      ]
+    },
+    {
+      "name": "x-graph",
+      "kind": "code",
+      "files": [
+        {
+          "name": "bfs.py",
+          "ext": "py",
+          "kind": "code",
+          "size": 1056
+        },
+        {
+          "name": "dfs.py",
+          "ext": "py",
+          "kind": "code",
+          "size": 136
+        },
+        {
+          "name": "main.py",
+          "ext": "py",
+          "kind": "code",
+          "size": 365
         }
       ]
     }
