@@ -986,7 +986,7 @@ carefully:</p>
 rank:    2     0     1     0     0
 
        A           E
-      / \
+      / \\
      B   C
          |
          D</code></pre>
@@ -1011,7 +1011,7 @@ A and B.</p>
 rank:    2     0     1     0     0
 
          A
-       / | | \
+       / | | \\
       B  C D  E</code></pre>
 <p>After path compression on D's lookup chain, every element now points <em>directly</em> to A
 in one step. C no longer has D as a child — D moved up. The tree is essentially flat.</p>
