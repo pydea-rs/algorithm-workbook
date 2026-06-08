@@ -54,32 +54,96 @@ WHERE NOT EXISTS (SELECT 1 FROM Orders o WHERE o.cid = c.id)
 - Postgres: `col + INTERVAL '1 day'`
 
 ### Common SQL pitfalls
-- `NULL = NULL` is NULL, not TRUE. Always use `IS NULL`.
-- `NOT IN (… NULL …)` returns zero rows. Use `NOT EXISTS` or filter NULLs first.
-- Window functions run AFTER `WHERE` but BEFORE `ORDER BY` and `LIMIT`. To filter on a window result (`rk <= 3`), wrap the query in a CTE/subquery and filter in the outer SELECT.
-- Aliases in SELECT are NOT visible to WHERE or to the same SELECT clause. They ARE visible to ORDER BY (most dialects) and to HAVING (some).
-- Integer division: `5/2 = 2` in most dialects. For median formulas use `(n+1)/2` and `n/2 + 1` deliberately. Cast to REAL when you want fractions.
-- For "median": `ROW_NUMBER() OVER (ORDER BY x) AS rn` + `COUNT(*) OVER () AS n`, then pick rows where `rn IN ((n+1)/2, n/2 + 1)`.
+- `NOT IN (… NULL …)` returns zero rows. Always use `NOT EXISTS` instead — it's NULL-safe.
+- For **median**: `ROW_NUMBER() OVER (ORDER BY x) AS rn` + `COUNT(*) OVER () AS n`, then pick rows where `rn IN ((n+1)/2, n/2 + 1)`. Odd n picks one row; even n picks two.
 
 ---
 
-## Hard regex (Python `re` module in mind)
+## Hard regex
 
-**Anchors** — `^` start, `$` end, `\b` word boundary, `\B` not-word-boundary.
-**Char classes** — `\d \w \s` and negations `\D \W \S`. `[^abc]` = anything except a/b/c.
-**Quantifiers** — `?` 0-1, `*` 0+, `+` 1+, `{n}` exact, `{n,m}` range. Append `?` for lazy: `.*?` matches minimum.
-**Groups** — `(...)` capture, `(?:...)` non-capture, `(?P<name>...)` named (Python).
-**Backrefs** — `\1 \2` reference earlier groups. `(\w+) \1` matches "the the".
-**Alternation** — `(cat|dog|bird)`. Wrap in a group for clarity.
-**Lookahead** — `(?=...)` positive, `(?!...)` negative. Zero-width, doesn't consume.
-**Lookbehind** — `(?<=...)` positive, `(?<!...)` negative. Must be fixed-width in Python.
+Regex is a small language for describing *patterns* of text. The hard part isn't the symbols — it's knowing **when each one is the right tool**. Here are the constructs that solve problems you can't solve with `str.startswith` and friends.
 
-### Python `re` cheatsheet
-- `re.match` (anchored at start) vs `re.search` (anywhere) vs `re.fullmatch` (whole string).
-- `re.findall` returns list of strings (or tuples if groups); `re.finditer` returns match objects.
-- `re.sub(pat, repl, s)`; in `repl`, `\1` refers to group 1.
-- Flags: `re.I` ignorecase, `re.M` per-line `^/$`, `re.S` dotall (`.` matches newline).
+### Anchors — "where in the string must this match?"
 
-### Regex pitfalls
-- `.` doesn't match `\n` unless `re.S`. Greedy `.*` is default — use lazy `.*?` or negated class `[^"]*`.
-- ALWAYS raw strings: `r"\d+"`. `re.findall` with groups returns group contents, not full match.
+By default a regex floats; it matches anywhere the pattern fits. Anchors pin it down.
+
+- `^pattern` — must start at the beginning of the string
+- `pattern$` — must end at the end
+- `\bword\b` — word boundaries; the position between a word char (`\w`) and a non-word char
+
+Without `\b`, the pattern `r"cat"` happily matches inside `concatenate`. With it, you get the standalone word "cat" only.
+
+### Character classes — "which characters are allowed here?"
+
+- `\d` any digit, `\w` any letter/digit/underscore, `\s` any whitespace
+- Uppercase versions `\D \W \S` are the **negation** of those
+- `[abc]` means literally a, b, or c. `[a-z]` is a range. `[^abc]` means *anything except* a, b, or c
+
+The "negation inside brackets" pattern is the powerful one. `r"[^,]+"` reads as "one or more characters, none of which is a comma" — i.e., "consume until the next comma". This shows up everywhere in parsing.
+
+### Quantifiers — "how many times?"
+
+- `?` zero or one (optional)
+- `*` zero or more
+- `+` one or more
+- `{3}` exactly 3, `{2,5}` between 2 and 5
+
+By default quantifiers are **greedy** — they eat as much as they possibly can. That's the source of most regex bugs. Example:
+
+```python
+text = '<a href="x.html">click</a>'
+re.findall(r'"(.+)"', text)    # → matches from first " all the way to last "  ← WRONG
+```
+
+The `.+` ate past the closing quote into the rest of the string. Two ways to fix:
+
+- **Lazy quantifier**: append `?` → `.+?` matches the minimum. `r'"(.+?)"'` works.
+- **Negated class**: explicitly forbid the terminator → `r'"([^"]+)"'`. Often safer than lazy because it makes the intent explicit.
+
+### Groups — "capture this part for later"
+
+- `(pattern)` — capturing group. The matched text is saved and accessible as group 1, 2, 3 …
+- `(?:pattern)` — non-capturing. Same matching behavior but doesn't reserve a group number. Use this when you only need grouping for alternation or repetition, not for extracting text.
+- `(?P<name>pattern)` — Python's named group. Access via `m.group("name")`.
+
+Concrete example — extract the order number and total from `"Order #1234, total: $89.50"`:
+
+```python
+m = re.search(r'#(\d+).+\$(\d+\.\d+)', text)
+m.group(1)  # '1234'
+m.group(2)  # '89.50'
+```
+
+### Backreferences — "match the same thing as before"
+
+Inside the pattern, `\1` means "whatever group 1 captured". This is how you find repetitions.
+
+```python
+re.findall(r'\b(\w+) \1\b', "the the quick brown fox fox")
+# → ['the', 'fox']     # each duplicated word
+```
+
+### Alternation — "any one of these"
+
+- `cat|dog|bird` matches any of the three.
+- Almost always wrap in a non-capturing group: `(?:cat|dog|bird)`. Without the group, the `|` extends to the entire pattern's start and end, which is usually not what you want.
+
+### Lookahead and lookbehind — "match here only if X is next / before"
+
+These are **zero-width assertions** — they check a condition but consume no characters. Very useful for "match X but only when followed/preceded by Y" without including Y in the result.
+
+- `(?=...)` positive lookahead — "next must be …"
+- `(?!...)` negative lookahead — "next must NOT be …"
+- `(?<=...)` positive lookbehind — "previous must be …"
+- `(?<!...)` negative lookbehind — "previous must NOT be …"
+
+Example — find prices that are followed by " USD" but don't include " USD" in the match itself:
+
+```python
+re.findall(r'\d+(?=\s+USD)', "10 USD, 20 EUR, 30 USD")
+# → ['10', '30']
+```
+
+The `(?=\s+USD)` checks for " USD" after the digits but the match is just the digits themselves. Without lookahead you'd have to capture the digits in a group and discard the rest manually — much uglier.
+
+In Python, lookbehind must be **fixed-width** (`(?<=abc)` is fine, `(?<=a+)` is rejected). Lookahead has no such restriction.

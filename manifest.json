@@ -1,5 +1,5 @@
 {
-  "generated": "2026-06-08T15:48:10Z",
+  "generated": "2026-06-08T16:18:00Z",
   "folders": [
     {
       "name": "bracketCount",
@@ -183,7 +183,7 @@
           "name": "sql-and-regex-cheatsheet.md",
           "ext": "md",
           "kind": "markdown",
-          "size": 4097
+          "size": 6395
         },
         {
           "name": "sql-joins.md",
