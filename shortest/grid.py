@@ -19,3 +19,5 @@ def shortest_path_binary_matrix(grid):
                 if 0 <= nxt_r < rows and 0 <= nxt_c < cols and 0 == grid[nxt_r][nxt_c]:
                     grid[nxt_r][nxt_c] = 1; q.append((nxt_r, nxt_c, d + 1))
     return -1
+
+

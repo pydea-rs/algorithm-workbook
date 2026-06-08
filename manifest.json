@@ -1,5 +1,5 @@
 {
-  "generated": "2026-06-08T15:20:20Z",
+  "generated": "2026-06-08T15:48:10Z",
   "folders": [
     {
       "name": "bracketCount",
@@ -180,6 +180,12 @@
           "size": 7284
         },
         {
+          "name": "sql-and-regex-cheatsheet.md",
+          "ext": "md",
+          "kind": "markdown",
+          "size": 4097
+        },
+        {
           "name": "sql-joins.md",
           "ext": "md",
           "kind": "markdown",
@@ -291,7 +297,7 @@
           "name": "grid.py",
           "ext": "py",
           "kind": "code",
-          "size": 747
+          "size": 749
         },
         {
           "name": "main.py",
