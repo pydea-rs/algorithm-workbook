@@ -1,6 +1,8 @@
 import re
 def QuestionsMarks(strParam):
-  parts = re.findall(r"\d+|[^\d]+", strParam)
+  parts = re.findall(r"\d+[\.\d]*|[^\d]+", strParam)
+  # or parts = re.findall(r"\d+\.*\d*|[^\d]+", strParam)
+  print(parts)
   length = len(parts)
   i = 0
   once = False

@@ -903,48 +903,147 @@ streaming problems — that's wasteful. <strong>Union-Find</strong> (also called
 Union, DSU) is a data structure that maintains components incrementally as edges arrive. Two
 operations:</p>
 <ul>
-  <li><code>find(x)</code> — return a canonical representative ("the leader") of x's group. If
-      <code>find(a) == find(b)</code>, a and b are in the same group.</li>
+  <li><code>find(x)</code> — return a canonical representative ("the leader" or "root") of x's
+      group. If <code>find(a) == find(b)</code>, a and b are in the same group.</li>
   <li><code>union(a, b)</code> — merge a's group with b's. Future <code>find</code>s for either
       a or b return the same leader.</li>
 </ul>
 
 <h3>How it works under the hood</h3>
-<p>Each element points to a "parent". Following parent pointers eventually lands you at a root —
-that's the group's leader. Initially every element is its own root (everyone in their own group).
-To union two elements, you find both roots and make one root point to the other.</p>
-<pre><code>Initial:    A   B   C   D   E    (5 singletons)
-            ↑   ↑   ↑   ↑   ↑
-            A   B   C   D   E    (parent pointers)
+<p>Each element holds one pointer: who its parent is. Follow parent pointers and you eventually
+reach a node whose parent is itself — that's the root of the tree, the group's leader. Initially
+every element is its own root (everyone alone in their own group).</p>
 
-union(A, B):       union(C, D):
-   A                  C
-   ↑                  ↑
-   B                  D
+<div class="callout tip">
+  <div class="callout-title">The one mechanical rule</div>
+  <code>union(X, Y)</code> does <strong>not</strong> directly link X and Y. It calls
+  <code>find(X)</code> and <code>find(Y)</code> to get their roots, then links those two roots.
+  This is the single trick that, if you forget it, makes Union-Find look like magic. Hold on to it.
+</div>
 
-union(B, C):                        union(D, E):
-   A                                   A
-   ↑                                   ↑↖
-   B                                   B  C
-   ↑                                      ↑↖
-   C                                      D  E
-   ↑
-   D</code></pre>
+<h3>The two optimizations, named up front</h3>
+<p>We'll use them throughout the walked example below, so let's name them now:</p>
+<ul>
+  <li><strong>Union by rank</strong> — when merging two trees, attach the shorter one under the
+      taller one (kept track of via a <code>rank</code> array). On a tie, pick one arbitrarily and
+      bump the winner's rank by 1. This keeps the tree from growing tall through bad luck.</li>
+  <li><strong>Path compression</strong> — during a <code>find</code> that walks up several
+      levels, repoint every node we passed to point <em>directly</em> at the root we found.
+      Every <code>find</code> not only answers the question, it makes all future queries on
+      those nodes faster.</li>
+</ul>
 
-<p>Without optimization, the trees can grow tall and find becomes O(n) in the worst case. Two
-classic tricks fix this:</p>
+<h3>A worked example — 4 unions on 5 elements</h3>
+<p>We'll start with 5 singletons A, B, C, D, E and apply four unions in order. Each step shows
+the <code>parent</code> array, the <code>rank</code> array, and the resulting forest.</p>
 
-<h3>Optimization 1: path compression (during find)</h3>
-<p>When you walk up the tree to find the root, flatten the tree as you go — make every node
-along the way point directly to the root. The next find on any of those nodes is O(1).</p>
+<h4>Initial state</h4>
+<pre><code>parent: A→A   B→B   C→C   D→D   E→E
+rank:    0     0     0     0     0
 
-<h3>Optimization 2: union by rank (during union)</h3>
-<p>When merging two trees, always attach the shorter one under the taller one (so the result
-stays as shallow as possible). "Rank" is just the estimated depth of the tree.</p>
+A     B     C     D     E       (five singletons)</code></pre>
 
-<p>With both optimizations, each operation runs in <strong>essentially O(1)</strong> on
-average — formally O(α(n)), the inverse Ackermann function, which is &le; 4 for any input you'll
-ever see in your lifetime.</p>
+<h4>union(A, B)</h4>
+<ol>
+  <li><code>find(A)</code> → A is its own parent → returns A.</li>
+  <li><code>find(B)</code> → returns B.</li>
+  <li>Roots A and B both have rank 0 — tie. A wins; bump rank[A] to 1.</li>
+  <li><code>parent[B] = A</code>.</li>
+</ol>
+<pre><code>parent: A→A   B→A   C→C   D→D   E→E
+rank:    1     0     0     0     0
+
+   A           C     D     E
+   |
+   B</code></pre>
+
+<h4>union(C, D)</h4>
+<ol>
+  <li><code>find(C)</code> → C.</li>
+  <li><code>find(D)</code> → D.</li>
+  <li>Both rank 0 — tie. C wins; rank[C] bumps to 1.</li>
+  <li><code>parent[D] = C</code>.</li>
+</ol>
+<pre><code>parent: A→A   B→A   C→C   D→C   E→E
+rank:    1     0     1     0     0
+
+   A     C           E
+   |     |
+   B     D</code></pre>
+
+<h4>union(B, C) — the one that confuses everyone</h4>
+<p>This is where the "but B and C don't go together!" reaction kicks in. Watch the find calls
+carefully:</p>
+<ol>
+  <li><code>find(B)</code> → walk up: parent[B] = A; A is its own parent → returns
+      <strong>A</strong>.</li>
+  <li><code>find(C)</code> → C is its own parent → returns <strong>C</strong>.</li>
+  <li>We're now merging the roots <strong>A</strong> and <strong>C</strong>, not B and C themselves.
+      Both have rank 1 — tie. A wins; rank[A] bumps to 2.</li>
+  <li><code>parent[C] = A</code>. C now points up to A. D is still C's child, dragged along.</li>
+</ol>
+<pre><code>parent: A→A   B→A   C→A   D→C   E→E
+rank:    2     0     1     0     0
+
+       A           E
+      / \
+     B   C
+         |
+         D</code></pre>
+<p>The key realization: union(B, C) didn't <em>link B to C</em>. It found the two leaders
+(A and C) and linked those. Everything underneath each leader got merged transitively. D didn't
+move — it's still parented at C — but since C now sits under A, D is in the same big group as
+A and B.</p>
+
+<h4>union(D, E)</h4>
+<ol>
+  <li><code>find(D)</code> → walk up: parent[D] = C → parent[C] = A → A is its own parent →
+      returns <strong>A</strong>.
+      <br/>This is where <strong>path compression</strong> kicks in: while walking the chain
+      D → C → A, the algorithm repoints D to point directly at A.
+      After this find, <code>parent[D] = A</code> as a shortcut.</li>
+  <li><code>find(E)</code> → returns <strong>E</strong>.</li>
+  <li>Roots A (rank 2) and E (rank 0). A has the higher rank, so E attaches under A. Ranks
+      don't change (only ties bump rank).</li>
+  <li><code>parent[E] = A</code>.</li>
+</ol>
+<pre><code>parent: A→A   B→A   C→A   D→A   E→A     (D was compressed)
+rank:    2     0     1     0     0
+
+         A
+       / | | \
+      B  C D  E</code></pre>
+<p>After path compression on D's lookup chain, every element now points <em>directly</em> to A
+in one step. C no longer has D as a child — D moved up. The tree is essentially flat.</p>
+
+<h3>Summary of the four unions at a glance</h3>
+<table class="tbl">
+  <tr><th>Call</th><th>Roots found</th><th>Merge decision</th><th>parent map change</th></tr>
+  <tr><td>union(A,B)</td><td>A and B</td><td>A swallows B (tie → A wins, rank[A]→1)</td>
+      <td>parent[B] = A</td></tr>
+  <tr><td>union(C,D)</td><td>C and D</td><td>C swallows D (tie → C wins, rank[C]→1)</td>
+      <td>parent[D] = C</td></tr>
+  <tr><td>union(B,C)</td><td>A and C</td><td>A swallows C (tie → A wins, rank[A]→2)</td>
+      <td>parent[C] = A</td></tr>
+  <tr><td>union(D,E)</td><td>A and E</td><td>A swallows E (rank 2 &gt; rank 0)</td>
+      <td>parent[E] = A; path compression sets parent[D] = A</td></tr>
+</table>
+
+<h3>Why the optimizations make it nearly free</h3>
+
+<p><strong>Union by rank</strong> ensures that when two trees of different heights merge, the
+shorter goes under the taller. Heights only grow on a tie — to reach height 3 you need to merge
+two height-2 trees, and to have two height-2 trees you must have already merged four height-1
+trees each, and so on. After n unions the tree is at most ~log₂(n) tall, even without path
+compression.</p>
+
+<p><strong>Path compression</strong> is even more aggressive. Every <code>find</code> shortens
+the path it walked over. After enough operations the tree is essentially flat — every node
+points directly to the root and <code>find</code> is one hop.</p>
+
+<p>Combined, the <em>amortized</em> cost per operation is α(n), the inverse Ackermann function,
+which is ≤ 4 for any input you'll ever process in your lifetime. You can treat both
+<code>find</code> and <code>union</code> as <strong>O(1)</strong> in practice.</p>
 
 <pre><code><span class="tok-kw">def</span> <span class="tok-fn">make_dsu</span>(n):
     parent = list(range(n))
