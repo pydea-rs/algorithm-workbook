@@ -42,6 +42,14 @@ ALWAYS_SKIP = {
     "build_manifest.py", "README.md", ".gitignore", ".git",
 }
 
+# Folders under `tutorials/` become sub-items of the "Tutorial" sidebar entry.
+# The order below determines the display order in the sidebar.
+TUTORIAL_CHILDREN = [
+    {"slug": "algorithms",     "title": "Algorithms"},
+    {"slug": "odoo-framework", "title": "Odoo Framework"},
+]
+TUTORIALS_DIR = "tutorials"
+
 
 def parse_gitignore(root):
     """Minimal .gitignore parser: dir/, glob, comments, blank lines. Negations ignored."""
@@ -125,8 +133,22 @@ def main():
             continue
         if is_ignored(name, skip_dirs, skip_globs, is_dir=True):
             continue
-        if name == "tutorial":
-            folders.append({"name": "tutorial", "kind": "tutorial", "entry": "tutorial/index.html"})
+        if name == TUTORIALS_DIR:
+            children = []
+            for c in TUTORIAL_CHILDREN:
+                child_index = os.path.join(path, c["slug"], "index.html")
+                if os.path.isfile(child_index):
+                    children.append({
+                        "slug":  c["slug"],
+                        "title": c["title"],
+                        "entry": f"{TUTORIALS_DIR}/{c['slug']}/index.html",
+                    })
+            if children:
+                folders.append({
+                    "name":     "tutorial",
+                    "kind":     "tutorial-group",
+                    "children": children,
+                })
             continue
         files = scan_folder(path, skip_dirs, skip_globs)
         if not files:

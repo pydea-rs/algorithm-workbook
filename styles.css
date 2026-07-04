@@ -140,6 +140,56 @@ a:hover { color: var(--accent); }
   border-radius: 999px;
 }
 
+/* ----- Expandable nav group (Tutorial → Algorithms / Odoo Framework) ----- */
+
+.nav-group { display: flex; flex-direction: column; gap: 2px; }
+.nav-group-header {
+  width: 100%;
+  background: transparent;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.nav-group-header .ni-chevron {
+  color: var(--text-mute);
+  font-size: 10px;
+  transition: transform 180ms var(--ease-out);
+  margin-left: auto;
+}
+.nav-group:not(.collapsed) .nav-group-header .ni-chevron { transform: rotate(90deg); }
+
+.nav-group-children {
+  display: flex; flex-direction: column; gap: 2px;
+  padding-left: 22px;
+  margin: 2px 0 4px;
+  border-left: 1px dashed var(--border-soft);
+  margin-left: 18px;
+  overflow: hidden;
+  max-height: 500px;
+  transition: max-height 200ms var(--ease-out), opacity 160ms var(--ease-out);
+}
+.nav-group.collapsed .nav-group-children {
+  max-height: 0;
+  opacity: 0;
+  margin: 0 0 0 18px;
+}
+.nav-subitem {
+  padding: 7px 10px;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+.nav-subitem .ni-name { padding-left: 2px; }
+.nav-subitem::before {
+  content: "";
+  width: 6px; height: 6px;
+  border-radius: 999px;
+  background: var(--border);
+  margin-right: 8px;
+  flex-shrink: 0;
+  transition: background-color 140ms var(--ease-out);
+}
+.nav-subitem.active::before { background: var(--accent); }
+
 .data-source-tag {
   margin-top: 12px;
   padding: 6px 10px;

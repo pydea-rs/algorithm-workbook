@@ -1,5 +1,5 @@
 {
-  "generated": "2026-06-08T16:18:00Z",
+  "generated": "2026-07-04T20:35:01Z",
   "folders": [
     {
       "name": "bracketCount",
@@ -183,7 +183,7 @@
           "name": "sql-and-regex-cheatsheet.md",
           "ext": "md",
           "kind": "markdown",
-          "size": 6395
+          "size": 6686
         },
         {
           "name": "sql-joins.md",
@@ -363,8 +363,19 @@
     },
     {
       "name": "tutorial",
-      "kind": "tutorial",
-      "entry": "tutorial/index.html"
+      "kind": "tutorial-group",
+      "children": [
+        {
+          "slug": "algorithms",
+          "title": "Algorithms",
+          "entry": "tutorials/algorithms/index.html"
+        },
+        {
+          "slug": "odoo-framework",
+          "title": "Odoo Framework",
+          "entry": "tutorials/odoo-framework/index.html"
+        }
+      ]
     },
     {
       "name": "unique-index",

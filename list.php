@@ -35,6 +35,13 @@ $ALWAYS_SKIP = [
     "build_manifest.py", "README.md", ".gitignore", ".git",
 ];
 
+// Folders under tutorials/ become sub-items of the "Tutorial" sidebar entry.
+$TUTORIALS_DIR = "tutorials";
+$TUTORIAL_CHILDREN = [
+    ["slug" => "algorithms",     "title" => "Algorithms"],
+    ["slug" => "odoo-framework", "title" => "Odoo Framework"],
+];
+
 function parse_gitignore_php($root) {
     $skip_dirs = [];
     $skip_globs = [];
@@ -106,8 +113,25 @@ if ($names !== false) {
         $full = "$ROOT/$name";
         if (!is_dir($full)) continue;
         if (is_ignored_php($name, $skip_dirs, $skip_globs, true)) continue;
-        if ($name === "tutorial") {
-            $folders[] = ["name" => "tutorial", "kind" => "tutorial", "entry" => "tutorial/index.html"];
+        if ($name === $TUTORIALS_DIR) {
+            $children = [];
+            foreach ($TUTORIAL_CHILDREN as $c) {
+                $child_index = "$full/{$c['slug']}/index.html";
+                if (is_file($child_index)) {
+                    $children[] = [
+                        "slug"  => $c["slug"],
+                        "title" => $c["title"],
+                        "entry" => "$TUTORIALS_DIR/{$c['slug']}/index.html",
+                    ];
+                }
+            }
+            if ($children) {
+                $folders[] = [
+                    "name"     => "tutorial",
+                    "kind"     => "tutorial-group",
+                    "children" => $children,
+                ];
+            }
             continue;
         }
         $files = scan_folder_php($full, $skip_dirs, $skip_globs, $EXT_KIND, $ALWAYS_SKIP);

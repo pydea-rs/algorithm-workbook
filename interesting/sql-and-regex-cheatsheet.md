@@ -38,7 +38,8 @@ SELECT c.name FROM Customers c
 LEFT JOIN Orders o ON c.id = o.cid WHERE o.id IS NULL;
 ```
 
-**7. Self join** — same table, two aliases. Hierarchies (employee/manager) + consecutive-date / pairwise comparisons.
+**7. Self join** — same table, two aliases. Hierarchies (employee/manager) + consecutive-date / pairwise comparisons.The part about python cheet sheet (listing functions) is easy for me; also in SQL pitfalls only keep the `NOT EXISTS and The last `For median: ROW_NUMBER()` points; remove others
+Instead of these things i told you to remove, make `hard regex` part more understandable; its very badly written
 ```sql
 FROM Employee e JOIN Employee m ON e.managerId = m.id
 ```

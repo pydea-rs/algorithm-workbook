@@ -1,0 +1,2572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Odoo 19 Framework — Developer Tutorial</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Roboto+Condensed:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header>
+    <button class="hamburger" aria-label="Toggle navigation">☰</button>
+    <div class="logo">
+        <div class="logo-icon">O</div>
+        Odoo<span>Tutorial</span>
+    </div>
+    <div class="subtitle">Developer Guide — v19.0</div>
+</header>
+
+<div class="progress-bar"><div class="fill" id="progressFill"></div></div>
+
+<!-- ============================== SIDEBAR ============================== -->
+<nav id="sidebar">
+    <div class="search-box">
+        <input type="text" id="searchInput" placeholder="Search sections... ( / )">
+    </div>
+
+    <div class="nav-section">Foundations</div>
+    <a href="#intro">Introduction</a>
+    <a href="#architecture">Architecture Overview</a>
+    <a href="#setup">Development Setup</a>
+    <a href="#project-structure">Project Structure</a>
+    <a href="#manifest">Module Manifest</a>
+
+    <div class="nav-section">Backend (Python)</div>
+    <a href="#orm">ORM & Models</a>
+    <a href="#fields">Fields Reference</a>
+    <a href="#crud">CRUD Operations</a>
+    <a href="#relations">Relations & Domains</a>
+    <a href="#inheritance">Inheritance Patterns</a>
+    <a href="#constraints">Constraints & Validation</a>
+    <a href="#decorators">Decorators & API</a>
+    <a href="#security">Security (ACL & Rules)</a>
+    <a href="#server-actions">Server Actions & Crons</a>
+    <a href="#rpc">RPC & Web Services</a>
+    <a href="#controllers">HTTP Controllers</a>
+
+    <div class="nav-section">Frontend</div>
+    <a href="#owl">OWL Framework</a>
+    <a href="#views">View Types</a>
+    <a href="#qweb">QWeb Templates</a>
+    <a href="#assets">Assets & JS</a>
+
+    <div class="nav-section">Advanced</div>
+    <a href="#data-files">Data Files & Manifest</a>
+    <a href="#reports">Reports (QWeb PDF)</a>
+    <a href="#testing">Testing</a>
+    <a href="#deployment">Deployment</a>
+    <a href="#best-practices">Best Practices</a>
+    <a href="#cheatsheet">Cheat Sheet</a>
+
+    <div class="nav-section">Practice</div>
+    <a href="#projects">Sample Projects</a>
+</nav>
+
+<!-- ============================== MAIN CONTENT ============================== -->
+<main>
+
+<!-- ==================== INTRO ==================== -->
+<div class="toc-top" id="intro">
+    <h1>Odoo 19 Framework — Developer Tutorial</h1>
+    <p>A concise, complete guide for experienced backend/frontend developers. Maps Odoo concepts to Django, FastAPI, NestJS, Next.js, and more. Designed for a 2-3 hour read.</p>
+    <div class="reading-time">📖 ~120 min read</div>
+</div>
+
+<div class="callout info">
+    <strong>🎯 Who is this for?</strong>
+    Developers experienced with Django, FastAPI, Flask, NestJS, Next.js, Axum, Go Echo, or similar frameworks. We map Odoo concepts to familiar patterns throughout this tutorial.
+</div>
+
+<div class="toc-grid">
+    <a class="toc-item" href="#architecture"><div class="num">1</div><h3>Architecture</h3><p>MVC-like, ORM, RPC, module system</p></a>
+    <a class="toc-item" href="#orm"><div class="num">2</div><h3>ORM & Models</h3><p>Active Record ORM, fields, CRUD</p></a>
+    <a class="toc-item" href="#security"><div class="num">3</div><h3>Security</h3><p>ACL, record rules, groups</p></a>
+    <a class="toc-item" href="#views"><div class="num">4</div><h3>Views & Frontend</h3><p>XML views, OWL, QWeb</p></a>
+    <a class="toc-item" href="#inheritance"><div class="num">5</div><h3>Inheritance</h3><p>3 patterns for extensibility</p></a>
+    <a class="toc-item" href="#data-files"><div class="num">6</div><h3>Data & Deployment</h3><p>Manifest, testing, deployment</p></a>
+    <a class="toc-item" href="#rpc"><div class="num">7</div><h3>RPC & API</h3><p>External API, JSON-RPC</p></a>
+    <a class="toc-item" href="#projects"><div class="num">8</div><h3>Practice Projects</h3><p>Hands-on projects to master Odoo</p></a>
+</div>
+
+<hr class="section-divider">
+
+<!-- ==================== 1. ARCHITECTURE ==================== -->
+<h2 id="architecture"><span class="chapter-badge">Chapter 1</span>Architecture Overview</h2>
+
+<p>Odoo is a <strong>modular, monolithic ORM-driven application framework</strong> — think Django Admin + Django REST Framework + a frontend framework, all tightly integrated. Everything is a module. You define a model, and Odoo auto-generates CRUD UI, API endpoints, security rules, and more.</p>
+
+<div class="framework-compare">
+    <div class="side">
+        <h5>Django / FastAPI / NestJS</h5>
+        <p>You assemble models, views, serializers, admin, permissions, templates, and migrations as separate concerns. You wire them together explicitly.</p>
+    </div>
+    <div class="side">
+        <h5>Odoo</h5>
+        <p>All-in-one: define a model → auto-generated CRUD UI, API, security, reports, website pages. Convention over configuration. A single model definition gives you a full-stack feature.</p>
+    </div>
+</div>
+
+<h3>Core Concepts Mapping</h3>
+
+<table class="comparison-table">
+    <thead><tr><th>Odoo Concept</th><th>Django Equivalent</th><th>Description</th></tr></thead>
+    <tbody>
+        <tr><td><code>Module</code></td><td>App</td><td>Self-contained unit with models, views, controllers, data</td></tr>
+        <tr><td><code>Model</code></td><td>Model</td><td>ORM model mapped to a database table</td></tr>
+        <tr><td><code>View</code></td><td>Template + Admin</td><td>XML-defined UI (forms, lists, kanban, etc.)</td></tr>
+        <tr><td><code>Action</code></td><td>URL + View</td><td>Defines what happens when a menu is clicked</td></tr>
+        <tr><td><code>Record Rule</code></td><td>Object-level permissions</td><td>Row-level access control via domain filters</td></tr>
+        <tr><td><code>Field</code></td><td>Model Field</td><td>Typed attribute with ORM integration</td></tr>
+        <tr><td><code>TransientModel</code></td><td>Form Wizard</td><td>Auto-cleaned model for multi-step workflows</td></tr>
+        <tr><td><code>AbstractModel</code></td><td>AbstractModel</td><td>Mixin — no DB table, just behavior</td></tr>
+        <tr><td><code>QWeb</code></td><td>Django Templates</td><td>XML-based template engine for reports, emails, frontend</td></tr>
+        <tr><td><code>OWL</code></td><td>React / Vue</td><td>Component framework for rich client-side UI</td></tr>
+    </tbody>
+</table>
+
+<h3>Request Lifecycle</h3>
+<ol class="steps">
+    <li><strong>Browser/RPC</strong> sends request to Odoo server (port 8069)</li>
+    <li><strong>Web controller</strong> dispatches to appropriate handler (HTTP or JSON-RPC)</li>
+    <li><strong>Security layer</strong> checks ACL + record rules (like Django middleware)</li>
+    <li><strong>ORM</strong> processes business logic in Python (Active Record pattern)</li>
+    <li><strong>PostgreSQL</strong> executes queries (single database backend only)</li>
+    <li><strong>Response</strong> returns JSON / QWeb-rendered HTML / redirect</li>
+</ol>
+
+<div class="callout tip">
+    <strong>💡 Mental Model</strong>
+    Think of Odoo as a "batteries-included" Django where the admin panel, REST API, template engine, and frontend are all one cohesive system. You spend less time wiring things together and more time on business logic.
+</div>
+
+<h3>Technology Stack</h3>
+<table class="comparison-table">
+    <thead><tr><th>Layer</th><th>Technology</th><th>Notes</th></tr></thead>
+    <tbody>
+        <tr><td>Language</td><td>Python 3.10+</td><td>Backend logic, ORM, controllers</td></tr>
+        <tr><td>Database</td><td>PostgreSQL 14+</td><td>Only supported database — uses PG-specific features</td></tr>
+        <tr><td>Frontend</td><td>OWL (Odoo Web Library)</td><td>Custom component framework (not React/Vue)</td></tr>
+        <tr><td>Templates</td><td>QWeb</td><td>XML-based, used for reports, emails, website, OWL</td></tr>
+        <tr><td>JS Build</td><td>Rollup / Asset Bundles</td><td>No npm/webpack — Odoo bundles assets internally</td></tr>
+        <tr><td>RPC</td><td>JSON-RPC + XML-RPC</td><td>Communication between frontend and backend</td></tr>
+    </tbody>
+</table>
+
+<!-- ==================== Section Summary ==================== -->
+<div class="section-summary reveal">
+    <h3>Chapter 1 Summary</h3>
+    <ul>
+        <li>Odoo is a <strong>modular monolith</strong> — all features live in modules</li>
+        <li>Models auto-generate UI, API, and security — <strong>no separate admin setup</strong></li>
+        <li>Uses <strong>PostgreSQL only</strong> — leverages PG-specific features heavily</li>
+        <li>OWL is Odoo's custom frontend framework — similar to Vue but XML-based</li>
+        <li>Architecture is closest to <strong>Django + DRF + admin</strong> in one package</li>
+    </ul>
+</div>
+
+<!-- ==================== 2. SETUP ==================== -->
+<h2 id="setup"><span class="chapter-badge">Chapter 2</span>Development Setup</h2>
+
+<h3>System Requirements</h3>
+<table class="comparison-table">
+    <thead><tr><th>Component</th><th>Minimum</th><th>Recommended</th></tr></thead>
+    <tbody>
+        <tr><td>Python</td><td>3.10</td><td>3.11 or 3.12</td></tr>
+        <tr><td>PostgreSQL</td><td>14</td><td>16</td></tr>
+        <tr><td>Node.js</td><td>Not required</td><td>18+ (for some frontend tools)</td></tr>
+        <tr><td>OS</td><td>Linux / macOS</td><td>Ubuntu 22.04+</td></tr>
+        <tr><td>RAM</td><td>2 GB</td><td>4 GB+</td></tr>
+    </tbody>
+</table>
+
+<h3>Installation</h3>
+<pre><code># Clone Odoo 19
+git clone https://github.com/odoo/odoo.git --depth 1 -b 19.0
+cd odoo
+
+# Create virtual environment
+python3 -m venv venv
+source venv/bin/activate
+
+# Install Python dependencies
+pip install -r requirements.txt
+
+# Install system dependencies (Ubuntu/Debian)
+sudo apt install postgresql-client libpq-dev \
+    python3-dev libxml2-dev libxslt1-dev \
+    libldap2-dev libsasl2-dev libjpeg-dev zlib1g-dev
+
+# Create PostgreSQL user
+sudo -u postgres createuser --createdb --no-superuser --no-createrole odoo
+</code></pre>
+
+<h3>Running Odoo</h3>
+<pre><code># First run — create database and install base module
+./odoo-bin -d mydb -i base --dev=xmlrpc
+
+# Development mode with custom addons
+./odoo-bin --addons-path=addons,my_addons -d mydb -i my_module --dev=xmlrpc
+
+# Key flags:
+#   -d DATABASE         Database name
+#   -i MODULES          Install modules on startup
+#   -u MODULES          Update modules on startup
+#   --dev=xmlrpc        Auto-reload on Python/XML changes
+#   --addons-path=PATHS Comma-separated addon directories
+#   --stop-after-init   Run once and exit (for tests/scripts)
+</code></pre>
+
+<div class="callout warning">
+    <strong>⚠️ Important Ports</strong>
+    Odoo runs on port <code>8069</code> by default. The longpolling/websocket port for live updates is <code>8072</code>. The URL is <code>http://localhost:8069</code>.
+</div>
+
+<h3>Config File</h3>
+<pre><code># Generate a config file
+./odoo-bin --save --config /etc/odoo/odoo.conf
+
+# Key config options
+[options]
+admin_passwd = my_master_password
+db_host = localhost
+db_port = 5432
+db_user = odoo
+db_password = odoo_pass
+addons_path = /opt/odoo/addons,/opt/odoo/my_addons
+data_dir = /var/lib/odoo
+logfile = /var/log/odoo/odoo.log
+proxy_mode = True
+</code></pre>
+
+<!-- ==================== 3. PROJECT STRUCTURE ==================== -->
+<h2 id="project-structure"><span class="chapter-badge">Chapter 3</span>Project Structure</h2>
+
+<p>An Odoo addon module follows a strict directory structure — similar to a Django app but more structured:</p>
+
+<pre><code>my_module/
+├── __init__.py               # Python package init
+├── __manifest__.py           # Module metadata & dependencies
+├── models/
+│   ├── __init__.py           # Import all model files
+│   ├── my_model.py           # Main model
+│   └── res_partner.py        # Extend existing models
+├── views/
+│   ├── my_model_views.xml    # Form, tree, kanban, search views
+│   ├── my_model_menu.xml     # Menu items and window actions
+│   └── res_config_settings.xml  # Settings page
+├── security/
+│   ├── ir.model.access.csv   # Access control list (ACL)
+│   └── security_rules.xml    # Record rules (row-level)
+├── data/
+│   ├── sequence_data.xml     # Sequences, parameters
+│   └── cron_data.xml         # Scheduled actions
+├── demo/
+│   └── demo_data.xml         # Sample data (dev only)
+├── static/
+│   └── src/
+│       ├── js/               # OWL components / JS
+│       ├── css/              # Stylesheets
+│       └── xml/              # QWeb JS templates
+├── controllers/
+│   ├── __init__.py
+│   └── main.py               # HTTP routes (like Flask/FastAPI)
+├── wizard/
+│   ├── __init__.py
+│   └── my_wizard.py          # Transient models (wizards)
+├── report/
+│   ├── my_report.xml         # QWeb report template
+│   └── report_actions.xml    # Report actions
+└── tests/
+    ├── __init__.py
+    ├── test_my_model.py      # Unit tests
+    └── test_controllers.py   # Integration tests
+</code></pre>
+
+<div class="callout info">
+    <strong>📁 Scaffold a module</strong>
+    Odoo has a built-in scaffolding tool:<br>
+    <code>./odoo-bin scaffold my_module /path/to/addons/</code><br>
+    This creates the full directory structure with all boilerplate files.
+</div>
+
+<!-- ==================== 4. MANIFEST ==================== -->
+<h2 id="manifest"><span class="chapter-badge">Chapter 4</span>Module Manifest</h2>
+
+<p>The <code>__manifest__.py</code> file is the heart of every module — it tells Odoo what the module does, what it depends on, and what files to load. Think of it as a combination of Django's <code>apps.py</code> + <code>requirements.txt</code> + <code>settings.py</code>:</p>
+
+<pre><code>{
+    'name': 'My Module',
+    'version': '19.0.1.0.0',
+    'summary': 'Short one-line description',
+    'description': """
+        Longer description of what this module does.
+        Supports RST formatting.
+    """,
+    'author': 'Your Name',
+    'website': 'https://example.com',
+    'license': 'LGPL-3',
+
+    # Dependencies — like Django's INSTALLED_APPS
+    # Odoo loads these before your module
+    'depends': ['base', 'mail', 'sale'],
+
+    # Data files — loaded in exact order on install/upgrade
+    'data': [
+        'security/security_rules.xml',      # Record rules FIRST
+        'security/ir.model.access.csv',     # ACL SECOND
+        'data/sequence_data.xml',           # Seed data
+        'views/my_model_views.xml',         # Views
+        'views/my_model_menu.xml',          # Menus & actions
+    ],
+
+    # Demo data — loaded with --without-demo=False
+    'demo': ['demo/demo_data.xml'],
+
+    # Frontend assets — Odoo 19 asset bundles
+    'assets': {
+        'web.assets_backend': [
+            'my_module/static/src/js/**/*.js',
+            'my_module/static/src/css/**/*.css',
+            'my_module/static/src/xml/**/*.xml',
+        ],
+        'web.assets_frontend': [
+            'my_module/static/src/css/frontend.css',
+        ],
+        'web.assets_qweb': [
+            'my_module/static/src/xml/**/*',
+        ],
+    },
+
+    # Module flags
+    'installable': True,
+    'application': True,       # Show in apps dashboard
+    'auto_install': False,     # Auto-install if deps are met
+    'sequence': 10,
+    'category': 'Sales',
+}
+</code></pre>
+
+<div class="callout warning">
+    <strong>⚠️ Data File Order Matters</strong>
+    Load order is critical: <strong>security → data → views → menus</strong>. If a view references a model that doesn't exist yet, Odoo will crash during installation. Always put security files first.
+</div>
+
+<!-- ==================== Section Summary ==================== -->
+<div class="section-summary reveal">
+    <h3>Chapters 2-4 Summary</h3>
+    <ul>
+        <li>Odoo requires <strong>Python 3.10+ and PostgreSQL</strong> — no other databases</li>
+        <li>Use <code>--dev=xmlrpc</code> for auto-reload during development</li>
+        <li>Modules follow a <strong>fixed directory structure</strong> — use <code>scaffold</code> to generate</li>
+        <li><code>__manifest__.py</code> defines dependencies, data files, and assets</li>
+        <li>Data file load order: <strong>security → data → views → menus</strong></li>
+        <li><strong>noupdate="1"</strong> prevents data from being overwritten on module upgrade</li>
+    </ul>
+</div>
+
+<hr class="section-divider">
+
+<!-- ==================== 5. ORM ==================== -->
+<h2 id="orm"><span class="chapter-badge">Chapter 5</span>ORM & Models</h2>
+
+<p>Odoo's ORM is an <strong>Active Record</strong> implementation — similar to Laravel's Eloquent or Rails ActiveRecord. Unlike Django's Data Mapper pattern, Odoo models are tightly coupled to the UI layer. A single model definition gives you the database table, admin interface, API, and security hooks.</p>
+
+<table class="comparison-table">
+    <thead><tr><th>Pattern</th><th>Django</th><th>Odoo</th><th>Laravel</th></tr></thead>
+    <tbody>
+        <tr><td>ORM Style</td><td>Data Mapper</td><td>Active Record</td><td>Active Record</td></tr>
+        <tr><td>Query Building</td><td>QuerySet (lazy)</td><td>Domain lists (eager)</td><td>Eloquent Builder</td></tr>
+        <tr><td>Migrations</td><td>Separate files</td><td>Automatic (mostly)</td><td>Separate files</td></tr>
+        <tr><td>Admin</td><td>Manual setup</td><td>Auto-generated</td><td>Nothing built-in</td></tr>
+        <tr><td>Database</td><td>Multiple backends</td><td>PostgreSQL only</td><td>Multiple backends</td></tr>
+    </tbody>
+</table>
+
+<h3>Model Types</h3>
+<pre><code>from odoo import models, fields, api
+
+# Regular model — creates a database table (like Django's Model)
+class SaleOrder(models.Model):
+    _name = 'sale.order'            # Technical name → table: sale_order
+    _description = 'Sale Order'     # Human-readable name (REQUIRED in v14+)
+    _inherit = ['mail.thread']       # Mixin: adds chatter functionality
+    _order = 'date_order desc, id'  # Default sort (like Django's ordering)
+    _rec_name = 'name'              # Field used for display name
+
+    name = fields.Char(string='Order Reference', required=True, default='New')
+
+# Abstract model — no DB table, pure behavior mixin
+class MailThread(models.AbstractModel):
+    _name = 'mail.thread'
+    _description = 'Mail Thread'
+    message_follower_ids = fields.One2many(...)
+
+# TransientModel — auto-cleaned, for wizards (like Django sessions)
+class SaleOrderWizard(models.TransientModel):
+    _name = 'sale.order.wizard'
+    _description = 'Sale Order Wizard'
+    order_id = fields.Many2one('sale.order')
+</code></pre>
+
+<h3>Inheritance — Extending Existing Models</h3>
+<p>This is one of Odoo's most powerful features. You can add fields/methods to <strong>any model from any module</strong> without touching the original code:</p>
+
+<pre><code># Extend res.partner by adding a new field
+class ResPartnerExtend(models.Model):
+    _inherit = 'res.partner'   # No _name → extends in-place
+
+    loyalty_score = fields.Float(string='Loyalty Score')
+    preferred_currency_id = fields.Many2one('res.currency')
+
+    def compute_loyalty_tier(self):
+        for partner in self:
+            if partner.loyalty_score > 100:
+                partner.loyalty_tier = 'gold'
+            else:
+                partner.loyalty_tier = 'silver'
+
+    loyalty_tier = fields.Char(compute='compute_loyalty_tier')
+</code></pre>
+
+<!-- ==================== 6. FIELDS ==================== -->
+<h2 id="fields"><span class="chapter-badge">Chapter 6</span>Fields Reference</h2>
+
+<h3>Basic (Scalar) Fields</h3>
+<pre><code>class MyModel(models.Model):
+    _name = 'my.model'
+
+    # Text fields
+    name = fields.Char(string='Name', size=100, required=True, index=True)
+    code = fields.Text(string='Description')           # Unlimited length
+    html_content = fields.Html(string='Content')       # Sanitized HTML
+
+    # Numeric fields
+    count = fields.Integer(string='Count')
+    score = fields.Float(string='Score', digits=(10, 2))  # Total 10 digits, 2 decimal
+    amount = fields.Monetary(string='Amount', currency_field='currency_id')
+    currency_id = fields.Many2one('res.currency')
+
+    # Boolean
+    active = fields.Boolean(string='Active', default=True)
+
+    # Date/time
+    date = fields.Date(string='Date')
+    datetime = fields.Datetime(string='Datetime')
+
+    # Binary (file attachment)
+    attachment = fields.Binary(string='File')
+    attachment_name = fields.Char(string='File Name')
+
+    # Selection (enum)
+    state = fields.Selection([
+        ('draft', 'Draft'),
+        ('confirmed', 'Confirmed'),
+        ('done', 'Done'),
+        ('cancelled', 'Cancelled'),
+    ], string='State', default='draft', required=True, tracking=True)
+</code></pre>
+
+<h3>Relational Fields</h3>
+<pre><code>    # Many2one — like Django's ForeignKey (single reference)
+    partner_id = fields.Many2one(
+        'res.partner',
+        string='Customer',
+        required=True,
+        ondelete='cascade',     # Delete child when parent deleted
+        tracking=True,          # Track changes in chatter
+        index=True,             # Database index
+        check_company=True,     # Restrict to current company
+    )
+
+    # One2many — like Django's related_name (reverse FK)
+    order_line_ids = fields.One2many(
+        'sale.order.line',      # Comodel name
+        'order_id',             # Field name on the comodel pointing back
+        string='Order Lines'
+    )
+
+    # Many2many — like Django's ManyToManyField
+    tag_ids = fields.Many2many(
+        'my.tag',
+        string='Tags'
+    )
+    # With custom junction table:
+    category_ids = fields.Many2many(
+        'product.category',
+        'my_module_product_category_rel',   # Junction table
+        'product_id',                        # Column for this model
+        'category_id',                       # Column for related model
+        string='Categories'
+    )
+</code></pre>
+
+<h3>Computed Fields</h3>
+<p>Computed fields are calculated from other fields — like Django's <code>@property</code> but with optional database persistence:</p>
+
+<pre><code>    # Computed field — recalculated on every read
+    full_name = fields.Char(
+        compute='_compute_full_name',
+        store=True,            # Store in DB (triggers recomputation on dependency change)
+        index=True,            # Can index stored computed fields
+    )
+
+    @api.depends('first_name', 'last_name')   # Recompute when these change
+    def _compute_full_name(self):
+        for record in self:
+            record.full_name = f"{record.first_name} {record.last_name}"
+
+    # Inverse method — allow writing to computed field
+    def _set_full_name(self):
+        for record in self:
+            if record.full_name:
+                parts = record.full_name.split(' ', 1)
+                record.first_name = parts[0]
+                record.last_name = parts[1] if len(parts) > 1 else ''
+
+    full_name = fields.Char(compute='_compute_full_name', inverse='_set_full_name')
+
+    # Search method — custom search for computed field
+    def _search_full_name(self, operator, value):
+        if operator not in ('ilike', 'like'):
+            return [('first_name', operator, value)]
+        return ['|', ('first_name', operator, value), ('last_name', operator, value)]
+</code></pre>
+
+<h3>Field Attributes Reference</h3>
+<table class="comparison-table">
+    <thead><tr><th>Attribute</th><th>Type</th><th>Description</th><th>Django Equiv</th></tr></thead>
+    <tbody>
+        <tr><td><code>required=True</code></td><td>bool</td><td>NOT NULL + form validation</td><td><code>blank=False</code></td></tr>
+        <tr><td><code>index=True</code></td><td>bool</td><td>Create database index</td><td><code>db_index=True</code></td></tr>
+        <tr><td><code>unique=True</code></td><td>bool</td><td>Unique constraint</td><td><code>unique=True</code></td></tr>
+        <tr><td><code>default=...</code></td><td>any</td><td>Default value or callable</td><td><code>default=...</code></td></tr>
+        <tr><td><code>help='...'</code></td><td>str</td><td>Tooltip text</td><td><code>help_text='...'</code></td></tr>
+        <tr><td><code>copy=False</code></td><td>bool</td><td>Exclude from duplicate/copy</td><td>No direct equiv</td></tr>
+        <tr><td><code>tracking=True</code></td><td>bool</td><td>Track changes in chatter</td><td>No direct equiv</td></tr>
+        <tr><td><code>groups='...'</code></td><td>str</td><td>Visible only to these groups</td><td>No direct equiv</td></tr>
+        <tr><td><code>readonly=True</code></td><td>bool</td><td>Not editable in form</td><td><code>editable=False</code></td></tr>
+        <tr><td><code>company_dependent=True</code></td><td>bool</td><td>Per-company value</td><td>No direct equiv</td></tr>
+    </tbody>
+</table>
+
+<h3>Automatic Fields (Every Model)</h3>
+<pre><code>    # These exist on EVERY model automatically — like Django's auto fields
+    id = fields.Integer(string='ID', readonly=True, index=True)
+    create_date = fields.Datetime(string='Created On', readonly=True)
+    create_uid = fields.Many2one('res.users', string='Created By', readonly=True)
+    write_date = fields.Datetime(string='Last Modified', readonly=True)
+    write_uid = fields.Many2one('res.users', string='Last Modified By', readonly=True)
+</code></pre>
+
+<!-- ==================== 7. CRUD ==================== -->
+<h2 id="crud"><span class="chapter-badge">Chapter 7</span>CRUD Operations</h2>
+
+<h3>Create</h3>
+<pre><code># Single record — returns the new record
+partner = env['res.partner'].create({
+    'name': 'Acme Corp',
+    'email': 'contact@acme.com',
+    'is_company': True,
+})
+
+# Batch create (v14+) — more efficient, single SQL INSERT
+partners = env['res.partner'].create([
+    {'name': 'Partner A', 'email': 'a@example.com'},
+    {'name': 'Partner B', 'email': 'b@example.com'},
+])
+
+# Override create in your model
+@api.model_create_multi
+def create(self, vals_list):
+    for vals in vals_list:
+        if not vals.get('name'):
+            vals['name'] = self.env['ir.sequence'].next_by_code('my.model')
+    return super().create(vals_list)
+</code></pre>
+
+<h3>Read</h3>
+<pre><code># search() — returns a RecordSet (like Django's QuerySet)
+partners = env['res.partner'].search([
+    ('is_company', '=', True),
+    ('name', 'ilike', 'acme'),
+], order='name', limit=10, offset=0)
+
+# browse() — get by ID(s) — returns RecordSet
+partner = env['res.partner'].browse(42)
+partner = env['res.partner'].browse([1, 2, 3])
+
+# read() — returns list of dicts
+data = partner.read(['name', 'email', 'is_company'])[0]
+# {'name': 'Acme', 'email': 'a@acme.com', 'is_company': True, 'id': 42}
+
+# search_read() — combined search + read (single RPC call — efficient!)
+partners = env['res.partner'].search_read(
+    [('is_company', '=', True)],
+    ['name', 'email'],
+    order='name',
+    limit=10
+)
+
+# search_count() — count without loading records
+count = env['res.partner'].search_count([('is_company', '=', True)])
+</code></pre>
+
+<h3>Write</h3>
+<pre><code># Update one or many records — same API
+partner.write({'name': 'New Name', 'email': 'new@example.com'})
+partners.write({'active': False})   # Bulk update
+
+# Direct assignment (same as write)
+partner.name = 'New Name'
+</code></pre>
+
+<h3>Delete</h3>
+<pre><code># Delete one or many records
+partner.unlink()
+partners.unlink()   # Bulk delete
+</code></pre>
+
+<h3>Recordset Operations</h3>
+<pre><code># Filter — like Django's .filter() but with Python lambda
+companies = partners.filtered(lambda p: p.is_company)
+
+# Map — extract field values (like Django's .values_list())
+names = partners.mapped('name')            # ['Acme', 'Beta', ...]
+emails = partners.mapped('email')          # May contain False/None
+
+# Sort — like Django's .order_by()
+sorted_partners = partners.sorted('name', reverse=True)
+sorted_partners = partners.sorted(lambda r: r.name.lower())
+
+# Group — partition a recordset (no Django equivalent)
+groups = partners.grouped('is_company')
+# Returns: {True: RecordSet, False: RecordSet}
+
+# Set operations
+all_partners = recordset_a | recordset_b    # Union
+common = recordset_a & recordset_b          # Intersection
+difference = recordset_a - recordset_b      # Difference
+
+# Check if empty / get length
+if not partners:           # Empty recordset is falsy
+    print('No partners')
+len(partners)              # Number of records
+partners.ids               # List of database IDs [1, 2, 3]
+</code></pre>
+
+<!-- ==================== Section Summary ==================== -->
+<div class="section-summary reveal">
+    <h3>ORM & CRUD Summary</h3>
+    <ul>
+        <li>Odoo uses <strong>Active Record</strong> — recordsets are always ordered sets</li>
+        <li><code>search_read()</code> is preferred over <code>search() + read()</code> — single round-trip</li>
+        <li>Always iterate recordsets: <code>for record in self:</code> — never assume single record</li>
+        <li><code>mapped()</code> supports nested traversal: <code>records.mapped('partner_id.name')</code></li>
+        <li>Recordsets are <strong>falsy when empty</strong> — use <code>if not records:</code> to check</li>
+        <li><code>.ids</code> gives you the list of database IDs from a recordset</li>
+    </ul>
+</div>
+
+<h3>Practical ORM Patterns</h3>
+
+<p>Here are real-world patterns you'll use constantly. Each example shows the Odoo way alongside the Django equivalent:</p>
+
+<div class="concept-card">
+    <h4>Pattern: Override create with auto-naming</h4>
+    <p>Like Django's <code>save()</code> override — auto-generate a sequence number when creating records:</p>
+    <pre><code>@api.model_create_multi
+def create(self, vals_list):
+    for vals in vals_list:
+        if not vals.get('name'):
+            vals['name'] = self.env['ir.sequence'].next_by_code('sale.order')
+    return super().create(vals_list)</code></pre>
+</div>
+
+<div class="concept-card">
+    <h4>Pattern: Write override with side effects</h4>
+    <p>Trigger actions when specific fields change — like Django signals but inline:</p>
+    <pre><code>def write(self, vals):
+    if 'state' in vals:
+        old_states = {r.id: r.state for r in self}
+    result = super().write(vals)
+    if 'state' in vals:
+        for record in self:
+            old = old_states.get(record.id)
+            if old == 'draft' and record.state == 'confirmed':
+                record.message_post(body="Order confirmed!")
+                record._send_confirmation_email()
+    return result</code></pre>
+</div>
+
+<div class="concept-card">
+    <h4>Pattern: Batch processing with progress</h4>
+    <p>Process large datasets efficiently — like Django management commands but in crons:</p>
+    <pre><code>@api.model
+def _cron_process大批量(self):
+    records = self.search([('state', '=', 'pending')], limit=500)
+    for record in records:
+        try:
+            record._process_single()
+            self.env.cr.commit()
+        except Exception:
+            self.env.cr.rollback()
+            _logger.exception("Failed to process %s", record.id)</code></pre>
+</div>
+
+<div class="concept-card">
+    <h4>Pattern: Computed stored field with deps</h4>
+    <p>Cache expensive calculations in the database — auto-recompute when dependencies change:</p>
+    <pre><code>total = fields.Monetary(
+    compute='_compute_total',
+    store=True,            # persisted in DB
+    currency_field='currency_id',
+)
+
+@api.depends('line_ids.price_subtotal', 'line_ids.tax_ids')
+def _compute_total(self):
+    for order in self:
+        order.total = sum(
+            line.price_subtotal
+            for line in order.line_ids
+            if not line.tax_ids
+        )</code></pre>
+</div>
+
+<!-- ==================== EXAM 1: ORM Basics ==================== -->
+<div class="exam-block reveal"
+     data-answer="class MyModel(models.Model): _name = 'my.model' name = fields.Char(string='Name', required=True) state = fields.Selection([('draft', 'Draft'), ('done', 'Done')], default='draft')"
+     data-hint="Use models.Model as the base class. Define _name, then add a Char field 'name' and a Selection field 'state' with two options.">
+    <div class="exam-title">Test Your Knowledge</div>
+    <p class="exam-description">Create a basic Odoo model called <code>my.model</code> with a required <code>name</code> field and a <code>state</code> Selection field with two options: 'draft' and 'done'.</p>
+    <textarea class="exam-textarea" placeholder="class MyModel(models.Model):&#10;    _name = ...&#10;    ..."></textarea>
+    <div class="exam-actions">
+        <button class="exam-check">Check Answer</button>
+        <button class="exam-reset">Reset</button>
+        <button class="exam-hint">Show Hint</button>
+    </div>
+    <div class="exam-feedback"></div>
+    <div class="exam-hint-text">
+        <strong>Hint:</strong> Use <code>models.Model</code> as base class. Set <code>_name = 'my.model'</code>. Use <code>fields.Char()</code> for name and <code>fields.Selection()</code> for state with a list of tuples.
+    </div>
+</div>
+
+<hr class="section-divider">
+
+<!-- ==================== 8. RELATIONS & DOMAINS ==================== -->
+<h2 id="relations"><span class="chapter-badge">Chapter 8</span>Relations & Domains</h2>
+
+<p>Domains are Odoo's query filter syntax — used everywhere (search, security rules, defaults, computed fields). They're equivalent to Django's <code>Q()</code> objects but expressed as nested lists.</p>
+
+<h3>Domain Syntax</h3>
+<pre><code># Basic format: [(field, operator, value)]
+domain = [('name', 'ilike', 'test')]
+
+# Operators:
+#   =        Equal               !=       Not equal
+#   >        Greater than        <        Less than
+#   >=       Greater or equal    <=       Less or equal
+#   ilike    Case-insensitive contains (LIKE %value%)
+#   like     Case-sensitive contains
+#   in       In list             not in   Not in list
+#   =        True/False          child_of Hierarchical child
+#   parent_of Hierarchical parent
+
+# AND (implicit — comma separated)
+domain = [
+    ('name', 'ilike', 'test'),
+    ('active', '=', True),
+    ('is_company', '=', True),
+]
+
+# OR (explicit operator)
+domain = ['|',
+    ('name', 'ilike', 'test'),
+    ('email', 'ilike', 'test'),
+]
+
+# NOT
+domain = ['!', ('active', '=', False)]
+
+# Complex: (name contains 'test' AND active) OR (is_company=True AND country = US)
+domain = ['|',
+    '&', ('name', 'ilike', 'test'), ('active', '=', True),
+    '&', ('is_company', '=', True), ('country_id.code', '=', 'US'),
+]
+</code></pre>
+
+<div class="callout info">
+    <strong>🔗 Domain Operator Precedence</strong>
+    Operators are applied right-to-left. The pattern is always: <code>op, op, leaf, leaf</code>. <code>'|'</code> applies to the next two elements. <code>'&amp;'</code> is implicit (you rarely need it). <code>'!'</code> negates the next single element.
+</div>
+
+<h3>Common Patterns</h3>
+<pre><code># Related field traversal (dot notation)
+orders = env['sale.order'].search([
+    ('partner_id.is_company', '=', True),      # Follow FK chain
+    ('partner_id.country_id.code', '=', 'US'),
+])
+
+# Dynamic time domains
+from datetime import datetime, timedelta
+last_week = datetime.now() - timedelta(days=7)
+orders = env['sale.order'].search([
+    ('date_order', '>=', last_week),
+    ('state', '=', 'sale'),
+])
+
+# Null checks
+partners = env['res.partner'].search([
+    ('email', '=', False),       # email IS NULL
+    ('phone', '!=', False),      # phone IS NOT NULL
+])
+
+# Context-based filtering
+# Include archived records (normally filtered out)
+orders = env['sale.order'].with_context(active_test=False).search([])
+
+# Use context to pass dynamic values to search
+env['sale.order'].with_context(default_partner_id=42).create({})
+</code></pre>
+
+<h3>Relational Field Access</h3>
+<pre><code># Access related records (follow FK)
+order = env['sale.order'].browse(1)
+partner_name = order.partner_id.name           # Many2one → string
+partner_email = order.partner_id.email
+
+# Access One2many children
+for line in order.order_line_ids:
+    print(line.product_id.name, line.price_unit)
+
+# Multi-level traversal (V13+)
+# Instead of: env['sale.order'].mapped('partner_id.name')
+# You can write:
+order.partner_id.name    # If single record
+
+# For recordsets:
+partner_names = orders.mapped('partner_id.name')    # All partner names
+partner_cities = orders.mapped('partner_id.city_id.name')  # Nested
+</code></pre>
+
+<!-- ==================== 9. INHERITANCE ==================== -->
+<h2 id="inheritance"><span class="chapter-badge">Chapter 9</span>Inheritance Patterns</h2>
+
+<p>Odoo provides <strong>three distinct inheritance mechanisms</strong> — more than any other framework. Each serves a different purpose:</p>
+
+<div class="concept-card">
+    <h4>1. Classical Inheritance (<code>_inherit</code> + <code>_name</code>)</h4>
+    <p><strong>Creates a new model</strong> that inherits from an existing one. Like Python class inheritance — the new model gets all fields/methods. A new database table is created. This is what you use when you need a specialized version of an existing model.</p>
+    <pre><code>class SaleOrderInherit(models.Model):
+    _name = 'sale.order'                        # Same name as _inherit
+    _inherit = ['sale.order', 'mail.thread']    # Inherit from existing models
+
+    # Adds new field to sale.order
+    priority = fields.Selection([('0', 'Normal'), ('1', 'High')])
+    notes = fields.Text()
+
+    def custom_method(self):
+        # Has access to all sale.order methods
+        for order in self:
+            order.priority = '1'</code></pre>
+</div>
+
+<div class="concept-card">
+    <h4>2. Extension Inheritance (<code>_inherit</code> only, no <code>_name</code>)</h4>
+    <p><strong>Extends an existing model in-place</strong> — no new table. Like monkey-patching but clean. This is the most common pattern — used to add fields/methods to models from other modules (like adding <code>loyalty_score</code> to <code>res.partner</code>).</p>
+    <pre><code>class ResPartnerExtend(models.Model):
+    _inherit = 'res.partner'    # No _name → extends in-place
+
+    # Adds field to existing res.partner
+    loyalty_score = fields.Float(string='Loyalty Score')
+    vip_date = fields.Date(string='VIP Since')
+
+    def get_loyalty_discount(self):
+        for partner in self:
+            partner.vip_discount = 10.0 if partner.loyalty_score > 100 else 0.0</code></pre>
+</div>
+
+<div class="concept-card">
+    <h4>3. Delegation Inheritance (<code>_inherits</code>)</h4>
+    <p><strong>Composition pattern</strong> — model "has one" of another model. Fields from the delegated model are accessible directly, but it's a different table. Like Django's multi-table inheritance but more explicit. Use sparingly.</p>
+    <pre><code>class AccountInvoice(models.Model):
+    _name = 'account.invoice'
+    _inherits = {'account.invoice.line': 'line_id'}
+    # Fields from account.invoice.line are accessible directly
+    line_id = fields.Many2one('account.invoice.line', required=True, ondelete='cascade')
+
+    name = fields.Char()
+    # Can access: record.product_id, record.quantity, etc.
+    # (from account.invoice.line)</code></pre>
+</div>
+
+<div class="callout warning">
+    <strong>⚠️ Inheritance Rules</strong>
+    <ul>
+        <li><code>_inherit</code> = string → <code>_name</code> is auto-set to the same value</li>
+        <li><code>_inherit</code> = list → <code>_name</code> must be set explicitly (classical)</li>
+        <li><code>_inherits</code> is for composition — methods are <strong>not</strong> inherited, only fields</li>
+        <li>Chained <code>_inherits</code> is not supported — avoid it</li>
+    </ul>
+</div>
+
+<!-- ==================== 10. CONSTRAINTS ==================== -->
+<h2 id="constraints"><span class="chapter-badge">Chapter 10</span>Constraints & Validation</h2>
+
+<pre><code>from odoo.exceptions import ValidationError
+
+class MyModel(models.Model):
+    _name = 'my.model'
+
+    name = fields.Char(required=True)
+    amount = fields.Float()
+    start_date = fields.Date()
+    end_date = fields.Date()
+
+    # Python constraint — like Django's clean() method
+    # Runs when any of the listed fields change
+    @api.constrains('start_date', 'end_date')
+    def _check_dates(self):
+        for record in self:
+            if record.start_date and record.end_date:
+                if record.start_date > record.end_date:
+                    raise ValidationError("Start date must be before end date")
+
+    @api.constrains('amount')
+    def _check_amount(self):
+        for record in self:
+            if record.amount < 0:
+                raise ValidationError("Amount must be positive!")
+
+    # SQL constraints — enforced at database level (like Django's unique_together)
+    _sql_constraints = [
+        ('name_uniq', 'UNIQUE(name)', 'The name must be unique!'),
+        ('amount_positive', 'CHECK(amount >= 0)', 'Amount must be positive!'),
+        ('date_order_check',
+         'CHECK(start_date <= end_date)',
+         'Start date must be before end date!'),
+    ]
+</code></pre>
+
+<div class="callout tip">
+    <strong>💡 Python vs SQL Constraints</strong>
+    <strong>SQL constraints</strong> are enforced at the database level — they always work, even for direct SQL. <strong>Python constraints</strong> run in the ORM layer — they give better error messages but can be bypassed by raw SQL. Use both for defense in depth.
+</div>
+
+<!-- ==================== 11. DECORATORS ==================== -->
+<h2 id="decorators"><span class="chapter-badge">Chapter 11</span>Decorators & API</h2>
+
+<table class="comparison-table">
+    <thead><tr><th>Decorator</th><th>Purpose</th><th>Example</th></tr></thead>
+    <tbody>
+        <tr><td><code>@api.model</code></td><td>Class method (no recordset)</td><td><code>@api.model def _default_name(self):</code></td></tr>
+        <tr><td><code>@api.depends('f')</code></td><td>Computed field dependencies</td><td><code>@api.depends('first_name', 'last_name')</code></td></tr>
+        <tr><td><code>@api.constrains('f')</code></td><td>Validation constraint</td><td><code>@api.constrains('email')</code></td></tr>
+        <tr><td><code>@api.onchange('f')</code></td><td>Form field change handler</td><td><code>@api.onchange('partner_id')</code></td></tr>
+        <tr><td><code>@api.onchange('f1', 'f2')</code></td><td>Multi-field change handler</td><td>Reactive form updates</td></tr>
+        <tr><td><code>@api.returns('model')</code></td><td>RPC return type hint</td><td><code>@api.returns('sale.order')</code></td></tr>
+        <tr><td><code>@api.model_create_multi</code></td><td>Batch create optimization</td><td>Default in Odoo 14+</td></tr>
+    </tbody>
+</table>
+
+<pre><code># @api.model — no recordset context (like @classmethod)
+@api.model
+def _default_currency(self):
+    return self.env.company.currency_id
+
+# @api.onchange — client-side reactivity (like Django form clean())
+@api.onchange('partner_id')
+def _onchange_partner(self):
+    if self.partner_id:
+        self.email = self.partner_id.email
+        self.phone = self.partner_id.phone
+
+# @api.depends — triggers recomputation
+@api.depends('order_line_ids.price_subtotal', 'order_line_ids.tax_id')
+def _compute_amount_total(self):
+    for order in self:
+        order.amount_total = sum(line.price_subtotal for line in order.order_line_ids)
+</code></pre>
+
+<!-- ==================== 12. SECURITY ==================== -->
+<h2 id="security"><span class="chapter-badge">Chapter 12</span>Security (ACL & Record Rules)</h2>
+
+<p>Odoo's security operates at two levels — like Django's permissions + object-level permissions. Both must pass for access to be granted.</p>
+
+<h3>Security Groups</h3>
+<pre><code>&lt;!-- Define groups in XML --&gt;
+&lt;record id="group_user" model="res.groups"&gt;
+    &lt;field name="name"&gt;User&lt;/field&gt;
+    &lt;field name="category_id" ref="base.module_category_sales"/&gt;
+&lt;/record&gt;
+
+&lt;!-- Manager inherits User permissions (implied_ids = hierarchical) --&gt;
+&lt;record id="group_manager" model="res.groups"&gt;
+    &lt;field name="name"&gt;Manager&lt;/field&gt;
+    &lt;field name="implied_ids" eval="[(4, ref('group_user'))]"/&gt;
+&lt;/record&gt;
+</code></pre>
+
+<h3>Access Control List (ACL)</h3>
+<p>File: <code>security/ir.model.access.csv</code> — controls <strong>which operations</strong> each group can perform:</p>
+
+<pre><code>id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_my_model_user,my.model.user,model_my_model,sales_team.group_sale_user,1,1,1,0
+access_my_model_manager,my.model.manager,model_my_model,sales_team.group_sale_manager,1,1,1,1
+access_my_model_admin,my.model.admin,model_my_model,base.group_system,1,1,1,1
+</code></pre>
+
+<div class="callout danger">
+    <strong>🔐 ACL = First Gate</strong>
+    ACL grants or denies <strong>entire operations</strong> (read/write/create/unlink). If ACL denies, record rules are never checked. ACL is like Django's <code>Meta.permissions</code> but simpler.
+</div>
+
+<h3>Record Rules</h3>
+<p>Record rules filter <strong>which records</strong> a user can see — like Django's object-level permissions or Row-Level Security:</p>
+
+<pre><code>&lt;!-- Users can only see their own company's records --&gt;
+&lt;record id="rule_my_model_company" model="ir.rule"&gt;
+    &lt;field name="name"&gt;My Model: Multi Company&lt;/field&gt;
+    &lt;field name="model_id" ref="model_my_model"/&gt;
+    &lt;field name="domain_force"&gt;[('company_id', 'in', company_ids)]&lt;/field&gt;
+    &lt;field name="groups" eval="[(4, ref('base.group_user'))]"/&gt;
+&lt;/record&gt;
+
+&lt;!-- Managers see ALL records --&gt;
+&lt;record id="rule_my_model_manager" model="ir.rule"&gt;
+    &lt;field name="name"&gt;My Model: Manager Full Access&lt;/field&gt;
+    &lt;field name="model_id" ref="model_my_model"/&gt;
+    &lt;field name="domain_force"&gt;[(1, '=', 1)]&lt;/field&gt;  &lt;!-- Always true --&gt;
+    &lt;field name="groups" eval="[(4, ref('group_manager'))]"/&gt;
+&lt;/record&gt;
+
+&lt;!-- Users see only records they created --&gt;
+&lt;record id="rule_my_model_personal" model="ir.rule"&gt;
+    &lt;field name="name"&gt;My Model: Personal Records&lt;/field&gt;
+    &lt;field name="model_id" ref="model_my_model"/&gt;
+    &lt;field name="domain_force"&gt;[('create_uid', '=', uid)]&lt;/field&gt;
+    &lt;field name="groups" eval="[(4, ref('group_user'))]"/&gt;
+&lt;/record&gt;
+</code></pre>
+
+<div class="callout info">
+    <strong>🔑 Record Rule Logic</strong>
+    Rules for the <strong>same group</strong> are AND'd together. Rules for <strong>different groups</strong> are OR'd. A manager with both <code>rule_company</code> and <code>rule_manager</code> sees records matching EITHER rule.
+</div>
+
+<!-- ==================== EXAM 2: Security ==================== -->
+<div class="exam-block reveal"
+     data-answer="<record id='rule_my_company' model='ir.rule'><field name='name'>My Rule</field><field name='model_id' ref='model_my_model'/><field name='domain_force'>[('company_id', 'in', company_ids)]</field></record>"
+     data-hint="Create an ir.rule record. Set model_id using ref(), and domain_force to a domain list like [('company_id', 'in', company_ids)].">
+    <div class="exam-title">Test Your Knowledge</div>
+    <p class="exam-description">Write an XML record rule that restricts <code>my.model</code> so users can only see records belonging to their allowed companies.</p>
+    <textarea class="exam-textarea" placeholder="<record id='...' model='ir.rule'>..."></textarea>
+    <div class="exam-actions">
+        <button class="exam-check">Check Answer</button>
+        <button class="exam-reset">Reset</button>
+        <button class="exam-hint">Show Hint</button>
+    </div>
+    <div class="exam-feedback"></div>
+    <div class="exam-hint-text">
+        <strong>Hint:</strong> Use <code>&lt;record model="ir.rule"&gt;</code> with <code>model_id</code> pointing to your model and <code>domain_force</code> using <code>[('company_id', 'in', company_ids)]</code>.
+    </div>
+</div>
+
+<!-- ==================== 13. SERVER ACTIONS ==================== -->
+<h2 id="server-actions"><span class="chapter-badge">Chapter 13</span>Server Actions & Crons</h2>
+
+<h3>Server Actions</h3>
+<pre><code># Python code server action — triggered from UI or other actions
+&lt;record id="action_confirm_orders" model="ir.actions.server"&gt;
+    &lt;field name="name"&gt;Confirm Selected Orders&lt;/field&gt;
+    &lt;field name="model_id" ref="model_sale_order"/&gt;
+    &lt;field name="state"&gt;code&lt;/field&gt;
+    &lt;field name="code"&gt;
+        for record in records:
+            record.action_confirm()
+    &lt;/field&gt;
+&lt;/record&gt;
+
+# Server action that returns an action (open a view)
+&lt;record id="action_open wizard" model="ir.actions.server"&gt;
+    &lt;field name="name"&gt;Open Wizard&lt;/field&gt;
+    &lt;field name="model_id" ref="model_my_model"/&gt;
+    &lt;field name="state"&gt;code&lt;/field&gt;
+    &lt;field name="code"&gt;
+        action = {
+            "type": "ir.actions.act_window",
+            "res_model": "my.wizard",
+            "view_mode": "form",
+            "target": "new",
+            "context": {"default_order_id": record.id},
+        }
+    &lt;/field&gt;
+&lt;/record&gt;
+</code></pre>
+
+<h3>Scheduled Actions (Crons)</h3>
+<pre><code># Cron definition — runs automatically on schedule
+&lt;record id="cron_cleanup_old_records" model="ir.cron"&gt;
+    &lt;field name="name"&gt;My Module: Cleanup Old Records&lt;/field&gt;
+    &lt;field name="model_id" ref="model_my_model"/&gt;
+    &lt;field name="state"&gt;code&lt;/field&gt;
+    &lt;field name="code"&gt;
+        model._cron_cleanup_old_records()
+    &lt;/field&gt;
+    &lt;field name="interval_number"&gt;1&lt;/field&gt;
+    &lt;field name="interval_type"&gt;days&lt;/field&gt;
+    &lt;field name="numbercall"&gt;-1&lt;/field&gt;  &lt;!-- -1 = infinite --&gt;
+    &lt;field name="active"&gt;True&lt;/field&gt;
+&lt;/record&gt;
+
+# Python method for the cron
+@api.model
+def _cron_cleanup_old_records(self):
+    cutoff = fields.Datetime.now() - timedelta(days=30)
+    old_records = self.search([
+        ('create_date', '&lt;', cutoff),
+        ('state', '=', 'done'),
+    ])
+    old_records.unlink()
+    _logger.info("Cleaned up %d old records", len(old_records))
+</code></pre>
+
+<div class="callout warning">
+    <strong>⚠️ Cron Best Practices</strong>
+    <ul>
+        <li>Batch your work — process records in groups of 100-1000</li>
+        <li>Use <code>self.env['ir.cron']._commit_progress()</code> for progress tracking</li>
+        <li>Don't call cron methods directly — let the scheduler run them</li>
+        <li>If a cron fails 5 times in 7 days, it gets auto-deactivated</li>
+    </ul>
+</div>
+
+<!-- ==================== Section Summary ==================== -->
+<div class="section-summary reveal">
+    <h3>Chapters 5-13 Summary</h3>
+    <ul>
+        <li>Odoo's ORM is <strong>Active Record</strong> — recordsets are ordered sets, not lists</li>
+        <li>Always iterate with <code>for record in self:</code> — never assume single record</li>
+        <li>Use <code>search_read()</code> instead of <code>search() + read()</code> for efficiency</li>
+        <li><strong>3 inheritance patterns</strong>: classical (new model), extension (in-place), delegation (composition)</li>
+        <li>Security has <strong>two layers</strong>: ACL (operations) + Record Rules (rows)</li>
+        <li>Record rules: same group → AND, different groups → OR</li>
+        <li><strong>SQL constraints</strong> = database level, <strong>Python constraints</strong> = ORM level</li>
+        <li>Use <code>@api.depends</code> for computed fields that should be stored in DB</li>
+        <li>Crons should batch work and use <code>_commit_progress()</code></li>
+    </ul>
+</div>
+
+<h3>Real-World Workflow: Sales Order Confirmation</h3>
+
+<p>This example shows a complete business workflow — from user action to email notification. It demonstrates how all the pieces fit together:</p>
+
+<pre><code>class SaleOrder(models.Model):
+    _name = 'sale.order'
+    _inherit = ['sale.order', 'mail.thread']
+
+    state = fields.Selection([
+        ('draft', 'Draft'),
+        ('confirmed', 'Confirmed'),
+        ('done', 'Done'),
+    ], default='draft', tracking=True)
+
+    def action_confirm(self):
+        """Confirm the sale order — called by button click"""
+        for order in self:
+            # 1. Validate
+            if not order.order_line_ids:
+                raise UserError(_("Please add at least one line!"))
+
+            # 2. Update state
+            order.write({
+                'state': 'confirmed',
+                'confirmation_date': fields.Datetime.now(),
+            })
+
+            # 3. Post message to chatter
+            order.message_post(
+                body=_("Order confirmed by %s" % self.env.user.name),
+                subtype_xmlid='mail.mt_comment'
+            )
+
+            # 4. Create picking (delivery order)
+            order._create_delivery_picking()
+
+            # 5. Send confirmation email
+            template = self.env.ref('sale.mail_template_sale_confirmation')
+            template.send_mail(order.id, force_send=True)
+
+            # 6. Create activity for follow-up
+            order.activity_schedule(
+                activity_type_id=self.env.ref('mail.mail_activity_data_call').id,
+                summary=_("Follow up on delivery"),
+                date_deadline=fields.Date.add(fields.Date.today(), days=7),
+            )
+
+    def _create_delivery_picking(self):
+        """Create stock picking for delivery"""
+        self.ensure_one()  # Ensure single record
+        picking_type = self.env['stock.picking.type'].search([
+            ('code', '=', 'outgoing'),
+            ('warehouse_id', '=', self.warehouse_id.id),
+        ], limit=1)
+        # ... create picking with move lines from order lines</code></pre>
+
+<div class="callout info">
+    <strong>🔗 Notice the Pattern</strong>
+    Every method iterates <code>for record in self:</code> and calls <code>self.ensure_one()</code> when single-record behavior is needed. The workflow touches ORM, security, mail, inventory — all from one method call.
+</div>
+
+<h3>Real-World Pattern: Website Controller with RPC</h3>
+
+<p>Combining HTTP controllers with OWL frontend — like a Next.js API route + React component:</p>
+
+<pre><code># controllers/main.py
+from odoo import http
+from odoo.http import request
+
+class WebsiteMyModule(http.Controller):
+
+    @http.route('/my-module/api/search', type='json', auth='public')
+    def search_products(self, query='', category=None, **kwargs):
+        """API endpoint called by OWL component"""
+        domain = [('sale_ok', '=', True)]
+        if query:
+            domain.append(('name', 'ilike', query))
+        if category:
+            domain.append(('categ_id', '=', int(category)))
+
+        products = request.env['product.product'].sudo().search_read(
+            domain,
+            ['name', 'list_price', 'image_128', 'categ_id'],
+            limit=20,
+        )
+        return {'products': products}
+
+    @http.route('/my-module', type='http', auth='public', website=True)
+    def page(self, **kwargs):
+        """Render the website page"""
+        return request.render('my_module.website_template', {
+            'categories': request.env['product.category'].search([]),
+        })</code></pre>
+
+<hr class="section-divider">
+
+<!-- ==================== 14. RPC ==================== -->
+<h2 id="rpc"><span class="chapter-badge">Chapter 14</span>RPC & Web Services</h2>
+
+<h3>External API (XML-RPC)</h3>
+<pre><code># Python client — call Odoo's API from external scripts
+import xmlrpc.client
+
+URL = 'http://localhost:8069'
+DB = 'mydb'
+USERNAME = 'admin'
+PASSWORD = 'admin'
+
+# Step 1: Authenticate
+common = xmlrpc.client.ServerProxy(f'{URL}/xmlrpc/2/common')
+uid = common.authenticate(DB, USERNAME, PASSWORD, {})
+print(f"Authenticated as uid={uid}")
+
+# Step 2: Call model methods
+models = xmlrpc.client.ServerProxy(f'{URL}/xmlrpc/2/object')
+
+# search_read — get partners
+partners = models.execute_kw(DB, uid, PASSWORD,
+    'res.partner', 'search_read',
+    [[('is_company', '=', True)]],
+    {'fields': ['name', 'email'], 'limit': 5}
+)
+
+# create — create a record
+new_id = models.execute_kw(DB, uid, PASSWORD,
+    'res.partner', 'create',
+    [{'name': 'New Partner', 'email': 'new@example.com'}]
+)
+
+# write — update a record
+models.execute_kw(DB, uid, PASSWORD,
+    'res.partner', 'write',
+    [[new_id], {'name': 'Updated Name'}]
+)
+</code></pre>
+
+<h3>JSON-RPC (JavaScript)</h3>
+<pre><code>// Call from OWL component or browser console
+const result = await this.env.services.rpc("/web/dataset/call_kw", {
+    model: "res.partner",
+    method: "search_read",
+    args: [[["is_company", "=", true]]],
+    kwargs: { fields: ["name", "email"], limit: 5 }
+});
+</code></pre>
+
+<!-- ==================== 15. CONTROLLERS ==================== -->
+<h2 id="controllers"><span class="chapter-badge">Chapter 15</span>HTTP Controllers</h2>
+
+<p>Controllers handle HTTP routes — like Flask/FastAPI route handlers:</p>
+
+<pre><code>from odoo import http
+from odoo.http import request
+
+class MyController(http.Controller):
+
+    # JSON endpoint (like FastAPI's @app.post)
+    @http.route('/my_module/api/partners', type='json', auth='user')
+    def get_partners(self, **kwargs):
+        partners = request.env['res.partner'].search_read(
+            [('is_company', '=', True)],
+            ['name', 'email']
+        )
+        return {'partners': partners}
+
+    # HTML page (like Flask's @app.route)
+    @http.route('/my_module/page', type='http', auth='public', website=True)
+    def my_page(self, **kwargs):
+        partners = request.env['res.partner'].search([])
+        return request.render('my_module.my_template', {
+            'partners': partners
+        })
+
+    # Binary/download endpoint
+    @http.route('/my_module/download/<int:record_id>', type='http', auth='user')
+    def download(self, record_id, **kwargs):
+        record = request.env['my.model'].browse(record_id)
+        return request.make_response(
+            record.attachment,
+            headers=[
+                ('Content-Type', 'application/octet-stream'),
+                ('Content-Disposition', f'attachment; filename="{record.attachment_name}"'),
+            ]
+        )
+</code></pre>
+
+<table class="comparison-table">
+    <thead><tr><th>Auth Type</th><th>Description</th><th>Django Equivalent</th></tr></thead>
+    <tbody>
+        <tr><td><code>'none'</code></td><td>No authentication</td><td><code>@csrf_exempt</code> + no login required</td></tr>
+        <tr><td><code>'public'</code></td><td>Public + website mode</td><td>Public view</td></tr>
+        <tr><td><code>'user'</code></td><td>Logged-in user required</td><td><code>@login_required</code></td></tr>
+        <tr><td><code>'internal'</code></td><td>Internal user (not portal)</td><td>Staff permission</td></tr>
+    </tbody>
+</table>
+
+<!-- ==================== 16. OWL ==================== -->
+<h2 id="owl"><span class="chapter-badge">Chapter 16</span>OWL Framework (Frontend)</h2>
+
+<p><strong>OWL (Odoo Web Library)</strong> is Odoo's custom component framework — similar to Vue.js or React but tightly integrated with the backend. It uses XML templates (QWeb) instead of JSX.</p>
+
+<div class="framework-compare">
+    <div class="side">
+        <h5>React / Next.js</h5>
+        <p>JSX templates, virtual DOM, npm ecosystem, hooks, separate state management</p>
+    </div>
+    <div class="side">
+        <h5>OWL</h5>
+        <p>QWeb XML templates, reactive state (useState), built-in RPC, no npm — everything is Odoo-native</p>
+    </div>
+</div>
+
+<h3>Component Example</h3>
+<pre><code>// static/src/js/my_counter.js
+import { Component, useState } from "@odoo/owl";
+import { registry } from "@web/core/registry";
+
+export class MyCounter extends Component {
+    setup() {
+        this.state = useState({
+            count: 0,
+            items: [],
+            loading: false,
+        });
+    }
+
+    increment() {
+        this.state.count++;
+    }
+
+    decrement() {
+        this.state.count--;
+    }
+
+    async loadData() {
+        this.state.loading = true;
+        const result = await this.env.services.rpc(
+            "/my_module/api/data",
+            { limit: 10 }
+        );
+        this.state.items = result.items;
+        this.state.loading = false;
+    }
+}
+
+MyCounter.template = "my_module.MyCounter";
+</code></pre>
+
+<h3>QWeb Template (XML)</h3>
+<pre><code>&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;templates xml:space="preserve"&gt;
+
+    &lt;t t-name="my_module.MyCounter"&gt;
+        &lt;div class="o_my_counter"&gt;
+            &lt;h3&gt;Counter: &lt;t t-esc="state.count"/&gt;&lt;/h3&gt;
+            &lt;button class="btn btn-primary" t-on-click="increment"&gt;+1&lt;/button&gt;
+            &lt;button class="btn btn-secondary" t-on-click="decrement"&gt;-1&lt;/button&gt;
+
+            &lt;button t-on-click="loadData"&gt;Load Data&lt;/button&gt;
+
+            &lt;t t-if="state.loading"&gt;
+                &lt;div class="spinner"/&gt;
+            &lt;/t&gt;
+
+            &lt;t t-foreach="state.items" t-as="item" t-key="item.id"&gt;
+                &lt;div class="item"&gt;
+                    &lt;t t-esc="item.name"/&gt;
+                    &lt;span class="badge"&gt;&lt;t t-esc="item.state"/&gt;&lt;/span&gt;
+                &lt;/div&gt;
+            &lt;/t&gt;
+
+            &lt;input type="text" t-model="state.searchText" placeholder="Filter..."/&gt;
+        &lt;/div&gt;
+    &lt;/t&gt;
+
+&lt;/templates&gt;
+</code></pre>
+
+<h3>Register as Client Action</h3>
+<pre><code>// Register the component as a client action
+const MyClientAction = {
+    component: MyCounter,
+};
+registry.category("actions").add("my_client_action", MyClientAction);
+</code></pre>
+
+<pre><code>&lt;!-- Trigger from XML menu --&gt;
+&lt;record id="action_my_client" model="ir.actions.client"&gt;
+    &lt;field name="name"&gt;My Client Action&lt;/field&gt;
+    &lt;field name="tag"&gt;my_client_action&lt;/field&gt;
+&lt;/record&gt;
+</code></pre>
+
+<h3>OWL Key Concepts</h3>
+<table class="comparison-table">
+    <thead><tr><th>OWL Concept</th><th>React / Vue Equivalent</th><th>Description</th></tr></thead>
+    <tbody>
+        <tr><td><code>useState()</code></td><td><code>useState()</code> / <code>reactive()</code></td><td>Reactive state object</td></tr>
+        <tr><td><code>t-on-click</code></td><td><code>onClick</code></td><td>Event handler binding</td></tr>
+        <tr><td><code>t-esc</code></td><td><code>{variable}</code></td><td>Text interpolation (escaped)</td></tr>
+        <tr><td><code>t-raw</code></td><td><code>dangerouslySetInnerHTML</code></td><td>Raw HTML output</td></tr>
+        <tr><td><code>t-if / t-elif / t-else</code></td><td><code>{cond && ...}</code></td><td>Conditional rendering</td></tr>
+        <tr><td><code>t-foreach</code></td><td><code>.map()</code></td><td>List rendering</td></tr>
+        <tr><td><code>t-model</code></td><td><code>value + onChange</code></td><td>Two-way binding</td></tr>
+        <tr><td><code>t-key</code></td><td><code>key</code> prop</td><td>Unique identifier for list items</td></tr>
+        <tr><td><code>useChildSubEnv()</code></td><td>Context Provider</td><td>Pass env to children</td></tr>
+        <tr><td><code>useExternalListener()</code></td><td><code>useEffect</code></td><td>DOM event listener</td></tr>
+    </tbody>
+</table>
+
+<h3>OWL Advanced: Service Integration</h3>
+
+<p>OWL components can access Odoo services (RPC, notifications, user context) via <code>this.env.services</code>:</p>
+
+<pre><code>import { Component, useState } from "@odoo/owl";
+import { useService } from "@web/core/utils/hooks";
+import { registry } from "@web/core/registry";
+
+export class Dashboard extends Component {
+    setup() {
+        // Access services
+        this.rpc = useService("rpc");
+        this.notification = useService("notification");
+        this.user = useService("user");
+        this.orm = useService("orm");
+
+        this.state = useState({
+            partners: [],
+            loading: true,
+            searchQuery: '',
+        });
+
+        this.loadData();
+    }
+
+    async loadData() {
+        // Option 1: Direct RPC
+        const result = await this.rpc("/my_module/api/dashboard");
+        this.state.partners = result.partners;
+        this.state.loading = false;
+
+        // Option 2: ORM service (cleaner, auto-handles context)
+        // const partners = await this.orm.read("res.partner", [1, 2, 3], ["name", "email"]);
+    }
+
+    async onSearch(ev) {
+        this.state.searchQuery = ev.target.value;
+        // Debounced search
+        const partners = await this.orm.call(
+            "res.partner", "search_read",
+            [[["name", "ilike", this.state.searchQuery]]],
+            { fields: ["name", "email"], limit: 10 }
+        );
+        this.state.partners = partners;
+    }
+
+    onPartnerClick(partnerId) {
+        // Show notification
+        this.notification.add(`Viewing partner ${partnerId}`, {
+            type: "info",
+            title: "Partner Selected",
+        });
+
+        // Open form view
+        this.env.services.action.doAction({
+            type: "ir.actions.act_window",
+            res_model: "res.partner",
+            res_id: partnerId,
+            view_mode: "form",
+            target: "current",
+        });
+    }
+}
+
+Dashboard.template = "my_module.Dashboard";
+</code></pre>
+
+<div class="callout tip">
+    <strong>💡 ORM Service vs RPC</strong>
+    <code>useService("orm")</code> is preferred over raw <code>rpc()</code> — it automatically handles company context, user preferences, and error handling. Use <code>orm.call()</code> for method calls and <code>orm.searchRead()</code> for queries.
+</div>
+
+<h3>OWL Component Lifecycle</h3>
+<table class="comparison-table">
+    <thead><tr><th>OWL Method</th><th>When Called</th><th>Use Case</th></tr></thead>
+    <tbody>
+        <tr><td><code>setup()</code></td><td>Before first render</td><td>Initialize state, services, effects</td></tr>
+        <tr><td><code>willStart()</code></td><td>Before mount (async)</td><td>Load initial data</td></tr>
+        <tr><td><code>mounted()</code></td><td>After DOM insert</td><td>DOM manipulation, focus, animations</td></tr>
+        <tr><td><code>willUpdateProps()</code></td><td>Before props change</td><td>Cleanup before re-render</td></tr>
+        <tr><td><code>patched()</code></td><td>After re-render</td><td>Post-update DOM work</td></tr>
+        <tr><td><code>willUnmount()</code></td><td>Before DOM remove</td><td>Cleanup timers, listeners</td></tr>
+    </tbody>
+</table>
+
+<!-- ==================== EXAM 4: OWL Component ==================== -->
+<div class="exam-block reveal"
+     data-answer="import { Component, useState } from '@odoo/owl'; class MyComponent extends Component { setup() { this.state = useState({ count: 0 }); } increment() { this.state.count++; } }"
+     data-hint="Import Component and useState from @odoo/owl. Create a class extending Component. In setup(), use useState() to create reactive state. Add a method to modify state.">
+    <div class="exam-title">Test Your Knowledge</div>
+    <p class="exam-description">Write a basic OWL component with a reactive counter state and an increment method.</p>
+    <textarea class="exam-textarea" placeholder="import { Component, useState } from '@odoo/owl';
+
+class MyComponent extends Component {
+    setup() {
+        this.state = useState({ ... });
+    }
+
+    increment() {
+        this.state....;
+    }
+}"></textarea>
+    <div class="exam-actions">
+        <button class="exam-check">Check Answer</button>
+        <button class="exam-reset">Reset</button>
+        <button class="exam-hint">Show Hint</button>
+    </div>
+    <div class="exam-feedback"></div>
+    <div class="exam-hint-text">
+        <strong>Hint:</strong> Use <code>import { Component, useState } from "@odoo/owl"</code>. In <code>setup()</code>, call <code>this.state = useState({ count: 0 })</code>. To modify, use <code>this.state.count++</code>.
+    </div>
+</div>
+
+<!-- ==================== 17. VIEWS ==================== -->
+<h2 id="views"><span class="chapter-badge">Chapter 17</span>View Types</h2>
+
+<h3>Form View</h3>
+<pre><code>&lt;record id="view_my_model_form" model="ir.ui.view"&gt;
+    &lt;field name="name"&gt;my.model.form&lt;/field&gt;
+    &lt;field name="model"&gt;my.model&lt;/field&gt;
+    &lt;field name="arch" type="xml"&gt;
+        &lt;form&gt;
+            &lt;header&gt;
+                &lt;button name="action_confirm" type="object"
+                        string="Confirm" class="oe_highlight"
+                        invisible="state != 'draft'"/&gt;
+                &lt;field name="state" widget="statusbar"/&gt;
+            &lt;/header&gt;
+            &lt;sheet&gt;
+                &lt;div class="oe_button_box" name="button_box"&gt;
+                    &lt;button name="action_view_lines" type="object"
+                            class="oe_stat_button" icon="fa-list"&gt;
+                        &lt;field name="line_count" widget="statinfo" string="Lines"/&gt;
+                    &lt;/button&gt;
+                &lt;/div&gt;
+                &lt;widget name="web_ribbon" title="Archived"
+                        bg_color="bg-danger"
+                        invisible="active == True"/&gt;
+                &lt;group&gt;
+                    &lt;group&gt;
+                        &lt;field name="name"/&gt;
+                        &lt;field name="partner_id"/&gt;
+                    &lt;/group&gt;
+                    &lt;group&gt;
+                        &lt;field name="amount" widget="monetary"
+                               options="{'currency_field': 'currency_id'}"/&gt;
+                        &lt;field name="date"/&gt;
+                    &lt;/group&gt;
+                &lt;/group&gt;
+                &lt;notebook&gt;
+                    &lt;page string="Lines" name="lines"&gt;
+                        &lt;field name="order_line_ids"&gt;
+                            &lt;tree editable="bottom"&gt;
+                                &lt;field name="product_id"/&gt;
+                                &lt;field name="quantity"/&gt;
+                                &lt;field name="price" widget="monetary"/&gt;
+                            &lt;/tree&gt;
+                        &lt;/field&gt;
+                    &lt;/page&gt;
+                &lt;/notebook&gt;
+            &lt;/sheet&gt;
+            &lt;div class="oe_chatter"&gt;
+                &lt;field name="message_follower_ids"/&gt;
+                &lt;field name="activity_ids"/&gt;
+                &lt;field name="message_ids"/&gt;
+            &lt;/div&gt;
+        &lt;/form&gt;
+    &lt;/field&gt;
+&lt;/record&gt;
+</code></pre>
+
+<h3>List (Tree) View</h3>
+<pre><code>&lt;record id="view_my_model_list" model="ir.ui.view"&gt;
+    &lt;field name="name"&gt;my.model.list&lt;/field&gt;
+    &lt;field name="model"&gt;my.model&lt;/field&gt;
+    &lt;field name="arch" type="xml"&gt;
+        &lt;tree multi_edit="1" sample="1"
+              decoration-danger="state == 'cancelled'"
+              decoration-success="state == 'done'"&gt;
+            &lt;field name="name" string="Reference"/&gt;
+            &lt;field name="partner_id"/&gt;
+            &lt;field name="amount" sum="Total Amount" widget="monetary"/&gt;
+            &lt;field name="state" widget="badge"
+                   decoration-info="state == 'draft'"
+                   decoration-success="state == 'done'"
+                   decoration-danger="state == 'cancelled'"/&gt;
+            &lt;field name="create_date" readonly="1"/&gt;
+        &lt;/tree&gt;
+    &lt;/field&gt;
+&lt;/record&gt;
+</code></pre>
+
+<h3>Kanban View</h3>
+<pre><code>&lt;record id="view_my_model_kanban" model="ir.ui.view"&gt;
+    &lt;field name="name"&gt;my.model.kanban&lt;/field&gt;
+    &lt;field name="model"&gt;my.model&lt;/field&gt;
+    &lt;field name="arch" type="xml"&gt;
+        &lt;kanban class="o_kanban_mobile"
+                default_group_by="state"
+                sample="1"&gt;
+            &lt;field name="name"/&gt;
+            &lt;field name="partner_id"/&gt;
+            &lt;field name="state"/&gt;
+            &lt;field name="priority"/&gt;
+            &lt;templates&gt;
+                &lt;t t-name="card"&gt;
+                    &lt;div class="o_kanban_record_top mb8"&gt;
+                        &lt;div class="o_kanban_record_headings"&gt;
+                            &lt;strong class="o_kanban_record_title"&gt;
+                                &lt;t t-esc="record.name.value"/&gt;
+                            &lt;/strong&gt;
+                        &lt;/div&gt;
+                        &lt;field name="priority" widget="priority"/&gt;
+                    &lt;/div&gt;
+                    &lt;div class="o_kanban_record_body"&gt;
+                        &lt;span t-esc="record.partner_id.value"/&gt;
+                    &lt;/div&gt;
+                    &lt;div class="o_kanban_record_bottom"&gt;
+                        &lt;div class="oe_kanban_bottom_left"&gt;
+                            &lt;field name="state" widget="badge"
+                                   invisible="state == 'draft'"/&gt;
+                        &lt;/div&gt;
+                    &lt;/div&gt;
+                &lt;/t&gt;
+            &lt;/templates&gt;
+        &lt;/kanban&gt;
+    &lt;/field&gt;
+&lt;/record&gt;
+</code></pre>
+
+<h3>Search View</h3>
+<pre><code>&lt;record id="view_my_model_search" model="ir.ui.view"&gt;
+    &lt;field name="name"&gt;my.model.search&lt;/field&gt;
+    &lt;field name="model"&gt;my.model&lt;/field&gt;
+    &lt;field name="arch" type="xml"&gt;
+        &lt;search&gt;
+            &lt;field name="name"/&gt;
+            &lt;field name="partner_id"/&gt;
+            &lt;filter name="filter_active" string="Active"
+                    domain="[('active', '=', True)]"/&gt;
+            &lt;filter name="filter_my_records" string="My Records"
+                    domain="[('create_uid', '=', uid)]"/&gt;
+            &lt;separator/&gt;
+            &lt;group expand="0" string="Group By"&gt;
+                &lt;filter name="group_state" string="State"
+                        context="{'group_by': 'state'}"/&gt;
+                &lt;filter name="group_partner" string="Partner"
+                        context="{'group_by': 'partner_id'}"/&gt;
+            &lt;/group&gt;
+        &lt;/search&gt;
+    &lt;/field&gt;
+&lt;/record&gt;
+</code></pre>
+
+<h3>Window Action & Menu</h3>
+<pre><code>&lt;!-- Window Action --&gt;
+&lt;record id="action_my_model" model="ir.actions.act_window"&gt;
+    &lt;field name="name"&gt;My Models&lt;/field&gt;
+    &lt;field name="res_model"&gt;my.model&lt;/field&gt;
+    &lt;field name="view_mode"&gt;tree,form,kanban&lt;/field&gt;
+    &lt;field name="search_view_id" ref="view_my_model_search"/&gt;
+    &lt;field name="context"&gt;{'search_default_filter_active': 1}&lt;/field&gt;
+    &lt;field name="help" type="html"&gt;
+        &lt;p class="o_view_nocontent_smiling_face"&gt;
+            Create your first record!
+        &lt;/p&gt;
+    &lt;/field&gt;
+&lt;/record&gt;
+
+&lt;!-- Menu Items (hierarchical) --&gt;
+&lt;menuitem id="menu_my_module_root"
+          name="My Module"
+          web_icon="my_module,static/description/icon.png"/&gt;
+
+&lt;menuitem id="menu_my_model_root"
+          name="My Models"
+          parent="menu_my_module_root"/&gt;
+
+&lt;menuitem id="menu_my_model"
+          name="All Records"
+          parent="menu_my_model_root"
+          action="action_my_model"
+          sequence="10"/&gt;
+</code></pre>
+
+<!-- ==================== EXAM 3: Views ==================== -->
+<div class="exam-block reveal"
+     data-answer="<record id='action_my_model' model='ir.actions.act_window'><field name='name'>My Models</field><field name='res_model'>my.model</field><field name='view_mode'>tree,form</field></record>"
+     data-hint="Create an ir.actions.act_window record. Set res_model to your model name and view_mode to the view types you want.">
+    <div class="exam-title">Test Your Knowledge</div>
+    <p class="exam-description">Write a window action that opens <code>my.model</code> with both tree and form views.</p>
+    <textarea class="exam-textarea" placeholder="<record id='...' model='ir.actions.act_window'>..."></textarea>
+    <div class="exam-actions">
+        <button class="exam-check">Check Answer</button>
+        <button class="exam-reset">Reset</button>
+        <button class="exam-hint">Show Hint</button>
+    </div>
+    <div class="exam-feedback"></div>
+    <div class="exam-hint-text">
+        <strong>Hint:</strong> Use <code>&lt;record model="ir.actions.act_window"&gt;</code>. Set <code>res_model</code> to <code>'my.model'</code> and <code>view_mode</code> to <code>'tree,form'</code>.
+    </div>
+</div>
+
+<!-- ==================== 18. QWEB ==================== -->
+<h2 id="qweb"><span class="chapter-badge">Chapter 18</span>QWeb Templates</h2>
+
+<p>QWeb is Odoo's XML-based template engine — used for reports, emails, website pages, and OWL components. Think of it as Django Templates but XML-based.</p>
+
+<pre><code>&lt;?xml version="1.0" encoding="utf-8"?&gt;
+&lt;template id="my_report_template"&gt;
+    &lt;t t-call="web.html_container"&gt;
+        &lt;t t-foreach="docs" t-as="doc"&gt;
+            &lt;t t-call="web.external_layout"&gt;
+                &lt;div class="page"&gt;
+                    &lt;h2&gt;&lt;t t-esc="doc.name"/&gt;&lt;/h2&gt;
+
+                    &lt;t t-if="doc.partner_id"&gt;
+                        &lt;p&gt;Customer: &lt;t t-esc="doc.partner_id.name"/&gt;&lt;/p&gt;
+                    &lt;/t&gt;
+
+                    &lt;table class="table"&gt;
+                        &lt;thead&gt;
+                            &lt;tr&gt;
+                                &lt;th&gt;Product&lt;/th&gt;
+                                &lt;th class="text-right"&gt;Quantity&lt;/th&gt;
+                                &lt;th class="text-right"&gt;Price&lt;/th&gt;
+                            &lt;/tr&gt;
+                        &lt;/thead&gt;
+                        &lt;tbody&gt;
+                            &lt;t t-foreach="doc.line_ids" t-as="line"&gt;
+                                &lt;tr&gt;
+                                    &lt;td&gt;&lt;t t-esc="line.product_id.name"/&gt;&lt;/td&gt;
+                                    &lt;td class="text-right"&gt;&lt;t t-esc="line.quantity"/&gt;&lt;/td&gt;
+                                    &lt;td class="text-right"&gt;
+                                        &lt;t t-esc="line.price"
+                                           t-options="{
+                                               'widget': 'monetary',
+                                               'display_currency': doc.currency_id
+                                           }"/&gt;
+                                    &lt;/td&gt;
+                                &lt;/tr&gt;
+                            &lt;/t&gt;
+                        &lt;/tbody&gt;
+                    &lt;/table&gt;
+                &lt;/div&gt;
+            &lt;/t&gt;
+        &lt;/t&gt;
+    &lt;/t&gt;
+&lt;/template&gt;
+</code></pre>
+
+<h3>QWeb Expressions</h3>
+<pre><code>&lt;!-- Conditionals --&gt;
+&lt;t t-if="record.state == 'draft'"&gt;Draft&lt;/t&gt;
+&lt;t t-elif="record.state == 'done'"&gt;Done&lt;/t&gt;
+&lt;t t-else&gt;Unknown&lt;/t&gt;
+
+&lt;!-- Loops --&gt;
+&lt;t t-foreach="records" t-as="rec" t-index="idx" t-rec="rec"&gt;
+    &lt;p&gt;Item #&lt;t t-esc="idx + 1"/&gt;: &lt;t t-esc="rec.name"/&gt;&lt;/p&gt;
+&lt;/t&gt;
+
+&lt;!-- Formatting --&gt;
+&lt;t t-esc="amount" t-options="{'widget': 'monetary', 'currency': 'USD'}"/&gt;
+&lt;t t-esc="date_val" t-options="{'widget': 'date'}"/&gt;
+&lt;t t-raw="html_content"/&gt;  &lt;!-- Unescaped HTML (security risk!) --&gt;
+
+&lt;!-- Call other templates --&gt;
+&lt;t t-call="my_module.sub_template"&gt;
+    &lt;t t-set="title" t-value="'Hello'"/&gt;
+&lt;/t&gt;
+</code></pre>
+
+<!-- ==================== 19. ASSETS ==================== -->
+<h2 id="assets"><span class="chapter-badge">Chapter 19</span>Assets & JavaScript</h2>
+
+<pre><code># In __manifest__.py
+'assets': {
+    'web.assets_backend': [
+        # JS files
+        'my_module/static/src/js/**/*.js',
+        # CSS files
+        'my_module/static/src/css/**/*.css',
+        # QWeb XML templates
+        'my_module/static/src/xml/**/*.xml',
+    ],
+    'web.assets_frontend': [
+        'my_module/static/src/css/frontend.css',
+        'my_module/static/src/js/frontend.js',
+    ],
+    'web.assets_qweb': [
+        'my_module/static/src/xml/**/*',
+    ],
+},
+</code></pre>
+
+<div class="callout info">
+    <strong>📦 Asset Bundles</strong>
+    Odoo uses pre-defined asset bundles: <code>web.assets_backend</code> (backend UI), <code>web.assets_frontend</code> (website), <code>web.assets_common</code> (shared). You add your files to these bundles — Odoo handles bundling/minification.
+</div>
+
+<!-- ==================== 20. DATA FILES ==================== -->
+<h2 id="data-files"><span class="chapter-badge">Chapter 20</span>Data Files</h2>
+
+<pre><code>&lt;?xml version="1.0" encoding="utf-8"?&gt;
+&lt;data noupdate="1"&gt;
+    &lt;!-- noupdate=1: only loads on FIRST install, never on upgrade --&gt;
+
+    &lt;!-- System parameter --&gt;
+    &lt;record id="my_default_limit" model="ir.config_parameter"&gt;
+        &lt;field name="key"&gt;my_module.default_limit&lt;/field&gt;
+        &lt;field name="value"&gt;100&lt;/field&gt;
+    &lt;/record&gt;
+
+    &lt;!-- Sequence --&gt;
+    &lt;record id="seq_my_model" model="ir.sequence"&gt;
+        &lt;field name="name"&gt;My Model Sequence&lt;/field&gt;
+        &lt;field name="code"&gt;my.model&lt;/field&gt;
+        &lt;field name="prefix"&gt;MY-&lt;/field&gt;
+        &lt;field name="padding"&gt;5&lt;/field&gt;
+        &lt;field name="number_increment"&gt;1&lt;/field&gt;
+    &lt;/record&gt;
+
+    &lt;!-- Email template --&gt;
+    &lt;record id="email_template_confirmation" model="mail.template"&gt;
+        &lt;field name="name"&gt;Confirmation Email&lt;/field&gt;
+        &lt;field name="model_id" ref="model_my_model"/&gt;
+        &lt;field name="subject"&gt;Confirmation: {{ object.name }}&lt;/field&gt;
+        &lt;field name="email_from"&gt;{{ (object.company_id.email or 'noreply@example.com') }}&lt;/field&gt;
+        &lt;field name="email_to"&gt;{{ object.partner_id.email }}&lt;/field&gt;
+        &lt;field name="body_html" type="html"&gt;
+            &lt;div&gt;
+                &lt;p&gt;Dear &lt;t t-out="object.partner_id.name"/&gt;,&lt;/p&gt;
+                &lt;p&gt;Your order &lt;strong&gt;&lt;t t-out="object.name"/&gt;&lt;/strong&gt; is confirmed.&lt;/p&gt;
+            &lt;/div&gt;
+        &lt;/field&gt;
+    &lt;/record&gt;
+&lt;/data&gt;
+</code></pre>
+
+<!-- ==================== 21. REPORTS ==================== -->
+<h2 id="reports"><span class="chapter-badge">Chapter 21</span>Reports (QWeb PDF)</h2>
+
+<pre><code>&lt;!-- Report action --&gt;
+&lt;record id="action_report_my_model" model="ir.actions.report"&gt;
+    &lt;field name="name"&gt;My Model Report&lt;/field&gt;
+    &lt;field name="model" ref="model_my_model"/&gt;
+    &lt;field name="report_type"&gt;qweb-pdf&lt;/field&gt;
+    &lt;field name="report_name"&gt;my_module.report_my_model&lt;/field&gt;
+    &lt;field name="report_file"&gt;my_module.report_my_model&lt;/field&gt;
+    &lt;field name="print_report_name"&gt;'Report - %s' % (object.name)&lt;/field&gt;
+    &lt;field name="binding_model_id" ref="model_my_model"/&gt;
+    &lt;field name="binding_type"&gt;report&lt;/field&gt;
+&lt;/record&gt;
+
+&lt;!-- QWeb report template --&gt;
+&lt;template id="report_my_model"&gt;
+    &lt;t t-call="web.html_container"&gt;
+        &lt;t t-foreach="docs" t-as="doc"&gt;
+            &lt;t t-call="web.external_layout"&gt;
+                &lt;div class="page"&gt;
+                    &lt;h2&gt;&lt;t t-esc="doc.name"/&gt;&lt;/h2&gt;
+                    &lt;p&gt;Date: &lt;t t-esc="doc.date" t-options="{'widget': 'date'}"/&gt;&lt;/p&gt;
+                    &lt;p&gt;Total: &lt;t t-esc="doc.amount"
+                       t-options="{'widget': 'monetary',
+                                   'display_currency': doc.currency_id}"/&gt;&lt;/p&gt;
+                &lt;/div&gt;
+            &lt;/t&gt;
+        &lt;/t&gt;
+    &lt;/t&gt;
+&lt;/template&gt;
+</code></pre>
+
+<!-- ==================== 22. TESTING ==================== -->
+<h2 id="testing"><span class="chapter-badge">Chapter 22</span>Testing</h2>
+
+<pre><code>from odoo.tests.common import TransactionCase, tagged
+from odoo.exceptions import ValidationError
+
+@tagged('post_install', '-at_install')
+class TestMyModel(TransactionCase):
+
+    def setUp(self):
+        super().setUp()
+        self.partner = self.env['res.partner'].create({
+            'name': 'Test Partner',
+            'email': 'test@example.com',
+        })
+        self.order = self.env['my.model'].create({
+            'name': 'TEST-001',
+            'partner_id': self.partner.id,
+            'amount': 100.0,
+        })
+
+    def test_basic_creation(self):
+        """Verify record creation"""
+        self.assertEqual(self.order.name, 'TEST-001')
+        self.assertEqual(self.order.partner_id, self.partner)
+        self.assertTrue(self.order.active)
+
+    def test_compute_fields(self):
+        """Verify computed fields"""
+        self.order.partner_id.first_name = 'John'
+        self.order.partner_id.last_name = 'Doe'
+        self.assertEqual(self.order.partner_id.full_name, 'John Doe')
+
+    def test_constraint_negative_amount(self):
+        """Verify validation raises error"""
+        with self.assertRaises(ValidationError):
+            self.order.write({'amount': -100})
+
+    def test_search(self):
+        """Verify search returns expected records"""
+        orders = self.env['my.model'].search([
+            ('partner_id', '=', self.partner.id)
+        ])
+        self.assertIn(self.order, orders)
+
+    def test_workflow(self):
+        """Test state transitions"""
+        self.order.action_confirm()
+        self.assertEqual(self.order.state, 'confirmed')
+        self.order.action_done()
+        self.assertEqual(self.order.state, 'done')
+</code></pre>
+
+<pre><code># Run tests
+./odoo-bin -d test_db --test-tags=/my_module -i my_module --stop-after-init
+
+# Test tags:
+#   -at_install       Run BEFORE module is marked installed
+#   post_install      Run AFTER all modules installed
+#   /my_module        Run only tests from my_module
+#   -tag_name         Exclude a tag
+</code></pre>
+
+<!-- ==================== EXAM 5: Testing ==================== -->
+<div class="exam-block reveal"
+     data-answer="from odoo.tests.common import TransactionCase class TestMyModel(TransactionCase): def test_basic(self): record = self.env['my.model'].create({'name': 'Test'}) self.assertEqual(record.name, 'Test')"
+     data-hint="Import TransactionCase from odoo.tests.common. Create a test class extending it. Write a test_ method that creates a record and uses assertEqual to verify.">
+    <div class="exam-title">Test Your Knowledge</div>
+    <p class="exam-description">Write a basic test case for <code>my.model</code> that creates a record and verifies the name field.</p>
+    <textarea class="exam-textarea" placeholder="from odoo.tests.common import ...
+
+class TestMyModel(...):
+    def test_..."):
+        ..."></textarea>
+    <div class="exam-actions">
+        <button class="exam-check">Check Answer</button>
+        <button class="exam-reset">Reset</button>
+        <button class="exam-hint">Show Hint</button>
+    </div>
+    <div class="exam-feedback"></div>
+    <div class="exam-hint-text">
+        <strong>Hint:</strong> Import <code>TransactionCase</code>. Extend it with your test class. Use <code>self.env['my.model'].create()</code> and <code>self.assertEqual()</code>.
+    </div>
+</div>
+
+<!-- ==================== 23. DEPLOYMENT ==================== -->
+<h2 id="deployment"><span class="chapter-badge">Chapter 23</span>Deployment</h2>
+
+<h3>Production Config</h3>
+<pre><code># /etc/odoo/odoo.conf
+[options]
+admin_passwd = your_master_password
+db_host = localhost
+db_port = 5432
+db_user = odoo
+db_password = secure_password
+addons_path = /opt/odoo/addons,/opt/odoo/my_addons
+data_dir = /var/lib/odoo
+logfile = /var/log/odoo/odoo.log
+
+# Performance
+proxy_mode = True
+workers = 4                    # Multi-process mode (CPU cores + 1)
+max_cron_threads = 2
+limit_memory_hard = 2684354560 # 2.5 GB
+limit_memory_soft = 2147483648 # 2 GB
+limit_time_cpu = 600           # 10 min CPU time
+limit_time_real = 1200         # 20 min wall clock
+limit_request = 8192
+</code></pre>
+
+<h3>Nginx Reverse Proxy</h3>
+<pre><code>server {
+    listen 80;
+    server_name odoo.example.com;
+
+    proxy_buffers 16 64k;
+    proxy_buffer_size 128k;
+
+    location / {
+        proxy_pass http://127.0.0.1:8069;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location /longpolling {
+        proxy_pass http://127.0.0.1:8072;
+    }
+
+    location ~* /web/static/ {
+        proxy_cache_valid 200 30m;
+        proxy_buffering on;
+        expires 864000;
+        proxy_pass http://127.0.0.1:8069;
+    }
+}
+</code></pre>
+
+<!-- ==================== 24. BEST PRACTICES ==================== -->
+<h2 id="best-practices"><span class="chapter-badge">Chapter 24</span>Best Practices</h2>
+
+<div class="concept-card">
+    <h4>✅ Do</h4>
+    <ul>
+        <li>Always iterate recordsets: <code>for record in self:</code> — never assume single record</li>
+        <li>Use <code>search_read()</code> instead of <code>search() + read()</code> — single round-trip</li>
+        <li>Use <code>@api.depends</code> for computed fields that should be stored</li>
+        <li>Define <code>_sql_constraints</code> for data integrity at DB level</li>
+        <li>Use <code>noupdate="1"</code> for seed data users should customize</li>
+        <li>Write tests for every model — use <code>TransactionCase</code></li>
+        <li>Keep controllers thin — business logic belongs in models</li>
+        <li>Use <code>mapped()</code> for efficient field access across recordsets</li>
+        <li>Use <code>_description</code> on every model (required since v14)</li>
+        <li>Batch operations instead of looping single records</li>
+    </ul>
+</div>
+
+<div class="concept-card">
+    <h4>❌ Don't</h4>
+    <ul>
+        <li>Don't use raw SQL unless absolutely necessary</li>
+        <li>Don't access <code>self.env.uid</code> in loops — cache it</li>
+        <li>Don't call <code>create/write</code> in loops — use batch methods</li>
+        <li>Don't use <code>search()</code> when you need IDs — use <code>search_read()</code></li>
+        <li>Don't modify <code>__manifest__.py</code> data file order without care</li>
+        <li>Don't hardcode external IDs — always use <code>ref()</code></li>
+        <li>Don't use <code>super()</code> without arguments in model methods</li>
+        <li>Don't put business logic in views/controllers</li>
+        <li>Don't skip <code>_description</code> — Odoo will warn</li>
+        <li>Don't forget to handle empty recordsets in computed fields</li>
+    </ul>
+</div>
+
+<div class="callout tip">
+    <strong>🏗️ Performance Pattern: Avoid N+1</strong>
+    <pre><code># ❌ Bad: N+1 queries (one query per record)
+for order in orders:
+    partner_name = order.partner_id.name
+
+# ✅ Good: Prefetch in one query
+partners = orders.mapped('partner_id')
+# All partner data is now cached — no extra queries
+
+# ❌ Bad: Individual creates
+for data in data_list:
+    Model.create(data)
+
+# ✅ Good: Batch create
+Model.create(data_list)  # Single SQL INSERT</code></pre>
+</div>
+
+<!-- ==================== 25. CHEAT SHEET ==================== -->
+<h2 id="cheatsheet"><span class="chapter-badge">Chapter 25</span>Cheat Sheet</h2>
+
+<h3>Common Commands</h3>
+<pre><code># Development
+./odoo-bin -d mydb -i my_module --dev=xmlrpc    # Start dev server
+./odoo-bin -d mydb -u my_module                  # Update module
+./odoo-bin -d mydb --test-tags=/my_module -i my_module --stop-after-init  # Run tests
+./odoo-bin scaffold my_module /path/to/addons    # Generate module
+
+# Database
+createdb mydb                                     # Create database
+dropdb mydb                                       # Delete database
+./odoo-bin -d mydb -i base --stop-after-init     # Initialize base module
+</code></pre>
+
+<h3>ORM Quick Reference</h3>
+<pre><code># CRUD
+record = Model.create({'field': 'value'})
+records = Model.create([{...}, {...}])
+record = Model.browse(id)
+records = Model.search([('field', '=', 'value')], limit=10)
+data = Model.search_read([('field', '=', 'value')], ['f1', 'f2'])
+record.write({'field': 'new_value'})
+record.unlink()
+
+# Recordset ops
+filtered = records.filtered(lambda r: r.field == 'value')
+mapped = records.mapped('field_name')
+sorted = records.sorted('field_name', reverse=True)
+grouped = records.grouped('field_name')
+</code></pre>
+
+<h3>Error Types</h3>
+<pre><code>from odoo.exceptions import (
+    UserError,          # Show message to user
+    AccessError,        # Permission denied
+    AccessDenied,       # Login failed
+    ValidationError,    # Constraint violation
+    MissingError,       # Record not found
+    RedirectWarning,    # Warning with redirect
+)
+</code></pre>
+
+<h3>Decorators</h3>
+<pre><code>@api.model              # Class method (no recordset)
+@api.depends('field')   # Computed field deps
+@api.constrains('f')    # Validation
+@api.onchange('field')  # Form change handler
+@api.returns('model')   # RPC return type
+</code></pre>
+
+<h3>View Widgets</h3>
+<table class="comparison-table">
+    <thead><tr><th>Widget</th><th>Usage</th><th>Example</th></tr></thead>
+    <tbody>
+        <tr><td><code>statusbar</code></td><td>State flow indicator</td><td><code>&lt;field name="state" widget="statusbar"/&gt;</code></td></tr>
+        <tr><td><code>badge</code></td><td>Colored label</td><td><code>widget="badge" decoration-info="state=='draft'"</code></td></tr>
+        <tr><td><code>priority</code></td><td>Star rating</td><td><code>&lt;field name="priority" widget="priority"/&gt;</code></td></tr>
+        <tr><td><code>monetary</code></td><td>Currency format</td><td><code>widget="monetary" options="{'currency_field': 'currency_id'}"</code></td></tr>
+        <tr><td><code>html</code></td><td>Rich text editor</td><td><code>widget="html"</code></td></tr>
+        <tr><td><code>color</code></td><td>Color picker</td><td><code>widget="color"</code></td></tr>
+        <tr><td><code>image</code></td><td>Image preview</td><td><code>widget="image"</code></td></tr>
+        <tr><td><code>many2many_tags</code></td><td>Tag chips</td><td><code>widget="many2many_tags"</code></td></tr>
+    </tbody>
+</table>
+
+<h3>Useful Snippets</h3>
+<pre><code># Next sequence number
+name = self.env['ir.sequence'].next_by_code('my.model')
+
+# Send email from template
+template = self.env.ref('my_module.email_template')
+template.send_mail(self.id, force_send=True)
+
+# Raise user error
+raise UserError(_("You cannot do this because %s", reason))
+
+# Post to chatter
+self.message_post(body="Confirmed by %s" % self.env.user.name)
+
+# Override create
+@api.model_create_multi
+def create(self, vals_list):
+    for vals in vals_list:
+        if not vals.get('name'):
+            vals['name'] = self.env['ir.sequence'].next_by_code('my.model')
+    return super().create(vals_list)
+
+# Override write
+def write(self, vals):
+    if 'state' in vals and vals['state'] == 'done':
+        vals['done_date'] = fields.Datetime.now()
+    return super().write(vals)
+
+# SQL execution (use parameterized queries!)
+self.env.cr.execute(
+    "SELECT id, name FROM res_partner WHERE name ILIKE %s",
+    ['%test%']
+)
+results = self.env.cr.dictfetchall()
+
+# Access environment
+env = self.env
+uid = env.uid
+user = env.user
+company = env.company
+context = env.context
+</code></pre>
+
+<hr class="section-divider">
+
+<!-- ==================== 26. PRACTICE PROJECTS ==================== -->
+<h2 id="projects"><span class="chapter-badge">Practice Projects</span>Sample Projects to Master Odoo</h2>
+
+<p>Building real projects is the best way to solidify your Odoo knowledge. Here are progressively challenging projects, from beginner to advanced:</p>
+
+<!-- Project 1 -->
+<div class="project-card reveal">
+    <div class="difficulty easy">● Beginner</div>
+    <h4>1. Task Manager Module</h4>
+    <p>Build a simple project/task management system. This teaches you the fundamentals of models, views, security, and basic business logic.</p>
+    <div class="features">
+        <span class="tag blue">Models</span>
+        <span class="tag green">Views</span>
+        <span class="tag primary">Security</span>
+        <span class="tag orange">Wizards</span>
+    </div>
+    <p><strong>Features to implement:</strong></p>
+    <ul>
+        <li><code>project.task</code> model with name, description, assignee, due date, priority, state</li>
+        <li>Kanban view (drag-and-drop between states)</li>
+        <li>Tree + form views with inline editing</li>
+        <li>Record rules: users see only assigned tasks</li>
+        <li>Dashboard with task counts by state</li>
+        <li>Email notification on assignment (mail.thread mixin)</li>
+    </ul>
+    <div class="time-estimate">⏱ Estimated time: <strong>2-3 hours</strong></div>
+</div>
+
+<!-- Project 2 -->
+<div class="project-card reveal">
+    <div class="difficulty easy">● Beginner</div>
+    <h4>2. Library Management System</h4>
+    <p>A book lending system — teaches relational fields, constraints, computed fields, and search views.</p>
+    <div class="features">
+        <span class="tag blue">Relations</span>
+        <span class="tag green">Computed Fields</span>
+        <span class="tag primary">Constraints</span>
+        <span class="tag orange">Search</span>
+    </div>
+    <p><strong>Features to implement:</strong></p>
+    <ul>
+        <li><code>library.book</code> (title, author M2O, genre M2M, ISBN, state)</li>
+        <li><code>library.member</code> (partner M2O, membership date, borrowed_books O2M)</li>
+        <li><code>library.lending</code> (transient model wizard for borrowing)</li>
+        <li>Computed field: <code>is_available</code> based on active lendings</li>
+        <li>SQL constraint: unique ISBN</li>
+        <li>Python constraint: max 5 books per member</li>
+        <li>Search view with filters: available, overdue, by genre</li>
+    </ul>
+    <div class="time-estimate">⏱ Estimated time: <strong>3-4 hours</strong></div>
+</div>
+
+<!-- Project 3 -->
+<div class="project-card reveal">
+    <div class="difficulty medium">● Intermediate</div>
+    <h4>3. Restaurant POS Extension</h4>
+    <p>Extend the Point of Sale module with a custom restaurant features. Teaches module inheritance, OWL components, and real-world integration.</p>
+    <div class="features">
+        <span class="tag blue">Inheritance</span>
+        <span class="tag green">OWL</span>
+        <span class="tag primary">POS Integration</span>
+        <span class="tag orange">JavaScript</span>
+    </div>
+    <p><strong>Features to implement:</strong></p>
+    <ul>
+        <li>Table management with floor plans (extend <code>pos.config</code>)</li>
+        <li>Order notes / special instructions per line</li>
+        <li>Kitchen display system (OWL component)</li>
+        <li>Custom POS screen with table status overview</li>
+        <li>Print kitchen tickets via IoT Box integration</li>
+        <li>Revenue reporting per table/floor</li>
+    </ul>
+    <div class="time-estimate">⏱ Estimated time: <strong>6-8 hours</strong></div>
+</div>
+
+<!-- Project 4 -->
+<div class="project-card reveal">
+    <div class="difficulty medium">● Intermediate</div>
+    <h4>4. Real Estate Listing Platform</h4>
+    <p>Build a property listing system with website integration. Teaches website controllers, QWeb templates, multi-step workflows, and reporting.</p>
+    <div class="features">
+        <span class="tag blue">Website</span>
+        <span class="tag green">Controllers</span>
+        <span class="tag primary">Reports</span>
+        <span class="tag orange">Multi-step</span>
+    </div>
+    <p><strong>Features to implement:</strong></p>
+    <ul>
+        <li><code>property.listing</code> (title, address, price, bedrooms, bathrooms, photos, state)</li>
+        <li>Website frontend: listing page, detail page, search with filters</li>
+        <li>Offer system: users submit offers (One2many on listing)</li>
+        <li>Multi-step workflow: draft → published → sold/rented</li>
+        <li>Automated email on offer received/accepted/rejected</li>
+        <li>PDF property brochure report</li>
+        <li>Analytics dashboard (graph view)</li>
+    </ul>
+    <div class="time-estimate">⏱ Estimated time: <strong>8-12 hours</strong></div>
+</div>
+
+<!-- Project 5 -->
+<div class="project-card reveal">
+    <div class="difficulty hard">● Advanced</div>
+    <h4>5. Custom CRM with AI Lead Scoring</h4>
+    <p>Build a CRM extension with automated lead scoring, email integration, and custom dashboards. Teaches advanced patterns, scheduled actions, and OWL.</p>
+    <div class="features">
+        <span class="tag blue">Advanced ORM</span>
+        <span class="tag green">Crons</span>
+        <span class="tag primary">OWL Dashboard</span>
+        <span class="tag red">Email Integration</span>
+    </div>
+    <p><strong>Features to implement:</strong></p>
+    <ul>
+        <li>Extend <code>crm.lead</code> with scoring model (computed fields)</li>
+        <li>Scheduled action: auto-score leads every hour</li>
+        <li>Email gateway: auto-create leads from incoming emails</li>
+        <li>Custom OWL dashboard with lead pipeline visualization</li>
+        <li>Activity plans: auto-create follow-up tasks</li>
+        <li>Multi-company support with proper record rules</li>
+        <li>REST API endpoint for external lead submission</li>
+        <li>Comprehensive test suite</li>
+    </ul>
+    <div class="time-estimate">⏱ Estimated time: <strong>15-20 hours</strong></div>
+</div>
+
+<!-- Project 6 -->
+<div class="project-card reveal">
+    <div class="difficulty hard">● Advanced</div>
+    <h4>6. Full eCommerce Extension</h4>
+    <p>Build a complete eCommerce module with custom product types, payment integration, and shipping. The ultimate Odoo mastery project.</p>
+    <div class="features">
+        <span class="tag blue">Full Stack</span>
+        <span class="tag green">eCommerce</span>
+        <span class="tag primary">Payment</span>
+        <span class="tag red">Shipping</span>
+    </div>
+    <p><strong>Features to implement:</strong></p>
+    <ul>
+        <li>Custom product type (e.g., rental, subscription, digital)</li>
+        <li>Multi-variant products with attribute-based pricing</li>
+        <li>Custom checkout flow with address validation</li>
+        <li>Payment provider extension (Stripe/PayPal)</li>
+        <li>Shipping carrier integration with rate calculation</li>
+        <li>Order confirmation emails with PDF invoices</li>
+        <li>Customer account portal with order history</li>
+        <li>Inventory sync with stock levels</li>
+        <li>Custom website pages with QWeb templates</li>
+        <li>Full OWL components for cart/checkout UI</li>
+    </ul>
+    <div class="time-estimate">⏱ Estimated time: <strong>25-40 hours</strong></div>
+</div>
+
+<!-- Project 7 -->
+<div class="project-card reveal">
+    <div class="difficulty hard">● Advanced</div>
+    <h4>7. Odoo SaaS Multi-Tenant Manager</h4>
+    <p>Build a system to manage multiple Odoo instances for SaaS deployment. Teaches database management, ir.cron, and system-level Odoo programming.</p>
+    <div class="features">
+        <span class="tag blue">System</span>
+        <span class="tag green">Multi-DB</span>
+        <span class="tag primary">Automation</span>
+        <span class="tag red">DevOps</span>
+    </div>
+    <p><strong>Features to implement:</strong></p>
+    <ul>
+        <li><code>saas.tenant</code> model (database name, plan, status, disk usage)</li>
+        <li>Automated database creation/deletion</li>
+        <li>Subscription billing with payment integration</li>
+        <li>Resource monitoring (disk, CPU, active users)</li>
+        <li>Automated backups with retention policies</li>
+        <li>Tenant provisioning wizard</li>
+        <li>Admin dashboard with tenant overview</li>
+        <li>Module installation management per tenant</li>
+    </ul>
+    <div class="time-estimate">⏱ Estimated time: <strong>40+ hours</strong></div>
+</div>
+
+<!-- ==================== FINAL SUMMARY ==================== -->
+<div class="section-summary reveal">
+    <h3>🎓 Final Summary — What You've Learned</h3>
+    <ul>
+        <li><strong>Architecture:</strong> Modular monolith with ORM-driven UI generation</li>
+        <li><strong>ORM:</strong> Active Record pattern with recordsets, domains, and computed fields</li>
+        <li><strong>Fields:</strong> Rich field types with relational, computed, and stored variants</li>
+        <li><strong>Inheritance:</strong> 3 patterns — classical, extension, delegation</li>
+        <li><strong>Security:</strong> ACL (operations) + Record Rules (rows) + Groups (hierarchical)</li>
+        <li><strong>Views:</strong> XML-defined forms, lists, kanbans, searches, and actions</li>
+        <li><strong>Frontend:</strong> OWL component framework with QWeb XML templates</li>
+        <li><strong>Backend:</strong> Controllers, server actions, crons, and RPC</li>
+        <li><strong>Deployment:</strong> PostgreSQL + Nginx + multi-worker config</li>
+        <li><strong>Best Practices:</strong> Batch operations, avoid N+1, use search_read, test everything</li>
+    </ul>
+</div>
+
+<footer>
+    <p>Odoo 19 Developer Tutorial — Built from <a href="https://www.odoo.com/documentation/19.0/" target="_blank">official documentation</a>. For full reference, visit <a href="https://www.odoo.com/documentation/19.0/developer.html" target="_blank">odoo.com/developer</a></p>
+    <p style="margin-top:8px; opacity:0.6;">Press <kbd>/</kbd> to search • <kbd>Esc</kbd> to close</p>
+</footer>
+
+</main>
+
+<button class="back-to-top" id="backToTop" aria-label="Back to top">↑</button>
+
+<!-- Settings Button -->
+<button class="settings-btn" id="settingsBtn" aria-label="Open settings">⚙</button>
+
+<!-- Settings Panel -->
+<div class="settings-overlay" id="settingsOverlay"></div>
+<div class="settings-panel" id="settingsPanel">
+    <div class="settings-header">
+        <h2>Settings</h2>
+        <button class="settings-close" id="settingsClose">✕</button>
+    </div>
+    <div class="settings-body">
+
+        <!-- Theme -->
+        <div class="settings-section">
+            <div class="settings-section-title">Theme</div>
+            <div class="theme-grid">
+                <div class="theme-option theme-default active" data-theme="default">
+                    <span class="theme-name">Default</span>
+                </div>
+                <div class="theme-option theme-midnight" data-theme="midnight">
+                    <span class="theme-name">Midnight</span>
+                </div>
+                <div class="theme-option theme-ocean" data-theme="ocean">
+                    <span class="theme-name">Ocean</span>
+                </div>
+                <div class="theme-option theme-forest" data-theme="forest">
+                    <span class="theme-name">Forest</span>
+                </div>
+                <div class="theme-option theme-rose" data-theme="rose">
+                    <span class="theme-name">Rose</span>
+                </div>
+                <div class="theme-option theme-dark" data-theme="dark">
+                    <span class="theme-name">Dark</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Font -->
+        <div class="settings-section">
+            <div class="settings-section-title">Font Family</div>
+            <div class="font-options">
+                <button class="font-option active" data-font="system">
+                    System Default
+                    <div class="font-label">-apple-system, Segoe UI, Roboto</div>
+                </button>
+                <button class="font-option" data-font="inter">
+                    Inter
+                    <div class="font-label">Clean, modern sans-serif</div>
+                </button>
+                <button class="font-option" data-font="mono">
+                    JetBrains Mono
+                    <div class="font-label">Monospace for code-heavy reading</div>
+                </button>
+                <button class="font-option" data-font="serif">
+                    Georgia
+                    <div class="font-label">Classic serif for long reading</div>
+                </button>
+                <button class="font-option" data-font="compact">
+                    Roboto Condensed
+                    <div class="font-label">Compact, information-dense</div>
+                </button>
+            </div>
+        </div>
+
+        <!-- Font Size -->
+        <div class="settings-section">
+            <div class="settings-section-title">Font Size</div>
+            <div class="size-options">
+                <button class="size-option" data-size="small">S</button>
+                <button class="size-option active" data-size="default">M</button>
+                <button class="size-option" data-size="large">L</button>
+                <button class="size-option" data-size="xlarge">XL</button>
+            </div>
+        </div>
+
+        <!-- Code Size -->
+        <div class="settings-section">
+            <div class="settings-section-title">Code Block Size</div>
+            <select class="settings-select" id="codeSizeSelect">
+                <option value="12px">Small (12px)</option>
+                <option value="13.5px" selected>Default (13.5px)</option>
+                <option value="15px">Large (15px)</option>
+                <option value="17px">Extra Large (17px)</option>
+            </select>
+        </div>
+
+        <!-- Border Radius -->
+        <div class="settings-section">
+            <div class="settings-section-title">Border Radius</div>
+            <div class="radius-options">
+                <button class="radius-option" data-radius="none">None</button>
+                <button class="radius-option" data-radius="small">S</button>
+                <button class="radius-option active" data-radius="default">M</button>
+                <button class="radius-option" data-radius="large">L</button>
+            </div>
+        </div>
+
+        <!-- Sidebar Compact -->
+        <div class="settings-section">
+            <div class="settings-section-title">Layout</div>
+            <div class="toggle-row">
+                <label for="sidebarCompactToggle">Compact Sidebar</label>
+                <div class="toggle-switch">
+                    <input type="checkbox" id="sidebarCompactToggle">
+                    <span class="toggle-slider"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reset -->
+        <div class="settings-section">
+            <button class="settings-reset" id="settingsReset">Reset to Defaults</button>
+        </div>
+
+    </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>

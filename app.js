@@ -30,6 +30,7 @@
   // Short text glyphs (monospace) — universal across systems.
   const FOLDER_ICON = {
     tutorial: "★",
+    "tutorial-group": "★",
     markdown: "MD",
     code: "</>",
     pdf: "PDF",
@@ -104,6 +105,10 @@
     ]));
 
     for (const f of state.manifest.folders) {
+      if (f.kind === "tutorial-group") {
+        nav.appendChild(buildTutorialGroupNav(f));
+        continue;
+      }
       const count = f.files ? String(f.files.length) : "";
       nav.appendChild(el("a", {
         class: `nav-item kind-${f.kind}`,
@@ -121,9 +126,46 @@
     tag.className = "data-source-tag " + state.dataSource;
   }
 
+  function buildTutorialGroupNav(group) {
+    const wrap = el("div", { class: "nav-group", "data-group": "tutorial" });
+    const header = el("button", {
+      class: "nav-item kind-tutorial nav-group-header",
+      type: "button",
+      "aria-expanded": "true",
+    }, [
+      el("span", { class: "ni-icon", text: FOLDER_ICON["tutorial-group"] }),
+      el("span", { class: "ni-name", text: "Tutorial" }),
+      el("span", { class: "ni-chevron", text: "▸" }),
+    ]);
+    const children = el("div", { class: "nav-group-children" });
+    for (const c of group.children || []) {
+      children.appendChild(el("a", {
+        class: "nav-item nav-subitem kind-tutorial",
+        href: "#/tutorial/" + encodeURIComponent(c.slug),
+        "data-route": "tutorial/" + c.slug,
+      }, [
+        el("span", { class: "ni-name", text: c.title || c.slug }),
+      ]));
+    }
+    header.addEventListener("click", (e) => {
+      e.preventDefault();
+      const open = wrap.classList.toggle("collapsed");
+      header.setAttribute("aria-expanded", open ? "false" : "true");
+    });
+    wrap.appendChild(header);
+    wrap.appendChild(children);
+    return wrap;
+  }
+
   function highlightActive(slug) {
     document.querySelectorAll(".nav-item").forEach((a) => {
       a.classList.toggle("active", a.dataset.route === slug);
+    });
+    // Highlight the parent group header whenever any of its children is active.
+    document.querySelectorAll(".nav-group").forEach((g) => {
+      const anyActive = !!g.querySelector(".nav-item.nav-subitem.active");
+      const header = g.querySelector(".nav-group-header");
+      if (header) header.classList.toggle("active", anyActive);
     });
   }
 
@@ -136,9 +178,16 @@
   function parseHash() {
     const h = (location.hash || "").replace(/^#\/?/, "");
     if (!h) return { kind: "home" };
-    const slug = decodeURIComponent(h);
-    if (slug === "tutorial") return { kind: "tutorial" };
-    return { kind: "folder", name: slug };
+    const parts = h.split("/").map(decodeURIComponent);
+    if (parts[0] === "tutorial") {
+      if (parts.length === 1 || !parts[1]) return { kind: "tutorial-index" };
+      return { kind: "tutorial-child", slug: parts[1] };
+    }
+    return { kind: "folder", name: parts[0] };
+  }
+
+  function findTutorialGroup() {
+    return state.manifest.folders.find((f) => f.kind === "tutorial-group");
   }
 
   function route() {
@@ -155,21 +204,40 @@
       return;
     }
 
-    if (r.kind === "tutorial") {
-      // Confirm tutorial exists in manifest before embedding.
-      const tut = state.manifest.folders.find((f) => f.name === "tutorial");
-      if (!tut) {
-        view.appendChild(missingCard("tutorial folder is not in the manifest"));
+    if (r.kind === "tutorial-index") {
+      const group = findTutorialGroup();
+      if (!group) {
+        view.appendChild(missingCard("No tutorials are registered in the manifest."));
         setCrumbs("<strong>Tutorial</strong>");
         setBack(true);
-        highlightActive("tutorial");
+        highlightActive("");
+        return;
+      }
+      renderTutorialIndex(view, group);
+      setCrumbs("<strong>Tutorial</strong>");
+      setBack(true);
+      highlightActive("");
+      return;
+    }
+
+    if (r.kind === "tutorial-child") {
+      const group = findTutorialGroup();
+      const child = group && (group.children || []).find((c) => c.slug === r.slug);
+      if (!child) {
+        view.appendChild(missingCard("Tutorial not found: " + r.slug));
+        setCrumbs("<strong>Tutorial</strong>");
+        setBack(true);
+        highlightActive("");
         return;
       }
       document.body.classList.add("tutorial-mode");
-      renderTutorial(view, tut);
-      setCrumbs("<strong>Tutorial</strong>");
+      renderTutorialChild(view, child);
+      setCrumbs(
+        `<a href="#/tutorial" class="crumb-link">Tutorial</a> &nbsp;/&nbsp; ` +
+        `<strong>${escapeHtml(child.title || child.slug)}</strong>`
+      );
       setBack(true);
-      highlightActive("tutorial");
+      highlightActive("tutorial/" + child.slug);
       return;
     }
 
@@ -218,27 +286,54 @@
 
     const grid = el("div", { class: "folder-grid" });
     for (const f of state.manifest.folders) {
-      const tile = el("a", {
-        class: `tile kind-${f.kind}`,
-        href: "#/" + encodeURIComponent(f.name),
-      });
+      const isGroup = f.kind === "tutorial-group";
+      const href = isGroup ? "#/tutorial" : "#/" + encodeURIComponent(f.name);
+      const tile = el("a", { class: `tile kind-${f.kind}`, href });
       tile.appendChild(el("div", { class: "tile-icon", text: FOLDER_ICON[f.kind] || "·" }));
-      tile.appendChild(el("div", { class: "tile-name", text: f.name }));
-      const sub = f.kind === "tutorial"
-        ? "interactive masterclass"
-        : `${f.files ? f.files.length : 0} file${(f.files && f.files.length === 1) ? "" : "s"} · ${f.kind}`;
+      tile.appendChild(el("div", { class: "tile-name", text: isGroup ? "Tutorial" : f.name }));
+      let sub;
+      if (isGroup) {
+        const n = (f.children || []).length;
+        sub = `${n} interactive tutorial${n === 1 ? "" : "s"}`;
+      } else if (f.kind === "tutorial") {
+        sub = "interactive masterclass";
+      } else {
+        const n = f.files ? f.files.length : 0;
+        sub = `${n} file${n === 1 ? "" : "s"} · ${f.kind}`;
+      }
       tile.appendChild(el("div", { class: "tile-sub", text: sub }));
       grid.appendChild(tile);
     }
     view.appendChild(grid);
   }
 
-  function renderTutorial(view, tut) {
+  function renderTutorialIndex(view, group) {
+    const card = el("div", { class: "card hero" });
+    card.appendChild(el("h1", { text: "Tutorial" }));
+    card.appendChild(el("p", {
+      text: "Pick a track. Each one is a self-contained interactive tutorial.",
+    }));
+    view.appendChild(card);
+
+    const grid = el("div", { class: "folder-grid" });
+    for (const c of group.children || []) {
+      const tile = el("a", {
+        class: "tile kind-tutorial",
+        href: "#/tutorial/" + encodeURIComponent(c.slug),
+      });
+      tile.appendChild(el("div", { class: "tile-icon", text: FOLDER_ICON["tutorial-group"] }));
+      tile.appendChild(el("div", { class: "tile-name", text: c.title || c.slug }));
+      tile.appendChild(el("div", { class: "tile-sub", text: "open tutorial" }));
+      grid.appendChild(tile);
+    }
+    view.appendChild(grid);
+  }
+
+  function renderTutorialChild(view, child) {
     const iframe = el("iframe", {
       class: "tutorial-iframe",
-      src: tut.entry || "tutorial/index.html",
-      title: "Tutorial",
-      // Allow iframe scripts to navigate inside; nothing escapes.
+      src: child.entry,
+      title: child.title || child.slug,
     });
     view.appendChild(iframe);
   }
