@@ -38,8 +38,9 @@ $ALWAYS_SKIP = [
 // Folders under tutorials/ become sub-items of the "Tutorial" sidebar entry.
 $TUTORIALS_DIR = "tutorials";
 $TUTORIAL_CHILDREN = [
-    ["slug" => "algorithms",     "title" => "Algorithms"],
-    ["slug" => "odoo-framework", "title" => "Odoo Framework"],
+    ["slug" => "algorithms",      "title" => "Algorithms"],
+    ["slug" => "odoo-framework",  "title" => "Odoo Framework"],
+    ["slug" => "interview-final", "title" => "Interview Final Stage"],
 ];
 
 function parse_gitignore_php($root) {

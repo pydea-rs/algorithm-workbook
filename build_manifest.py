@@ -45,8 +45,9 @@ ALWAYS_SKIP = {
 # Folders under `tutorials/` become sub-items of the "Tutorial" sidebar entry.
 # The order below determines the display order in the sidebar.
 TUTORIAL_CHILDREN = [
-    {"slug": "algorithms",     "title": "Algorithms"},
-    {"slug": "odoo-framework", "title": "Odoo Framework"},
+    {"slug": "algorithms",      "title": "Algorithms"},
+    {"slug": "odoo-framework",  "title": "Odoo Framework"},
+    {"slug": "interview-final", "title": "Interview Final Stage"},
 ]
 TUTORIALS_DIR = "tutorials"
 

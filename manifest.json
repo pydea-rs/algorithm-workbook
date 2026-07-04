@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-04T20:46:44Z",
+  "generated": "2026-07-04T23:02:48Z",
   "folders": [
     {
       "name": "bracketCount",
@@ -374,6 +374,11 @@
           "slug": "odoo-framework",
           "title": "Odoo Framework",
           "entry": "tutorials/odoo-framework/index.html"
+        },
+        {
+          "slug": "interview-final",
+          "title": "Interview Final Stage",
+          "entry": "tutorials/interview-final/index.html"
         }
       ]
     },
