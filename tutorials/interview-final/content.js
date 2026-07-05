@@ -2299,6 +2299,304 @@ query log shows hundreds of identical queries with different ids."</p>
     ],
   },
 
+  M14: {
+    id: "M14",
+    title: "Module 14 — OOP & Design Patterns",
+    subtitle: "Four pillars, SOLID, composition-first, patterns that matter live",
+    practiceSet: "PS14",
+    body: [
+      {
+        kind: "html",
+        html: `
+<div class="hero">
+  <h1>Module 14 — OOP &amp; Design Patterns</h1>
+  <p>OOP questions show up two ways in a live interview: as <strong>vocabulary checks</strong>
+  ("what's polymorphism?", "composition vs inheritance?") and as <strong>structure judgment</strong>
+  while you code ("should this be a class?"). Your interviewer lives in Odoo — one of the largest
+  OOP Python codebases in the wild — so clean object thinking lands well. This module compresses
+  the whole topic to what's askable in three hours.</p>
+</div>
+
+<h2>1. The four pillars — definitions that survive follow-ups</h2>
+<table class="tbl">
+  <tr><th>Pillar</th><th>One sentence</th><th>Python spelling</th></tr>
+  <tr><td><strong>Encapsulation</strong></td><td>state and the code that guards it live together; outsiders use the interface, not the internals</td><td><code>_single_underscore</code> convention, <code>@property</code> to gate access</td></tr>
+  <tr><td><strong>Abstraction</strong></td><td>expose <em>what</em> it does, hide <em>how</em></td><td><code>abc.ABC</code> / duck-typed interfaces</td></tr>
+  <tr><td><strong>Inheritance</strong></td><td>a subclass <em>is a</em> special case of its parent and can stand in for it</td><td><code>class Dog(Animal)</code>, <code>super()</code></td></tr>
+  <tr><td><strong>Polymorphism</strong></td><td>one call site, many behaviors — the object decides</td><td>duck typing: anything with <code>.speak()</code> works</td></tr>
+</table>
+<p>The Python twist worth saying: Python's polymorphism is <strong>duck typing</strong> — no
+interface declaration needed, the method lookup at runtime IS the dispatch. <code>len(x)</code>
+works on strings, lists and your class with <code>__len__</code>; that's the same idea as dunder
+protocols. If you mention <code>@property</code>, know its point: change an attribute into a
+computed value <em>without breaking callers</em> — encapsulation retrofitted.</p>
+
+<h2>2. Composition vs inheritance — the answer they're fishing for</h2>
+<p><strong>Default to composition; inherit only for true is-a with substitutability.</strong>
+Inheritance is the tightest coupling in OOP: the child inherits every parent decision, forever,
+including future ones. Composition (<em>has-a</em>) picks exactly the behavior it needs and can
+swap it at runtime.</p>
+<pre><code># inheritance: a Stack IS-A list? No — it inherits insert(), and now
+# users can violate LIFO. The relationship lies.
+class Stack(list): ...          # broken abstraction
+
+# composition: a Stack HAS-A list it delegates to. Interface stays honest.
+class Stack:
+    def __init__(self):  self._items = []
+    def push(self, x):   self._items.append(x)
+    def pop(self):       return self._items.pop()</code></pre>
+<p>The test for legitimate inheritance is <strong>Liskov substitution</strong> (the L of SOLID):
+anywhere the parent works, the child must work — same promises, no surprises. The classic
+counterexample: <code>Square(Rectangle)</code>. Setting a rectangle's width leaves height alone;
+a square can't honor that — code that resizes rectangles breaks when handed a square. "Is-a" in
+English is not "is-a" in behavior.</p>
+
+<h2>3. SOLID — one line each, plus the smell that violates it</h2>
+<table class="tbl">
+  <tr><th></th><th>Principle</th><th>Violation smell</th></tr>
+  <tr><td><strong>S</strong>ingle responsibility</td><td>one class, one reason to change</td><td>a <code>ReportManager</code> that queries, formats, and emails</td></tr>
+  <tr><td><strong>O</strong>pen/closed</td><td>extend behavior without editing working code</td><td>an ever-growing <code>if type == …</code> chain wherever a new case lands</td></tr>
+  <tr><td><strong>L</strong>iskov substitution</td><td>subclasses keep the parent's promises</td><td>an override that raises <code>NotImplementedError</code> or ignores arguments</td></tr>
+  <tr><td><strong>I</strong>nterface segregation</td><td>many small interfaces over one fat one</td><td>implementing 8 no-op methods to satisfy one</td></tr>
+  <tr><td><strong>D</strong>ependency inversion</td><td>depend on abstractions; inject them</td><td><code>PaymentService()</code> constructed inside the class you want to test</td></tr>
+</table>
+<p>Don't recite — <em>apply</em>. When an interviewer shows you a god-class and asks "thoughts?",
+the winning shape is: name the responsibilities you see, split them, and show how the pieces get
+injected. That's S and D in action, no acronyms required.</p>
+
+<h2>4. Python object toolkit — the parts interviews touch</h2>
+<ul>
+  <li><strong>Dunder protocols</strong>: <code>__init__</code>, <code>__repr__</code> (debuggability!),
+  <code>__eq__</code>/<code>__hash__</code> (dict keys), <code>__len__</code>/<code>__iter__</code>
+  (make collections feel native), <code>__enter__</code>/<code>__exit__</code> (context managers).</li>
+  <li><strong><code>@dataclass</code></strong>: kills <code>__init__</code>/<code>__repr__</code>/<code>__eq__</code>
+  boilerplate for record-like classes — reach for it live, it saves minutes.</li>
+  <li><strong><code>@classmethod</code></strong> = alternative constructors
+  (<code>Date.from_iso(s)</code>); <strong><code>@staticmethod</code></strong> = namespaced helper.</li>
+  <li><strong>ABC vs Protocol</strong>: <code>abc.ABC</code> enforces at instantiation;
+  <code>typing.Protocol</code> is structural — duck typing that type-checkers verify.</li>
+  <li><strong>MRO</strong>: multiple inheritance resolves left-to-right via C3 linearization;
+  <code>Cls.__mro__</code> shows the order, <code>super()</code> follows it (it does NOT simply
+  mean "my parent" — in a diamond it means "next in line"). Worth thirty seconds of fluency:
+  Odoo's model system is built on cooperative multiple inheritance and mixins.</li>
+</ul>
+
+<h2>5. The five patterns that actually come up</h2>
+<table class="tbl">
+  <tr><th>Pattern</th><th>Problem it solves</th><th>Pythonic shape</th></tr>
+  <tr><td><strong>Strategy</strong></td><td>swap an algorithm at runtime, kill the if-chain</td><td>pass a function/object in: <code>sorted(key=…)</code> IS strategy</td></tr>
+  <tr><td><strong>Observer</strong></td><td>N parties react to an event without the source knowing them</td><td>list of callbacks; <code>subscribe(fn)</code> / <code>notify()</code></td></tr>
+  <tr><td><strong>Factory</strong></td><td>centralize "which class do I build for this input?"</td><td>dict of constructors: <code>HANDLERS[kind](payload)</code></td></tr>
+  <tr><td><strong>Decorator</strong></td><td>bolt behavior around a callable without touching it</td><td>literally <code>@decorator</code> — closures wrapping functions</td></tr>
+  <tr><td><strong>Adapter</strong></td><td>make an interface you have fit an interface you need</td><td>thin wrapper class translating method calls</td></tr>
+</table>
+<p>Two honest notes that score points: <strong>Singleton</strong> in Python is usually just a
+module-level instance (modules are singletons already — say that, don't write
+<code>__new__</code> gymnastics); and half the classic GoF patterns exist to work around static
+typing that Python doesn't have — first-class functions ARE strategy/command. Knowing when a
+pattern is unnecessary is the senior half of knowing patterns.</p>
+
+<h2>6. The OOD mini-interview: "design a parking lot"</h2>
+<p>Object-oriented design questions ("model a parking lot / library / vending machine") are the
+schema walk-through of Module 13 wearing classes instead of tables. Same recipe, adapted:</p>
+<ol>
+  <li><strong>Nouns → classes</strong>, <strong>verbs → methods</strong>, exactly like entities/relationships.</li>
+  <li><strong>One responsibility per class</strong> — the lot assigns spots, a spot knows its size
+  and occupancy, a ticket records one stay. Resist the god-object.</li>
+  <li><strong>Where behavior varies, make it pluggable</strong> — pricing rules and spot-matching
+  policies are Strategy objects, so requirement changes don't reopen working classes (open/closed).</li>
+  <li><strong>State the invariants</strong> — a spot holds ≤ 1 vehicle; a ticket is closed exactly
+  once — and put each check inside the class that owns the state (encapsulation, for real).</li>
+  <li><strong>Walk one scenario end-to-end</strong> out loud: car arrives → lot finds a spot →
+  ticket opens → car leaves → pricing strategy computes the fee. If the walk is smooth, the
+  design is probably right.</li>
+</ol>
+`,
+      },
+      {
+        kind: "mcq",
+        q: "class Square(Rectangle) overrides set_width to also change height. Callers that resize rectangles now break on squares. Which principle is violated, and what's the accepted fix?",
+        options: [
+          { label: "Liskov substitution — Square can't keep Rectangle's promises. Don't inherit: make them siblings (both Shapes) or use composition; 'is-a' in English isn't 'is-a' in behavior.", correct: true },
+          { label: "Single responsibility — Square does two things (width and height).", correct: false },
+          { label: "Nothing is violated; callers should type-check before resizing.", correct: false },
+          { label: "Open/closed — Rectangle should have been final.", correct: false },
+        ],
+        explain:
+          "<p>LSP is about behavioral substitutability: every place a Rectangle works, a Square must work with the same guarantees. Rectangle promises 'set_width leaves height alone'; Square mathematically cannot honor that, so it doesn't belong under Rectangle no matter how natural the English sounds. Requiring callers to type-check (option 3) is the tell-tale symptom OF an LSP violation, not a fix. The escape hatches: sibling classes under a common abstraction, composition, or immutability (a resized square returns a new Rectangle).</p>",
+      },
+      {
+        kind: "mcq",
+        q: "A payment function has grown an if/elif chain over 'card', 'paypal', 'crypto', and every new method edits it again. Which pattern is the textbook cure, and what does it look like in Python?",
+        options: [
+          { label: "Strategy (often reached via a Factory dict): each method becomes an object/function with a common interface, selected by lookup — new methods are added, existing code untouched (open/closed).", correct: true },
+          { label: "Singleton: one PaymentManager instance guarantees consistency.", correct: false },
+          { label: "Observer: emit a 'payment' event and let handlers race to claim it.", correct: false },
+          { label: "Deep inheritance: CryptoPayment(PaypalPayment(CardPayment)).", correct: false },
+        ],
+        explain:
+          "<p>The growing if-chain is THE open/closed violation smell, and Strategy is its cure: <code>PROCESSORS = {'card': CardProcessor(), 'paypal': PaypalProcessor(), ...}</code>, then <code>PROCESSORS[method].pay(amount)</code>. Adding crypto = adding one entry and one class; nothing that already works gets reopened. In Python the strategies can be plain functions — first-class functions are the lightweight Strategy. Observer inverts the wrong relationship (exactly one processor must handle a payment), and the inheritance chain encodes no real is-a at all.</p>",
+      },
+      {
+        kind: "mcq",
+        q: "In Python multiple inheritance — class C(A, B) where both parents define greet() and call super().greet() — what does super() inside A refer to when you call C().greet()?",
+        options: [
+          { label: "B — super() follows C's MRO (C, A, B, object), meaning 'next in line after A', not 'A's parent'.", correct: true },
+          { label: "object — super() always means the class's direct base.", correct: false },
+          { label: "A itself, recursively.", correct: false },
+          { label: "It raises: two parents with the same method is an error.", correct: false },
+        ],
+        explain:
+          "<p>super() is MRO-relative, not parent-relative: it dispatches to the next class in the <em>instance's</em> linearization, which for C(A, B) is C → A → B → object. So A's super().greet() lands on B — a class A has never heard of. That's 'cooperative multiple inheritance', and it's exactly how mixin stacks compose behavior. Worth real fluency here: Odoo models are built from mixin chains, so your interviewer uses this machinery daily even though the question is general Python.</p>",
+      },
+    ],
+  },
+
+  M15: {
+    id: "M15",
+    title: "Module 15 — System Design, Application-Level",
+    subtitle: "A 4-step framework, core building blocks, the classic questions",
+    practiceSet: "PS15",
+    body: [
+      {
+        kind: "html",
+        html: `
+<div class="hero">
+  <h1>Module 15 — System Design, Application-Level</h1>
+  <p>At this interview's level, "system design" rarely means planetary-scale distributed systems.
+  It means: <strong>can you take a product sentence — "build a URL shortener" — and produce a data
+  model, an API, and defensible scaling decisions, out loud?</strong> That's Modules 13's schema
+  skills plus a vocabulary of building blocks. The practice set is discussion-style: think first,
+  then reveal.</p>
+</div>
+
+<h2>1. The 4-step framework (works for every question)</h2>
+<ol>
+  <li><strong>Requirements, 3 minutes.</strong> Functional: what must it do — list 3–5 features and
+  <em>cut scope out loud</em> ("I'll skip auth"). Non-functional: reads-vs-writes ratio, rough
+  scale, latency needs, consistency needs. Ask for numbers; if none come, assume some and say them.</li>
+  <li><strong>API sketch, 2 minutes.</strong> A handful of endpoints with verbs and payloads.
+  This forces the feature list to get concrete and exposes the entities.</li>
+  <li><strong>Data model, 10 minutes.</strong> Module 13's walk-through: entities, keys,
+  constraints, indexes for the hot queries. At this interview's level, <em>this is the part that
+  gets graded hardest</em>.</li>
+  <li><strong>Deep dives, rest of the time.</strong> Follow the interviewer's interest: caching,
+  the write path under concurrency, async work, what breaks at 10× traffic. One layer at a time,
+  only when a number justifies it.</li>
+</ol>
+<div class="callout tip"><div class="callout-title">The golden habit</div>
+<p>Every scaling decision gets a <em>because</em> with a number in it: "reads are 100× writes,
+so a cache earns its complexity" — not "I'd add Redis and Kafka" unprompted. Naming technologies
+without a reason is the fastest way to look junior; adding boxes only when a bottleneck demands
+them is the fastest way to look senior.</p></div>
+
+<h2>2. Numbers worth knowing (rough is fine)</h2>
+<table class="tbl">
+  <tr><th>Fact</th><th>Ballpark</th><th>What it buys you</th></tr>
+  <tr><td>Postgres point lookup (indexed, cached)</td><td>&lt; 1 ms</td><td>most apps never need more than a good schema</td></tr>
+  <tr><td>One beefy SQL box handles</td><td>~thousands of simple QPS</td><td>"do we even need to scale?" — usually no</td></tr>
+  <tr><td>Redis / memcached GET</td><td>~0.1 ms, 100k+ ops/s</td><td>read-path relief</td></tr>
+  <tr><td>Seconds per day</td><td>~86 400 (≈10⁵)</td><td>1M requests/day ≈ <strong>12 QPS</strong> — tiny!</td></tr>
+  <tr><td>UUID/row storage</td><td>~100 B–1 KB per row</td><td>100M rows ≈ tens of GB — one disk</td></tr>
+</table>
+<p>That third row is the interview's secret weapon: candidates hear "one million users" and panic
+into microservices; 1M requests/day is 12 per second — a single Postgres with the right indexes
+naps through it. Doing that division out loud resets the whole conversation.</p>
+
+<h2>3. Building blocks — and the moment each one enters</h2>
+<table class="tbl">
+  <tr><th>Block</th><th>Enters when…</th><th>The follow-up you must survive</th></tr>
+  <tr><td><strong>Stateless app servers + load balancer</strong></td><td>one box isn't enough / you need zero-downtime deploys</td><td>where did sessions go? (signed cookies / shared store)</td></tr>
+  <tr><td><strong>Cache (cache-aside)</strong></td><td>read-heavy + tolerable staleness</td><td>invalidation: TTL vs delete-on-write; stampede (lock or jitter)</td></tr>
+  <tr><td><strong>Read replicas</strong></td><td>reads dwarf writes and cache can't hold the working set</td><td>replication lag — read-your-own-writes goes to primary</td></tr>
+  <tr><td><strong>Queue + workers</strong></td><td>anything slow/flaky that the user needn't wait for (email, thumbnails, webhooks)</td><td>at-least-once delivery ⇒ consumers must be <strong>idempotent</strong></td></tr>
+  <tr><td><strong>Object storage + CDN</strong></td><td>files/images — they never belong in the DB</td><td>DB keeps the metadata + key; presigned URLs for upload</td></tr>
+  <tr><td><strong>Sharding</strong></td><td>last resort: one primary truly can't take the writes</td><td>shard key choice; cross-shard queries die — say you'd avoid this as long as possible</td></tr>
+</table>
+
+<h2>4. Patterns that answer 80% of follow-ups</h2>
+<ul>
+  <li><strong>Cache-aside</strong>: read → miss → fetch DB → fill cache. Write → update DB →
+  <em>delete</em> (don't update) the cache key. Simple, and wrong only briefly.</li>
+  <li><strong>Idempotency keys</strong>: client sends a unique key per operation; server stores
+  processed keys (UNIQUE constraint!) so retries and double-clicks don't double-charge. This is
+  Module 13's oversell gate generalized to APIs.</li>
+  <li><strong>Cursor pagination</strong> over OFFSET: <code>WHERE (created_at, id) &lt; (…last seen…)
+  ORDER BY … LIMIT 20</code> — OFFSET 100000 scans 100 000 rows to throw them away, and pages drift
+  when rows are inserted mid-scroll. The composite index from Module 13 serves the cursor for free.</li>
+  <li><strong>Fanout, push vs pull</strong> (feeds/notifications): push = write into every
+  follower's inbox at post time (fast reads, celebrity problem); pull = assemble at read time
+  (cheap writes, slow reads). Hybrid: push for normal users, pull for the million-follower
+  accounts.</li>
+  <li><strong>Outbox pattern</strong> (mention-level): write the event into the DB in the same
+  transaction as the data, a relay publishes it — solves "DB committed but queue publish failed".</li>
+</ul>
+
+<h2>5. Two worked miniatures (the shape of a good answer)</h2>
+<p><strong>Rate limiter — "100 requests/minute per API key."</strong> Algorithm choice: fixed
+window (counter per key per minute — 2× burst at boundaries), sliding window approximation
+(weighted two windows — fixes it cheaply), or token bucket (rate + burst as first-class knobs —
+usually the answer). State lives in Redis, not app memory (servers are stateless!):
+<code>INCR key; EXPIRE 60</code> — and the INCR must be atomic or two servers race. Degrade
+decision if Redis dies: fail-open (availability) vs fail-closed (protection) — pick per endpoint,
+out loud.</p>
+<p><strong>URL shortener.</strong> The data model is one table: <code>(id, code UNIQUE, target,
+owner, created_at, hits)</code>. Code generation: base62-encode an auto-increment id (no
+collisions, but guessable/sequential) vs random 7-char (check-and-retry on the UNIQUE index).
+Redirect path is 99.9% of traffic and pure cache-aside; counting hits synchronously would make
+every redirect a write — batch it through a queue or an <code>INCR</code> flushed periodically.
+Every decision traces back to a read/write-ratio sentence — that's the pattern to copy.</p>
+
+<h2>6. Red flags to avoid (interviewer's checklist)</h2>
+<ul>
+  <li>Naming technologies before requirements ("we'll need Kafka" — for 12 QPS?).</li>
+  <li>Skipping the data model to draw boxes — at this level the schema IS the interview.</li>
+  <li>No numbers anywhere — every choice should survive "why?" with arithmetic.</li>
+  <li>Ignoring failure: what happens on retry, on cache death, on double-submit?</li>
+  <li>Silence. The framework exists so you always know what you're doing <em>next</em> —
+  requirements → API → data model → deep dives, narrated (Module 2 rules apply here doubly).</li>
+</ul>
+`,
+      },
+      {
+        kind: "mcq",
+        q: "A product page gets 1M views/day; its data changes a few times daily. The DB does a 5-way JOIN per view and CPU is climbing. First move?",
+        options: [
+          { label: "Cache-aside on the rendered product data with a modest TTL + delete-on-write — 1M/day is ~12 QPS of highly repetitive, staleness-tolerant reads: the textbook cache case.", correct: true },
+          { label: "Shard the database by product id.", correct: false },
+          { label: "Move to microservices so the product service scales independently.", correct: false },
+          { label: "Denormalize the 5 joined tables into one wide table.", correct: false },
+        ],
+        explain:
+          "<p>Run the framework's arithmetic first: 12 QPS of reads on data that changes 'a few times daily' — read-heavy, staleness-tolerant, repetitive. Cache-aside removes ~all of the JOIN load with one moving part, and the invalidation story is easy (delete the key on the rare write). Sharding is the last resort for write throughput (this is a read problem); microservices don't reduce a single query's cost at all; denormalizing might be step two, but it rewrites the schema and takes on drift risk before the cheap option was tried. Order of escalation is what's being graded.</p>",
+      },
+      {
+        kind: "mcq",
+        q: "Your queue delivers messages at-least-once, and the 'send welcome email' consumer sometimes gets the same message twice. What's the correct fix?",
+        options: [
+          { label: "Make the consumer idempotent — record a processed marker (e.g., INSERT the message id under a UNIQUE constraint in the same transaction as the work) and skip duplicates.", correct: true },
+          { label: "Switch the queue to exactly-once delivery mode.", correct: false },
+          { label: "Have the producer wait and only publish once the consumer confirms.", correct: false },
+          { label: "Deduplicate by having the consumer sleep briefly and check for siblings.", correct: false },
+        ],
+        explain:
+          "<p>At-least-once is the honest guarantee most queues give — duplicates are a <em>feature</em> of surviving crashes (the consumer died after doing the work but before acking). True exactly-once <em>delivery</em> across process boundaries isn't a checkbox; what systems actually achieve is exactly-once <em>effect</em>: idempotent consumers. The UNIQUE-constraint marker makes the dedup atomic with the work itself — Module 13's constraint thinking applied to messaging. Producer-side waiting reinvents the same race one hop earlier, and sleeping is a race with extra steps.</p>",
+      },
+      {
+        kind: "mcq",
+        q: "Page 5000 of an activity feed (OFFSET 100000 LIMIT 20) takes seconds, and users see duplicate rows as new activity arrives. What does cursor pagination change?",
+        options: [
+          { label: "The query becomes WHERE (created_at, id) < (last seen) ORDER BY ... LIMIT 20 — the composite index seeks straight to the position (no scan-and-discard), and the cursor is stable when new rows are inserted above.", correct: true },
+          { label: "It caches each page so OFFSET is only computed once.", correct: false },
+          { label: "It's purely cosmetic — same query plan, nicer URLs.", correct: false },
+          { label: "It loads everything into the app and slices there.", correct: false },
+        ],
+        explain:
+          "<p>OFFSET N walks and discards N index entries — cost grows with depth, and because new inserts shift every subsequent page, scrolling users see repeats. A cursor pins the position to <em>values</em> ('everything older than what I last saw'), which an index on (created_at DESC, id DESC) answers with a direct seek: constant cost at any depth, and inserts above the cursor can't shift it. The id in the cursor breaks created_at ties — the same composite-index and tie-break thinking as Modules 13 and 10. Trade-off to volunteer: no 'jump to page 37', which feeds don't need anyway.</p>",
+      },
+    ],
+  },
+
 };
 
-window.MODULE_ORDER = ["M1", "M2", "M3", "M4", "M5", "M6", "M7", "M8", "M9", "M10", "M11", "M12", "M13"];
+window.MODULE_ORDER = ["M1", "M2", "M3", "M4", "M5", "M6", "M7", "M8", "M9", "M10", "M11", "M12", "M13", "M14", "M15"];

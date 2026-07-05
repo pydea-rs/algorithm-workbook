@@ -1304,6 +1304,86 @@ function deserialize(data) {
 }`,
   };
 
+  // ============ F56 — LRU Cache ============
+  J.F56 = {
+    functionName: "lruRun",
+    signature: "function lruRun(capacity: number, ops: string[], args: any[][]): any[]",
+    starter:
+`function lruRun(capacity, ops, args) {
+  // your code here
+}
+`,
+    solution:
+`function lruRun(capacity, ops, args) {
+  // JS's Map preserves insertion order — delete+set refreshes recency,
+  // map.keys().next().value is the least-recently used. It's OrderedDict
+  // in disguise; name the dict + doubly-linked-list design anyway.
+  const cache = new Map();
+  const out = [];
+  for (let i = 0; i < ops.length; i++) {
+    if (ops[i] === "put") {
+      const [key, value] = args[i];
+      if (cache.has(key)) cache.delete(key);        // refresh recency
+      cache.set(key, value);
+      if (cache.size > capacity) {
+        cache.delete(cache.keys().next().value);    // evict oldest
+      }
+      out.push(null);
+    } else {                                        // get
+      const key = args[i][0];
+      if (cache.has(key)) {
+        const v = cache.get(key);
+        cache.delete(key);                          // get is a "use" too!
+        cache.set(key, v);
+        out.push(v);
+      } else {
+        out.push(-1);
+      }
+    }
+  }
+  return out;
+}`,
+  };
+
+  // ============ F57 — Time-Based Key-Value Store ============
+  J.F57 = {
+    functionName: "timemapRun",
+    signature: "function timemapRun(ops: string[], args: any[][]): any[]",
+    starter:
+`function timemapRun(ops, args) {
+  // your code here
+}
+`,
+    solution:
+`function timemapRun(ops, args) {
+  const store = new Map();       // key -> {times: [], values: []}, times sorted
+  const out = [];
+  for (let i = 0; i < ops.length; i++) {
+    if (ops[i] === "set") {
+      const [key, value, ts] = args[i];
+      if (!store.has(key)) store.set(key, { times: [], values: [] });
+      const e = store.get(key);
+      e.times.push(ts);          // increasing input ts: append keeps it sorted
+      e.values.push(value);
+      out.push(null);
+    } else {                     // get
+      const [key, ts] = args[i];
+      const e = store.get(key);
+      if (!e) { out.push(""); continue; }
+      // bisect_right by hand: first index with times[idx] > ts
+      let lo = 0, hi = e.times.length;
+      while (lo < hi) {
+        const mid = (lo + hi) >> 1;
+        if (e.times[mid] <= ts) lo = mid + 1;
+        else hi = mid;
+      }
+      out.push(lo ? e.values[lo - 1] : "");
+    }
+  }
+  return out;
+}`,
+  };
+
   // =================================================================
   // Apply all impls to window.QUESTIONS
   // =================================================================

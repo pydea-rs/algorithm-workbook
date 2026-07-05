@@ -3345,6 +3345,813 @@ RESERVATIONS (pre-empt the follow-up)
       "modeled real systems.</p>",
   },
 
+  F56: {
+    id: "F56",
+    title: "LRU Cache",
+    difficulty: "Hard",
+    time: "25-30 min",
+    tags: ["OOP", "Hash Map", "Design a Structure"],
+    type: "python",
+    statement:
+      "Implement an LRU (least-recently-used) cache and drive it through an operation " +
+      "sequence: <code>lru_run(capacity, ops, args)</code> where <code>ops</code> is a list of " +
+      "<code>\"put\"</code>/<code>\"get\"</code> and <code>args[i]</code> holds " +
+      "<code>[key, value]</code> or <code>[key]</code>. Return one result per op: " +
+      "<code>None</code> for put, the value or <code>-1</code> for get. Both operations must be " +
+      "O(1) — and both count as 'use': get and put refresh recency. The single most-asked " +
+      "design-a-structure question in existence.",
+    examples:
+      "capacity=2\n" +
+      "put(1,1) put(2,2) get(1)->1 put(3,3)   # 3 evicts 2, because get(1) refreshed 1\n" +
+      "get(2)->-1 put(4,4)                    # 4 evicts 1\n" +
+      "get(1)->-1 get(3)->3 get(4)->4",
+    hint: "You need O(1) lookup (hash map) AND O(1) reorder/evict (doubly linked list) — or Python's OrderedDict, which is exactly that pairing: move_to_end(key) refreshes, popitem(last=False) evicts oldest. Name the DLL+dict design even if you use OrderedDict.",
+    functionName: "lru_run",
+    signature: "lru_run(capacity: int, ops: list[str], args: list[list]) -> list",
+    starter:
+      "def lru_run(capacity, ops, args):\n" +
+      "    # your code here\n" +
+      "    pass\n",
+    solution:
+`from collections import OrderedDict
+
+def lru_run(capacity: int, ops: list, args: list) -> list:
+    cache = OrderedDict()          # dict + doubly-linked order, in one type
+    out = []
+    for op, a in zip(ops, args):
+        if op == "put":
+            key, value = a
+            if key in cache:
+                cache.move_to_end(key)     # refresh recency
+            cache[key] = value
+            if len(cache) > capacity:
+                cache.popitem(last=False)  # evict least-recently used
+            out.append(None)
+        else:                              # get
+            key = a[0]
+            if key in cache:
+                cache.move_to_end(key)     # get is a "use" too!
+                out.append(cache[key])
+            else:
+                out.append(-1)
+    return out`,
+    explanation:
+      "The design insight (say it before coding): a hash map alone can't order, a list alone " +
+      "can't O(1)-lookup — the classic answer welds a dict onto a doubly linked list, where the " +
+      "dict values are DLL nodes; OrderedDict is that structure shipped in the stdlib (and " +
+      "saying so, plus offering to hand-roll the DLL if they want, is the ideal move). The two " +
+      "planted bugs the tests catch: forgetting that get() refreshes recency (test 4), and " +
+      "forgetting that put() on an EXISTING key refreshes without evicting (test 3).",
+    tests: [
+      {
+        args: [2, ["put", "put", "get", "put", "get", "put", "get", "get", "get"],
+               [[1, 1], [2, 2], [1], [3, 3], [2], [4, 4], [1], [3], [4]]],
+        expected: [null, null, 1, null, -1, null, -1, 3, 4],
+      },
+      {
+        args: [1, ["put", "get", "put", "get", "get"],
+               [[1, 1], [1], [2, 2], [1], [2]]],
+        expected: [null, 1, null, -1, 2],
+      },
+      {
+        args: [2, ["put", "put", "put", "put", "get", "get", "get"],
+               [[1, 1], [2, 2], [1, 10], [3, 3], [1], [2], [3]]],
+        expected: [null, null, null, null, 10, -1, 3],
+      },
+      {
+        args: [2, ["put", "put", "get", "put", "get", "get", "get"],
+               [[1, 1], [2, 2], [1], [3, 3], [2], [1], [3]]],
+        expected: [null, null, 1, null, -1, 1, 3],
+      },
+    ],
+  },
+
+  F57: {
+    id: "F57",
+    title: "Time-Based Key-Value Store",
+    difficulty: "Medium",
+    time: "20-25 min",
+    tags: ["OOP", "Binary Search", "Design a Structure"],
+    type: "python",
+    statement:
+      "Implement a versioned key-value store: <code>set(key, value, timestamp)</code> stores a " +
+      "version; <code>get(key, timestamp)</code> returns the value with the largest stored " +
+      "timestamp ≤ the requested one, or <code>\"\"</code> if none. Drive it via " +
+      "<code>timemap_run(ops, args)</code> (<code>None</code> per set, string per get). " +
+      "Timestamps per key arrive strictly increasing — which is the sentence that should make " +
+      "you shout 'binary search' (Module 6 meets Module 14).",
+    examples:
+      'set("foo","bar",1)\n' +
+      'get("foo",1) -> "bar"\n' +
+      'get("foo",3) -> "bar"    # largest ts <= 3 is 1\n' +
+      'set("foo","bar2",4)\n' +
+      'get("foo",4) -> "bar2"\n' +
+      'get("foo",5) -> "bar2"',
+    hint: "Per key, keep two parallel lists (timestamps, values) — appends keep them sorted for free since input timestamps increase. get = bisect_right(times, ts) - 1: the boundary-search 'rightmost element <= target' recipe verbatim.",
+    functionName: "timemap_run",
+    signature: "timemap_run(ops: list[str], args: list[list]) -> list",
+    starter:
+      "def timemap_run(ops, args):\n" +
+      "    # your code here\n" +
+      "    pass\n",
+    solution:
+`import bisect
+
+def timemap_run(ops: list, args: list) -> list:
+    store = {}                    # key -> ([timestamps], [values]), ts kept sorted
+    out = []
+    for op, a in zip(ops, args):
+        if op == "set":
+            key, value, ts = a
+            times, values = store.setdefault(key, ([], []))
+            times.append(ts)      # input guarantees increasing ts: append = sorted
+            values.append(value)
+            out.append(None)
+        else:                     # get
+            key, ts = a
+            if key not in store:
+                out.append("")
+                continue
+            times, values = store[key]
+            i = bisect.bisect_right(times, ts)   # first index with time > ts
+            out.append(values[i - 1] if i else "")
+    return out`,
+    explanation:
+      "The interview is the reduction: 'largest timestamp <= T in a sorted list' is Module 6's " +
+      "boundary search — bisect_right gives the first index AFTER the eligible ones, so i-1 is " +
+      "the answer and i == 0 means 'asked before the first version' (test 3's edge). Volunteer " +
+      "the follow-ups: if timestamps could arrive out of order, insert with insort or sort " +
+      "lazily; if versions per key explode, this is exactly how MVCC storage and Git-style " +
+      "snapshots think. O(1) set, O(log n) get.",
+    tests: [
+      {
+        args: [["set", "get", "get", "set", "get", "get"],
+               [["foo", "bar", 1], ["foo", 1], ["foo", 3], ["foo", "bar2", 4], ["foo", 4], ["foo", 5]]],
+        expected: [null, "bar", "bar", null, "bar2", "bar2"],
+      },
+      {
+        args: [["get", "set", "get", "get"],
+               [["missing", 5], ["a", "x", 10], ["a", 5], ["a", 10]]],
+        expected: ["", null, "", "x"],
+      },
+      {
+        args: [["set", "set", "set", "get", "get", "get", "get", "get", "get", "get"],
+               [["k", "v1", 1], ["k", "v2", 5], ["k", "v3", 9],
+                ["k", 0], ["k", 1], ["k", 4], ["k", 5], ["k", 8], ["k", 9], ["k", 100]]],
+        expected: [null, null, null, "", "v1", "v1", "v2", "v2", "v3", "v3"],
+      },
+    ],
+  },
+
+  F58: {
+    id: "F58",
+    title: "OOD — Design a Parking Lot",
+    difficulty: "Medium",
+    time: "20-30 min",
+    tags: ["Design", "OOP", "Classic OOD"],
+    type: "design",
+    statement:
+      "Object-model a multi-level parking lot: levels contain spots of sizes (motorcycle, " +
+      "compact, large); vehicles of matching sizes park and leave; a ticket records each stay " +
+      "and the fee is computed on exit — pricing rules will change often, per the product owner. " +
+      "Produce the classes, their single responsibilities, where each invariant is enforced, " +
+      "and walk one park-and-exit scenario end to end. The most common OOD warm-up there is.",
+    examples:
+      "Grade yourself on the Module 14 recipe:\n" +
+      "  nouns -> classes, verbs -> methods\n" +
+      "  one responsibility per class (no god-object ParkingLotManager!)\n" +
+      "  volatile behavior (pricing, spot choice) -> Strategy objects\n" +
+      "  each invariant lives inside the class owning the state\n" +
+      "  one spoken end-to-end scenario",
+    hint: "Entities: ParkingLot, Level, Spot, Vehicle (subtypes or a size enum), Ticket. 'Pricing rules change often' is a straight open/closed hint — PricingStrategy injected into the lot. Spot assignment policy is the second Strategy.",
+    solution:
+`CLASSES & RESPONSIBILITIES
+
+Vehicle            size: Size (MOTORCYCLE < COMPACT < LARGE), plate
+                   -- data object; @dataclass is perfect. Subclasses only if
+                   -- behavior differs; a size enum usually beats an inheritance tree.
+
+Spot               size, is_free, park(v)/leave()
+                   -- OWNS the invariant "<= 1 vehicle, size must fit":
+                   --   def park(self, v):
+                   --       if not self.is_free or not self.fits(v): raise ...
+                   -- fits(v): v.size <= self.size (motorcycle fits anywhere, etc.)
+
+Level              ordered spots; find_spot(vehicle) -> Spot | None
+                   -- just a container with a search; no pricing, no tickets.
+
+Ticket             vehicle, spot, entry_time, exit_time
+                   -- immutable record of one stay; closed exactly once (invariant here).
+
+PricingStrategy    fee(ticket) -> amount        [ABC / Protocol]
+  HourlyPricing, FlatDaily, WeekendPricing...
+                   -- "pricing changes often" = open/closed: new rule, new class,
+                   -- nothing reopened.
+
+SpotAssignment     choose(levels, vehicle) -> Spot | None    [Strategy #2]
+  FirstFit / BestFit (don't burn LARGE spots on motorcycles when compacts exist)
+
+ParkingLot         levels, pricing: PricingStrategy, assignment: SpotAssignment
+                   enter(vehicle) -> Ticket, exit(ticket) -> fee
+                   -- orchestrates; owns no per-spot state. Both strategies INJECTED
+                   -- (dependency inversion): ParkingLot(pricing=HourlyPricing()).
+
+SCENARIO WALK (say this out loud)
+  car arrives -> lot.enter(car)
+    -> assignment.choose(levels, car) finds a free COMPACT
+    -> spot.park(car)  [invariant checked where the state lives]
+    -> Ticket(car, spot, now) returned
+  car leaves -> lot.exit(ticket)
+    -> ticket.close(now)  [second close raises]
+    -> spot.leave()
+    -> return pricing.fee(ticket)
+
+FOLLOW-UPS TO PRE-EMPT
+  - "full lot?"     enter() returns None / raises LotFull — decide and say it
+  - "find my car"   dict plate -> ticket in the lot (O(1)), not a scan
+  - "concurrency?"  two cars, one spot: park() must be atomic — lock per spot,
+                    or CAS-style is_free flip; same race as Module 13's oversell
+  - "EV charging?"  a spot FEATURE set, matched in fits() — composition again,
+                    not a subclass explosion (EVCompactSpot, EVLargeSpot, ...)`,
+    explanation:
+      "<p>What separates a pass from a strong pass here: invariants placed <em>inside</em> the class " +
+      "that owns the state (spot occupancy in Spot.park, ticket closure in Ticket.close) rather than " +
+      "policed by the orchestrator; the two volatile behaviors (pricing, assignment) extracted as " +
+      "injected strategies the moment the statement said 'rules will change often'; and a spoken " +
+      "end-to-end scenario proving the pieces actually compose. The concurrency follow-up is the " +
+      "same read-then-write race as Module 13's oversell gate — noticing that link out loud ties " +
+      "your whole interview together.</p>",
+  },
+
+  F59: {
+    id: "F59",
+    title: "OOD — Notification Dispatch System",
+    difficulty: "Medium",
+    time: "20-25 min",
+    tags: ["Design", "OOP", "Strategy", "Observer"],
+    type: "design",
+    statement:
+      "Design the classes for an application's notification subsystem: events happen (order " +
+      "shipped, payment failed), users receive notifications over the channels they've opted " +
+      "into (email, SMS, push — more coming), templates render per channel, and a flaky " +
+      "provider must not lose messages. Name the patterns you're using and why each earns " +
+      "its place.",
+    examples:
+      "Three patterns are hiding in the prompt:\n" +
+      "  'more channels coming'        -> ?\n" +
+      "  'events happen, others react' -> ?\n" +
+      "  'flaky provider'              -> not a pattern — an architecture decision\n" +
+      "Sketch the classes, then trace one event to a user's phone.",
+    hint: "Channels are Strategy (common send() interface, Factory/registry to pick), event->notification wiring is Observer (emitters must not know about notifications), and the flaky provider means dispatch enqueues instead of calling the provider inline (Module 15 queue thinking).",
+    solution:
+`THE CLASSES
+
+Event              @dataclass: type ("order.shipped"), payload, occurred_at
+                   -- pure data; producers create these and know NOTHING else.
+
+EventBus           subscribe(event_type, handler), publish(event)     [OBSERVER]
+                   -- decouples "order code" from "notification code": the order
+                   -- module publishes; who listens is not its business.
+
+NotificationService  the one subscriber that matters here:
+                   on_event(event):
+                     for user in recipients_for(event):
+                       for channel_name in user.preferences.channels_for(event.type):
+                         message = Template.render(event, channel_name, user)
+                         queue.enqueue(channel_name, user, message)
+                   -- decides WHO and ON WHICH CHANNELS; sends nothing itself.
+
+Channel (ABC/Protocol)   send(user, message)                          [STRATEGY]
+  EmailChannel, SmsChannel, PushChannel
+                   -- one class per transport; adding WhatsApp = one new class +
+                   -- one registry line (open/closed, verbatim).
+
+CHANNELS = {"email": EmailChannel(), "sms": SmsChannel(), ...}        [FACTORY/registry]
+
+UserPreferences    channels_for(event_type) -> ["email", "push"]
+                   -- opt-ins are DATA (a user_channel_prefs table), not code.
+
+Worker             pops queue -> CHANNELS[name].send(user, message)
+                   -- retries with backoff on provider failure; after N failures
+                   -- dead-letter + alert. The queue is WHY a flaky provider
+                   -- can't lose messages or stall the request path.
+
+TRACE (say it): order code -> bus.publish(Event("order.shipped", ...))
+  -> NotificationService.on_event -> preferences say [email, push]
+  -> two messages enqueued -> workers deliver; the SMS provider being down
+  delays SMS retries only — email already went, order code never noticed.
+
+WHY EACH PATTERN EARNS ITS PLACE (the actual question)
+  Observer: producers must not import notification code — otherwise every
+            feature grows a hard dependency on messaging.
+  Strategy: transports share a verb (send) but nothing else; the if-chain
+            over channel names is the alternative, and it reopens on every
+            new channel.
+  Queue:    inline sending couples user-facing latency and correctness to a
+            third party's uptime. At-least-once + idempotency key (dedupe on
+            event_id + user + channel UNIQUE) so retries can't double-send.`,
+    explanation:
+      "<p>The prompt is a pattern-recognition test: 'more channels coming' → Strategy behind a " +
+      "registry; 'events happen, users receive' → Observer so producers stay ignorant of messaging; " +
+      "'flaky provider' → not a GoF pattern at all but a queue with retries, dead-lettering, and an " +
+      "idempotency UNIQUE — Module 15's at-least-once story landing inside an OOD question. " +
+      "Preferences as data (a table, not subclasses) is the quiet fourth point graders look for. " +
+      "If you reached for Singleton anywhere, revisit Module 14's note — the registry is just a " +
+      "module-level dict.</p>",
+  },
+
+  F60: {
+    id: "F60",
+    title: "Refactor — The God Class",
+    difficulty: "Medium",
+    time: "15-20 min",
+    tags: ["Design", "SOLID", "Refactoring"],
+    type: "design",
+    statement:
+      "Code review: a 900-line <code>OrderManager</code> validates carts, computes prices with " +
+      "seasonal discount rules, charges cards through a hardcoded <code>StripeClient()</code> " +
+      "it constructs itself, writes orders to the database with inline SQL, and sends " +
+      "confirmation emails. Every sprint touches this file and merge conflicts are constant. " +
+      "The tests hit the real Stripe sandbox. Diagnose with named principles, propose the " +
+      "split, and explain what becomes testable and why.",
+    examples:
+      "Structure the answer as:\n" +
+      "  1. diagnosis    - which SOLID letters are violated, evidence for each\n" +
+      "  2. the split    - new classes, one responsibility each\n" +
+      "  3. the wiring   - how they compose (injection, not construction)\n" +
+      "  4. the payoff   - name a test you could not write before and now can",
+    hint: "Count the 'reasons to change': validation rules, pricing rules, payment provider, storage, email templates — that's five, and SRP says it should be ~five classes. The hardcoded StripeClient() is the dependency-inversion violation and the direct cause of sandbox-hitting tests.",
+    solution:
+`1. DIAGNOSIS
+  S violated - five unrelated reasons to change live in one class (validation,
+               pricing, payment, persistence, email). The constant merge
+               conflicts ARE the symptom: unrelated changes collide in one file.
+  D violated - OrderManager constructs StripeClient() internally; you cannot
+               substitute a fake, so tests hit the sandbox. Same story hiding
+               in the inline SQL (no seam to fake the DB).
+  O violated - "seasonal discount rules" inside the class means every new
+               promotion reopens tested payment-adjacent code.
+
+2. THE SPLIT (one reason to change each)
+  CartValidator        validate(cart) -> list[Error]
+  PricingEngine        total(cart, date) -> Money
+                       discount rules injected as a list of DiscountRule
+                       strategies -> new promo = new rule class, engine untouched
+  PaymentGateway (Protocol)  charge(amount, method) -> PaymentResult
+      StripeGateway    the ONLY class that imports stripe
+  OrderRepository      save(order), get(id) - the ONLY class that speaks SQL
+  OrderNotifier        confirmation(order) - templates + the email provider
+  PlaceOrderService    ~20 lines of orchestration:
+                       validate -> price -> charge -> save -> notify
+
+3. THE WIRING (composition root, e.g. app startup)
+  service = PlaceOrderService(
+      validator=CartValidator(),
+      pricing=PricingEngine(rules=[SeasonalDiscount(), BulkDiscount()]),
+      gateway=StripeGateway(api_key=...),
+      repo=PostgresOrderRepository(pool),
+      notifier=EmailNotifier(smtp),
+  )
+  Depend on the Protocols, construct at the edge. No class news up its own
+  collaborators anymore - that single change is what unlocks testing.
+
+4. THE PAYOFF - tests that were impossible and now are unit tests
+  - "declined card leaves no order row and sends no email":
+      gateway = FakeGateway(result=DECLINED); repo = InMemoryRepo()
+      run service; assert repo.empty and notifier.sent == []
+      Before: unwritable without the Stripe sandbox and a real DB.
+  - PricingEngine tested against a table of carts/dates - pure function, no IO.
+  - Each discount rule tested alone; new rules can't break payment tests.
+
+  ORDER OF OPERATIONS (they may probe): extract PaymentGateway FIRST -
+  it's the seam that kills the sandbox dependency; then peel pricing,
+  persistence, email in any order, behind tests as you go.`,
+    explanation:
+      "<p>This question grades vocabulary-under-evidence: not 'it violates SOLID' but <em>which</em> " +
+      "letters, with the symptom as proof (merge conflicts ⇒ SRP; sandbox-hitting tests ⇒ DIP; " +
+      "promo edits touching payment code ⇒ OCP). The split lands on roughly one class per reason " +
+      "to change, glued by a thin orchestrator taking its collaborators via constructor injection. " +
+      "The strongest closing move is naming a concrete test that flips from impossible to trivial — " +
+      "'declined card leaves no order and no email' — because making that test writable is the " +
+      "entire economic argument for the refactor.</p>",
+  },
+
+  F61: {
+    id: "F61",
+    title: "System Design — URL Shortener",
+    difficulty: "Medium",
+    time: "25-35 min",
+    tags: ["Design", "System Design", "Caching"],
+    type: "design",
+    statement:
+      "Design a URL shortener (bit.ly): create a short code for a long URL, redirect visitors, " +
+      "count clicks, support 100M redirects/day and 1M new links/day. Run the full Module 15 " +
+      "framework — requirements with arithmetic, API, data model with indexes, then the " +
+      "redirect hot path and the click-counting write problem. The canonical first system-design " +
+      "question; interviewers use it because every layer has a decision in it.",
+    examples:
+      "Do the arithmetic before anything else:\n" +
+      "  100M redirects/day = ? QPS      1M creates/day = ? QPS\n" +
+      "  read:write ratio = ?            -> which patterns does that ratio summon?\n" +
+      "  storage: 1M links/day x 5 years x ~500B = ?",
+    hint: "100M/86400 ≈ 1200 QPS reads vs ~12 QPS writes — a 100:1 read-heavy system: cache-aside on the redirect, and never let click counting put a synchronous write on the hot path.",
+    solution:
+`1. REQUIREMENTS & ARITHMETIC
+  Functional: create link (custom alias optional), redirect, click counts.
+  Scope cut out loud: no auth flows, no spam scanning today.
+  Numbers: reads 100M/86400 ~ 1200 QPS (peak x3 ~ 4000). writes ~ 12 QPS.
+           ratio ~100:1 -> cache earns its keep; one Postgres survives writes easily.
+  Storage: 1M/day x 365 x 5yr x ~500B ~ 1 TB. One database, partitioning later.
+
+2. API
+  POST /links   {url, custom_alias?}         -> {code}
+  GET  /{code}  -> 301/302 redirect
+  GET  /links/{code}/stats                   -> {clicks, ...}
+
+3. DATA MODEL
+  links(id BIGINT PK, code TEXT UNIQUE, target TEXT, created_at, owner_id NULL)
+  index: UNIQUE on code IS the hot-path index; nothing else needed day one.
+  clicks: DO NOT write a row per click on the hot path (see 5).
+
+4. CODE GENERATION (the classic fork - present both)
+  a) base62(auto-increment id): zero collisions, 7 chars covers 3.5T links.
+     Downside: sequential/guessable -> competitors can enumerate volume.
+     Fix: XOR/permute the id before encoding, or...
+  b) random 7-char base62: unguessable; collision chance tiny, so
+     INSERT ... ON CONFLICT retry loop (the UNIQUE index is the referee -
+     Module 13 constraint thinking, not an application-level check-then-insert).
+  Custom aliases: same UNIQUE index arbitrates, first-come-first-served.
+
+5. HOT PATH: REDIRECT (99%+ of traffic)
+  GET /{code}: cache-aside in Redis (code -> target), TTL hours.
+  ~1200 QPS with a >95% hit rate = a few dozen DB lookups/sec. Comfortable.
+  301 vs 302: 301 is cached by browsers -> fewer hits BUT you lose click
+  visibility and can't edit targets; product wants analytics -> 302/307.
+  Saying that trade-off unprompted is a strong signal.
+
+  CLICK COUNTING - never a synchronous INSERT per redirect. Options:
+    - Redis INCR per code, flushed to Postgres every N seconds (cheap, ~exact)
+    - or enqueue click events -> worker batches inserts (buys per-click
+      analytics: referrer, geo) -- pick based on the stats requirement.
+  Either way the redirect path does zero synchronous DB writes.
+
+6. DEEP-DIVE ANSWERS TO HAVE READY
+  Expiry: expires_at column; redirect checks it; nightly sweep deletes.
+  Deletes/abuse: soft-delete flag; cache DELETE on write (aside invalidation).
+  10x growth: stateless app tier scales flat; cache absorbs reads; writes
+  still ~120 QPS - Postgres fine. Sharding (by hash(code)) is the LAST card,
+  and say why: cross-shard joins die and ops cost jumps.
+  Availability: cache down -> DB takes 1200 QPS point lookups on a UNIQUE
+  index - degraded but alive (fail-open, Module 15).`,
+    explanation:
+      "<p>The rubric hiding inside: (1) the division — 100M/day is 1200 QPS, which reframes the " +
+      "whole problem as 'medium read-heavy', not 'planet scale'; (2) letting the UNIQUE constraint " +
+      "arbitrate code collisions instead of check-then-insert (the same race Module 13 kills with " +
+      "atomic writes); (3) keeping every synchronous write off the redirect path — the Redis-INCR " +
+      "flush or queued click events; (4) the 301-vs-302 trade-off, which is where product sense " +
+      "meets HTTP mechanics. Escalate boxes only when a number demands it and this question is a " +
+      "guaranteed pass.</p>",
+  },
+
+  F62: {
+    id: "F62",
+    title: "System Design — API Rate Limiter",
+    difficulty: "Medium",
+    time: "20-30 min",
+    tags: ["Design", "System Design", "Redis"],
+    type: "design",
+    statement:
+      "Design rate limiting for a public API: 100 requests/minute per API key, multiple " +
+      "stateless app servers behind a load balancer, limit-exceeded responses must be cheap, " +
+      "and the business wants to sell higher tiers later. Compare the candidate algorithms, " +
+      "decide where the state lives, get the atomicity right, and answer the 'what if the " +
+      "limiter's store dies?' question before it's asked.",
+    examples:
+      "The four decisions that make up the answer:\n" +
+      "  1. algorithm: fixed window / sliding window / token bucket - trade-offs?\n" +
+      "  2. state: why can't it live in app-server memory?\n" +
+      "  3. atomicity: what races when two servers check the same key at once?\n" +
+      "  4. failure: Redis down -> fail-open or fail-closed, and per what?",
+    hint: "Servers are stateless, so counters live in Redis. Fixed window allows 2x bursts at boundaries; token bucket makes rate AND burst explicit knobs (and 'sell higher tiers' = per-key parameters, which token bucket models natively). Check-then-set races — the increment must be atomic (INCR or a Lua script).",
+    solution:
+`1. ALGORITHM CHOICE (know all three, pick with a reason)
+  Fixed window   INCR counter per (key, minute-bucket); EXPIRE 60.
+                 Cheapest. Flaw: 100 at 11:59:59 + 100 at 12:00:01 = 200 in
+                 2 seconds (boundary burst).
+  Sliding-window approximation
+                 weight = overlap between "last 60s" and the two adjacent
+                 fixed windows: count = cur + prev * overlap%. Two counters,
+                 kills the boundary burst. Good default.
+  Token bucket   bucket per key: capacity B (burst), refill r/sec (rate).
+                 request takes a token; empty -> 429.
+                 WHY IT WINS HERE: "sell higher tiers later" = per-key (r, B)
+                 stored as data; rate and burst become product knobs.
+
+2. WHERE STATE LIVES
+  App-server memory fails immediately: N servers = N independent limits
+  (LB spreads a key's requests), and every deploy resets counters.
+  -> Redis: shared, fast (~0.1ms), TTLs for free. The limiter is a
+  read-modify-write of a couple of integers per request.
+
+3. ATOMICITY (the planted race)
+  GET count; if count < limit then INCR  -- two servers interleave and both
+  pass at count=99 -> 101 accepted. Same read-then-write race as the
+  oversell gate (Module 13). Fixes:
+    - fixed/sliding: INCR first, compare the RETURNED value (INCR is atomic);
+      set EXPIRE only when the return value == 1 (first hit creates the window)
+    - token bucket: one small Lua script = atomic refill-compute + take
+      (store tokens + last_refill_ts; refill lazily on access - no cron).
+
+4. FAILURE POLICY
+  Redis down: fail-open (allow) for ordinary endpoints - availability over
+  protection; fail-closed for expensive/abusable ones (auth attempts, SMS
+  sending). Per-endpoint policy, stated up front. Circuit-break the Redis
+  call with a short timeout so the limiter can never become the outage.
+
+5. THE RESPONSE CONTRACT
+  429 Too Many Requests + Retry-After (seconds) +
+  X-RateLimit-Limit / -Remaining / -Reset headers - cheap to compute from
+  the same counters, and it's what makes the API feel professional.
+
+6. SCALE FOLLOW-UP
+  One Redis handles ~100k ops/s - arithmetic first (Module 15): how many
+  request/s do we actually see? If truly beyond one box: shard by API key
+  (key affinity keeps each bucket on one shard - no cross-shard math).`,
+    explanation:
+      "<p>Four graded decisions: algorithm (token bucket, argued from the <em>business</em> line " +
+      "about tiers — not from fashion), state placement (the stateless-servers premise forces " +
+      "Redis; noticing that is the point of the premise), atomicity (the GET-then-INCR race is " +
+      "planted; the answer is INCR-then-compare or a Lua script — Module 13's oversell gate in " +
+      "Redis clothing), and failure policy (fail-open vs fail-closed <em>per endpoint class</em>, " +
+      "chosen before the interviewer asks). The 429/Retry-After contract is the polish point most " +
+      "candidates skip.</p>",
+  },
+
+  F63: {
+    id: "F63",
+    title: "System Design — Background Job Queue",
+    difficulty: "Hard",
+    time: "30-40 min",
+    tags: ["Design", "System Design", "Postgres", "Concurrency"],
+    type: "design",
+    statement:
+      "Design a background job system on top of PostgreSQL (no Kafka/RabbitMQ — the team wants " +
+      "one database): API servers enqueue work (send email, generate PDF, sync to ERP); worker " +
+      "processes execute it with retries and backoff; a crashed worker must not lose or wedge " +
+      "its job; the same job must never run twice concurrently; failed jobs need visibility. " +
+      "Schema, the claim query, the crash story, retries, and when this design runs out of road.",
+    examples:
+      "The heart of the question is one query:\n" +
+      "  how do 10 workers each claim a DIFFERENT pending job,\n" +
+      "  without blocking each other, and without any job being claimed twice?\n" +
+      "(If you know the two magic words in Postgres, say them early.)",
+    hint: "SELECT ... FOR UPDATE SKIP LOCKED is the whole trick — row locks make claims exclusive, SKIP LOCKED makes workers leap over each other's locks instead of queueing behind them. Crash recovery = a locked_until lease, not a lock held over the job's runtime.",
+    solution:
+`1. SCHEMA
+  jobs (
+    id            BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    kind          TEXT NOT NULL,              -- 'email.send', 'pdf.render'
+    payload       JSONB NOT NULL,
+    status        TEXT NOT NULL DEFAULT 'pending'
+                  CHECK (status IN ('pending','running','done','failed','dead')),
+    run_at        TIMESTAMPTZ NOT NULL DEFAULT now(),   -- delay/backoff lever
+    attempts      INT NOT NULL DEFAULT 0,
+    max_attempts  INT NOT NULL DEFAULT 5,
+    locked_until  TIMESTAMPTZ,                -- the LEASE (see crash story)
+    last_error    TEXT,
+    created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+  );
+  INDEX (status, run_at)  -- exactly the claim query's shape (partial index
+                          -- WHERE status='pending' is the senior variant)
+
+2. THE CLAIM QUERY (the heart)
+  UPDATE jobs SET status='running', attempts = attempts + 1,
+                  locked_until = now() + interval '10 minutes'
+  WHERE id = (
+    SELECT id FROM jobs
+    WHERE status = 'pending' AND run_at <= now()
+    ORDER BY run_at
+    LIMIT 1
+    FOR UPDATE SKIP LOCKED          -- the two magic words
+  )
+  RETURNING *;
+  FOR UPDATE: claiming is exclusive - no double-claim, ever.
+  SKIP LOCKED: 10 workers don't serialize behind one row lock; each vaults
+  to the next unclaimed job. Without it, workers convoy and throughput dies.
+  (This exact pattern is how Postgres-backed queues - and Odoo's own job
+  runners - are built. Saying so lands well in this room.)
+
+3. CRASH STORY (why locked_until is a lease, not a lock)
+  Worker dies mid-job: its transaction's row lock vanished at crash, but
+  status='running' would wedge forever. The lease fixes it: a reaper query
+    UPDATE jobs SET status='pending'
+    WHERE status='running' AND locked_until < now();
+  requeues expired leases. Long jobs heartbeat (extend locked_until).
+  CONSEQUENCE: a job can run TWICE (worker finished but died before marking
+  done; lease expired). That's at-least-once -> handlers MUST be idempotent:
+  natural idempotency (PDF overwrite), or an idempotency key
+  (UNIQUE(kind, payload->>'dedup_key')) - Module 15's rule made concrete.
+
+4. RETRIES & FAILURE VISIBILITY
+  Handler throws -> status='pending', run_at = now() + backoff:
+  backoff = base * 2^attempts + jitter (jitter breaks retry stampedes).
+  attempts >= max_attempts -> status='dead' (dead-letter): a queryable
+  table of failures with last_error - the "visibility" requirement is a
+  WHERE status='dead' dashboard, free because we're in SQL.
+
+5. WHEN THIS RUNS OUT OF ROAD (they will ask)
+  Comfortable to ~1-5k jobs/sec claimed; beyond that the contention point
+  is the hot (status, run_at) index. Escalations in order:
+  partial index -> separate queue DB -> then a real broker. The honest
+  pitch: same transaction as your business data (enqueue atomically with
+  the order INSERT - the outbox problem disappears), zero new
+  infrastructure, SQL-queryable state. That trade is right for almost
+  everyone below big-tech scale.`,
+    explanation:
+      "<p>One Postgres feature carries the whole design: <code>FOR UPDATE SKIP LOCKED</code> — " +
+      "exclusive claims without worker convoys. Around it, the graded parts: the <strong>lease</strong> " +
+      "(locked_until) instead of a held lock, which converts crashes into delayed retries and " +
+      "forces the at-least-once ⇒ idempotent-handler conclusion; exponential backoff with jitter; " +
+      "a dead state that makes failure a queryable fact; and the honest ceiling ('when do we need " +
+      "a real broker?') answered with a number instead of a shrug. Enqueueing in the same " +
+      "transaction as the business write is the quiet killer argument — the outbox pattern for " +
+      "free. Odoo's own queue runners work exactly this way, which your interviewer likely knows.</p>",
+  },
+
+  F64: {
+    id: "F64",
+    title: "System Design — Activity Feed (Fanout)",
+    difficulty: "Hard",
+    time: "30-40 min",
+    tags: ["Design", "System Design", "Fanout", "Pagination"],
+    type: "design",
+    statement:
+      "Design the feed for a social app: users follow users; posting makes the post appear in " +
+      "followers' feeds; a user opens the app and reads their feed newest-first with infinite " +
+      "scroll; median user has 200 followers, a few accounts have 5M. Decide push vs pull vs " +
+      "hybrid with arithmetic, design the tables for both paths, and get pagination right. " +
+      "The question every fanout discussion is secretly about.",
+    examples:
+      "The tension to resolve with numbers, not vibes:\n" +
+      "  PUSH (write fanout): post -> insert into every follower's feed\n" +
+      "     median cost: 200 rows. celebrity cost: 5,000,000 rows. per post!\n" +
+      "  PULL (read fanout): feed = merge posts of ~200 followees at read time\n" +
+      "  Which side does each user class belong on, and why?",
+    hint: "Hybrid is the answer to defend: push for normal accounts (200 inserts is nothing, reads become one indexed scan), pull for the 5M-follower accounts (a post must not trigger 5M writes), merge the two at read time. Pagination: cursor on (created_at, id) — never OFFSET (Module 15).",
+    solution:
+`1. TABLES
+  follows (follower_id, followee_id, PRIMARY KEY (follower_id, followee_id))
+    + INDEX (followee_id)            -- "who follows X" = fanout direction
+  posts (id, author_id, body, created_at)
+    + INDEX (author_id, created_at DESC)   -- pull path: an author's recents
+  feed_items (user_id, post_id, created_at,
+              PRIMARY KEY (user_id, created_at DESC, id/post_id))
+    -- the PUSH materialization: one row = "this post is in this user's feed";
+    -- clustered/PK shape IS the read query's shape (Module 13 thinking).
+
+2. THE DECISION, WITH ARITHMETIC
+  Push-only: median post -> 200 feed_items inserts (queued, cheap; reads
+    become ONE indexed range scan - perfect). Celebrity post -> 5M inserts:
+    minutes of write storm per tweet. Unacceptable.
+  Pull-only: every feed open merges ~200 authors' recent posts - K sorted
+    streams (Module 11's k-way merge, in SQL: WHERE author_id IN (...)
+    ORDER BY created_at DESC LIMIT 20 on the (author_id, created_at) index).
+    Works, but the hottest path (feed open) does the most work, every time.
+  HYBRID (the defended answer):
+    accounts under a threshold (say 10k followers) -> push via queue workers
+    celebrity accounts -> flagged is_celebrity; their posts are NOT fanned out
+    feed read = feed_items scan MERGED with pull of followed celebrities'
+    recent posts (user follows maybe 3 celebrities - tiny pull).
+  The threshold is a tunable, not a constant - say that.
+
+3. WRITE PATH (push side)
+  post INSERT -> enqueue fanout job (the F63 machine!) -> workers page
+  through followers (keyset on follower_id, batches of ~1000) -> batch
+  INSERT feed_items. At-least-once queue -> PK (user_id, ..., post_id)
+  makes duplicate fanout idempotent: ON CONFLICT DO NOTHING.
+
+4. READ PATH & PAGINATION
+  Cursor, never OFFSET (page drift + scan-and-discard - Module 15):
+    WHERE user_id = ? AND (created_at, post_id) < (:cursor_ts, :cursor_id)
+    ORDER BY created_at DESC, post_id DESC LIMIT 20
+  - the feed_items PK serves this with a pure index seek at any depth.
+  Cache the first page per active user (it's 90% of reads); invalidate
+  lazily - a feed being seconds stale is invisible.
+
+5. FOLLOW-UPS TO HAVE LOADED
+  New follow: backfill their feed with the followee's recent posts? Usually
+    just start from now (cheap honesty - say the product call).
+  Unfollow/delete: delete feed_items lazily / filter at read - eager
+    cleanup of 5M rows is the same storm in reverse.
+  Retention: feed_items is a CACHE, not truth (posts table is truth) - cap
+    at ~800 items/user, TTL the tail; rebuildable from the pull path.
+  "Why not just pull for everyone?" - fine at small scale, say so! The
+    hybrid earns its complexity only when read QPS demands it (Module 15's
+    golden habit: complexity must be paid for by a number).`,
+    explanation:
+      "<p>The whole question is one asymmetry: fanout cost is follower-count at <em>write</em> time " +
+      "(push) or followee-count at <em>read</em> time (pull) — and the two user classes sit on " +
+      "opposite sides of that trade, hence hybrid with a follower-count threshold. Around the core: " +
+      "feed_items as a rebuildable cache whose primary key IS the read query (Module 13), fanout " +
+      "riding the F63 job queue with ON CONFLICT making at-least-once idempotent, and cursor " +
+      "pagination as the only sane infinite scroll. Admitting pull-only suffices at small scale " +
+      "before defending the hybrid is what makes the answer sound experienced rather than " +
+      "rehearsed.</p>",
+  },
+
+  F65: {
+    id: "F65",
+    title: "System Design — Appointment Booking",
+    difficulty: "Hard",
+    time: "30-40 min",
+    tags: ["Design", "System Design", "Concurrency", "Postgres"],
+    type: "design",
+    statement:
+      "Design booking for a clinic chain: providers publish availability (working hours, " +
+      "variable appointment lengths), patients book/cancel/reschedule, and a slot must " +
+      "never be double-booked — under concurrent requests, ever. Model availability " +
+      "(discrete slots vs open intervals — argue it), design the double-booking defense in " +
+      "layers, and handle time zones like someone who has been burned. The most " +
+      "Odoo-adjacent system-design question in the set.",
+    examples:
+      "The three hard parts, in order:\n" +
+      "  1. availability model: pre-generated slot rows vs (start,end) intervals?\n" +
+      "  2. the race: two patients grab the last Tuesday 10:00 simultaneously\n" +
+      "  3. the follow-up you should see coming: 'what about variable-length\n" +
+      "     appointments that OVERLAP arbitrary slots?'",
+    hint: "Discrete slots + UNIQUE constraint is the robust core: booking = UPDATE ... WHERE status='free' (atomic claim, 0 rows = lost the race — the F55 oversell gate again). For variable-length intervals, Postgres has the expert answer: EXCLUDE USING gist with && on a time range.",
+    solution:
+`1. AVAILABILITY MODEL - argue both, pick slots
+  A) INTERVALS: provider_hours (provider, weekday, start, end) and bookings
+     hold (start_t, end_t); "free" is computed by subtraction.
+     + flexible lengths native   - overlap logic on every read AND write
+  B) DISCRETE SLOTS (chosen): a generator materializes slot rows from
+     working-hours templates, e.g. 30-min grid, N weeks ahead:
+     slots (
+       id BIGINT PK,
+       provider_id BIGINT NOT NULL REFERENCES providers(id),
+       starts_at   TIMESTAMPTZ NOT NULL,     -- UTC. ALWAYS UTC. see (4)
+       duration    INTERVAL NOT NULL,
+       status      TEXT NOT NULL DEFAULT 'free'
+                   CHECK (status IN ('free','held','booked','blocked')),
+       version     INT NOT NULL DEFAULT 0,
+       UNIQUE (provider_id, starts_at)       -- defense layer 0
+     )
+     bookings (id PK, slot_id UNIQUE REFERENCES slots, patient_id, state, ...)
+     + reads are trivial (WHERE status='free'), the race becomes ONE row
+     + slot_id UNIQUE in bookings = a slot can't have two bookings, by schema
+     - variable lengths need the upgrade in (3)
+
+2. THE DOUBLE-BOOKING DEFENSE (layers, innermost = strongest)
+  BEGIN;
+    UPDATE slots SET status='booked', version=version+1
+     WHERE id=:slot AND status='free';      -- atomic claim
+    -- 0 rows affected -> someone won the race -> ROLLBACK, "slot taken"
+    INSERT INTO bookings (slot_id, patient_id, state) VALUES (...,'confirmed');
+  COMMIT;
+  Layer 1: conditional UPDATE - the read-check lives INSIDE the write
+           (never SELECT-then-UPDATE: both patients see 'free' - F55's race).
+  Layer 2: bookings.slot_id UNIQUE - even buggy code paths can't double-book.
+  Layer 3 (holds): patient picks a slot -> status='held' + expires_at
+           (5 min) while they pay; reaper frees expired holds. Same
+           lease idea as F63's locked_until.
+
+3. VARIABLE-LENGTH / OVERLAP FOLLOW-UP (the expert card)
+  A 45-min booking spans 1.5 grid slots - grid breaks. Postgres answer:
+    bookings (provider_id, period TSTZRANGE NOT NULL, ...)
+    EXCLUDE USING gist (provider_id WITH =, period WITH &&)
+  - the DATABASE rejects any two bookings whose ranges overlap for the
+  same provider: it's UNIQUE generalized to intervals. Under the hood
+  that's Module 10's interval-overlap check enforced by an index.
+  Claiming still atomic: INSERT and catch the exclusion violation.
+
+4. TIME ZONES (where real systems bleed)
+  Store TIMESTAMPTZ (UTC instants). Render in clinic's zone. The trap:
+  "every Tuesday 09:00" is a LOCAL rule - store the recurrence as
+  (weekday, local time, zone) and materialize to UTC instants per date,
+  or DST week shifts every appointment by an hour. Slot generation is
+  where that conversion lives - one place, tested.
+
+5. THE REST OF THE FRAME (brief, from Module 15)
+  API: GET /providers/:id/slots?from&to / POST /bookings {slot_id}
+       (idempotency key on POST - double-click safe)
+  Cancel: booking state machine (confirmed -> cancelled), slot back to
+       'free'; reschedule = cancel + book new atomically in one txn.
+  Reminders: F63's job queue, run_at = starts_at - 24h; cancel dequeues.
+  Scale: bookings are low-QPS writes; reads cached per provider-day with
+       delete-on-write. Postgres yawns at clinic-chain scale - say it.`,
+    explanation:
+      "<p>The spine is the same atomic-claim gate as F55's inventory and F62's limiter — by this " +
+      "point in the course you should be recognizing it on sight: the check must live inside the " +
+      "write (conditional UPDATE, 0 rows = lost), backstopped by a constraint the application " +
+      "can't bypass. The two differentiators here: the slots-vs-intervals argument (slots for " +
+      "robustness, then the <code>EXCLUDE USING gist</code> range-overlap constraint as the " +
+      "variable-length upgrade — a genuinely senior Postgres card), and treating time zones as a " +
+      "materialization concern (local recurrence rules → UTC instants in exactly one tested " +
+      "place). Holds-with-expiry is F63's lease wearing a lab coat. Odoo ships appointment " +
+      "scheduling, so expect sharp follow-ups here.</p>",
+  },
+
 };
 
 // ----------------------------------------------------------------
@@ -3373,6 +4180,10 @@ window.PRACTICE_SETS = {
           qids: ["F46", "F47", "F48", "F49", "F50", "F51"] },
   PS13: { module: "M13", title: "Practice Set 13 — Database Design & Indexes",
           qids: ["F52", "F53", "F54", "F55"] },
+  PS14: { module: "M14", title: "Practice Set 14 — OOP & Design Patterns",
+          qids: ["F56", "F57", "F58", "F59", "F60"] },
+  PS15: { module: "M15", title: "Practice Set 15 — System Design",
+          qids: ["F61", "F62", "F63", "F64", "F65"] },
 };
 
 // Final exam pool — filled in as later modules land (held-back questions).
