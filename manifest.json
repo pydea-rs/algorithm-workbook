@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-05T16:12:29Z",
+  "generated": "2026-07-05T20:01:31Z",
   "folders": [
     {
       "name": "bracketCount",
@@ -408,6 +408,11 @@
           "slug": "logictest",
           "title": "Logic Test",
           "entry": "tutorials/logictest/index.html"
+        },
+        {
+          "slug": "roadmap",
+          "title": "Final Week Roadmap",
+          "entry": "tutorials/roadmap/index.html"
         }
       ]
     },

@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Final Week Roadmap — Odoo Interview</title>
+<style>
+    :root {
+        --primary: #714B67;
+        --primary-light: #8f6a85;
+        --primary-dark: #5a3a52;
+        --accent: #00A09D;
+        --accent-light: #e6f7f7;
+        --danger: #E74C3C;
+        --warning: #F39C12;
+        --success: #27AE60;
+        --info: #3498DB;
+        --bg: #f4f5f8;
+        --card-bg: #ffffff;
+        --text: #2c3e50;
+        --text-light: #7f8c8d;
+        --border: #e8e8e8;
+        --shadow: 0 4px 24px rgba(0,0,0,0.06);
+        --shadow-lg: 0 12px 40px rgba(0,0,0,0.12);
+    }
+    @media (prefers-color-scheme: dark) {
+        :root {
+            --bg: #16141a;
+            --card-bg: #211e27;
+            --text: #e8e4ee;
+            --text-light: #9a93a5;
+            --border: #35313d;
+            --accent-light: #10312f;
+            --shadow: 0 4px 24px rgba(0,0,0,0.35);
+            --shadow-lg: 0 12px 40px rgba(0,0,0,0.5);
+        }
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        line-height: 1.55;
+        padding-bottom: 60px;
+    }
+    .wrap { max-width: 920px; margin: 0 auto; padding: 0 18px; }
+
+    /* ---------- hero ---------- */
+    .hero {
+        background: linear-gradient(135deg, var(--primary-dark), var(--primary) 55%, #3d6b66);
+        color: #fff;
+        padding: 42px 18px 34px;
+        text-align: center;
+    }
+    .hero h1 { font-size: 1.9rem; letter-spacing: -0.5px; }
+    .hero .sub { opacity: 0.9; margin-top: 6px; font-size: 1.02rem; }
+    .hero .sub strong { color: #ffe9a8; }
+    .countdown {
+        display: flex; justify-content: center; gap: 14px;
+        margin: 22px auto 4px; flex-wrap: wrap;
+    }
+    .cd-box {
+        background: rgba(255,255,255,0.12);
+        border: 1px solid rgba(255,255,255,0.25);
+        border-radius: 12px; padding: 10px 16px; min-width: 84px;
+        backdrop-filter: blur(4px);
+    }
+    .cd-box b { display: block; font-size: 1.7rem; font-variant-numeric: tabular-nums; }
+    .cd-box span { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.85; }
+    .overall { max-width: 560px; margin: 22px auto 0; }
+    .overall .bar {
+        height: 12px; border-radius: 6px; overflow: hidden;
+        background: rgba(255,255,255,0.2);
+    }
+    .overall .fill {
+        height: 100%; width: 0%;
+        background: linear-gradient(90deg, #ffd166, #06d6a0);
+        border-radius: 6px; transition: width 0.5s ease;
+    }
+    .overall .lbl { font-size: 0.85rem; margin-top: 7px; opacity: 0.92; }
+    .quick-links { margin-top: 20px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+    .quick-links a {
+        color: #fff; text-decoration: none; font-size: 0.85rem; font-weight: 600;
+        border: 1px solid rgba(255,255,255,0.4); border-radius: 20px; padding: 7px 15px;
+        transition: background 0.2s;
+    }
+    .quick-links a:hover { background: rgba(255,255,255,0.15); }
+
+    /* ---------- rules & rhythm ---------- */
+    h2.section { margin: 36px 0 14px; font-size: 1.25rem; }
+    h2.section small { color: var(--text-light); font-weight: 400; font-size: 0.85rem; margin-left: 8px; }
+    .rules { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+    .rule {
+        background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px;
+        padding: 14px 16px; box-shadow: var(--shadow); font-size: 0.92rem;
+    }
+    .rule b { display: block; margin-bottom: 4px; }
+    .rhythm {
+        background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px;
+        box-shadow: var(--shadow); padding: 18px 20px;
+    }
+    .rhythm .block { display: flex; gap: 14px; padding: 10px 0; border-bottom: 1px dashed var(--border); }
+    .rhythm .block:last-child { border-bottom: none; }
+    .rhythm .when {
+        flex: 0 0 118px; font-weight: 700; font-size: 0.88rem; color: var(--primary);
+    }
+    @media (prefers-color-scheme: dark) { .rhythm .when { color: var(--primary-light); } }
+    .rhythm .what { font-size: 0.92rem; }
+    .rhythm .what span { color: var(--text-light); }
+
+    /* ---------- day cards ---------- */
+    .day {
+        background: var(--card-bg); border: 1px solid var(--border); border-radius: 14px;
+        box-shadow: var(--shadow); margin-bottom: 16px; overflow: hidden;
+        transition: box-shadow 0.25s;
+    }
+    .day.today { border: 2px solid var(--accent); box-shadow: var(--shadow-lg); }
+    .day.past:not(.today) { opacity: 0.82; }
+    .day-head {
+        display: flex; align-items: center; gap: 14px; padding: 15px 18px;
+        cursor: pointer; user-select: none;
+    }
+    .day-head:hover { background: rgba(113,75,103,0.05); }
+    .day-num {
+        flex: 0 0 46px; height: 46px; border-radius: 12px;
+        background: var(--primary); color: #fff; font-weight: 800;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        font-size: 1.05rem; line-height: 1.1;
+    }
+    .day-num small { font-size: 0.58rem; font-weight: 600; opacity: 0.85; text-transform: uppercase; }
+    .day.interview-day .day-num { background: var(--danger); }
+    .day-title { flex: 1; min-width: 0; }
+    .day-title b { font-size: 1.02rem; display: block; }
+    .day-title span { font-size: 0.82rem; color: var(--text-light); }
+    .today-chip {
+        background: var(--accent); color: #fff; font-size: 0.68rem; font-weight: 700;
+        border-radius: 10px; padding: 2px 9px; text-transform: uppercase; letter-spacing: 0.5px;
+        margin-left: 8px; vertical-align: 2px;
+    }
+    .day-meta { text-align: right; flex-shrink: 0; }
+    .day-meta .pct { font-weight: 800; font-size: 1rem; color: var(--accent); font-variant-numeric: tabular-nums; }
+    .day-meta .est { font-size: 0.75rem; color: var(--text-light); }
+    .day-bar { height: 4px; background: transparent; }
+    .day-bar .fill { height: 100%; background: var(--accent); width: 0%; transition: width 0.4s; }
+    .chev { color: var(--text-light); transition: transform 0.25s; font-size: 0.8rem; }
+    .day.open .chev { transform: rotate(90deg); }
+    .day-body { display: none; padding: 4px 18px 16px; }
+    .day.open .day-body { display: block; animation: slideIn 0.25s ease; }
+    @keyframes slideIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+
+    .task {
+        display: flex; align-items: flex-start; gap: 11px;
+        padding: 9px 10px; border-radius: 9px; margin: 3px 0;
+        transition: background 0.15s;
+    }
+    .task:hover { background: rgba(113,75,103,0.06); }
+    .task input[type="checkbox"] {
+        width: 19px; height: 19px; margin-top: 2px; accent-color: var(--accent);
+        cursor: pointer; flex-shrink: 0;
+    }
+    .task.done .t-label { text-decoration: line-through; color: var(--text-light); }
+    .t-label { font-size: 0.93rem; flex: 1; cursor: pointer; }
+    .t-label a { color: var(--info); text-decoration: none; font-weight: 600; }
+    .t-label a:hover { text-decoration: underline; }
+    .t-est { font-size: 0.74rem; color: var(--text-light); flex-shrink: 0; margin-top: 3px; font-variant-numeric: tabular-nums; }
+    .cat {
+        flex-shrink: 0; margin-top: 1px; font-size: 0.66rem; font-weight: 800;
+        border-radius: 8px; padding: 3px 8px; text-transform: uppercase; letter-spacing: 0.4px;
+        color: #fff; min-width: 52px; text-align: center;
+    }
+    .cat-read  { background: var(--info); }
+    .cat-drill { background: var(--primary); }
+    .cat-code  { background: var(--accent); }
+    .cat-logic { background: var(--warning); }
+    .cat-prep  { background: var(--success); }
+    .day-note {
+        margin-top: 10px; padding: 10px 14px; border-left: 3px solid var(--warning);
+        background: rgba(243,156,18,0.08); border-radius: 0 9px 9px 0; font-size: 0.87rem;
+    }
+
+    footer { text-align: center; color: var(--text-light); font-size: 0.82rem; margin-top: 42px; }
+    footer a { color: var(--primary); }
+    @media (prefers-color-scheme: dark) { footer a { color: var(--primary-light); } }
+    @media (max-width: 560px) {
+        .day-meta .est { display: none; }
+        .t-est { display: none; }
+        .cat { min-width: 0; }
+    }
+</style>
+</head>
+<body>
+
+<div class="hero">
+    <h1>🗓️ Final Week Roadmap</h1>
+    <div class="sub">Odoo final-stage interview — <strong>Monday, 13 July 2026, 13:30</strong> · Google Meet · 3 hours<br>
+    plus the <strong>25-minute Coderbyte logic test</strong>, taken before the interview</div>
+    <div class="countdown" id="countdown"></div>
+    <div class="overall">
+        <div class="bar"><div class="fill" id="overallFill"></div></div>
+        <div class="lbl" id="overallLbl"></div>
+    </div>
+    <div class="quick-links">
+        <a href="../interview-final/index.html">📚 Interview Course</a>
+        <a href="../logictest/index.html">🧩 Logic Simulator</a>
+        <a href="https://leetcode.com/problemset/" target="_blank" rel="noopener">💻 LeetCode</a>
+        <a href="../algorithms/index.html">🗂️ Stage-1 Tutorial</a>
+    </div>
+</div>
+
+<div class="wrap">
+
+    <h2 class="section">📌 Rules of the week <small>read once, obey daily</small></h2>
+    <div class="rules">
+        <div class="rule"><b>🗣️ Narrate aloud, in English</b>
+            Every practice question this week: say your plan out loud <em>before</em> typing.
+            The live interview grades communication as much as code — make thinking-out-loud automatic.</div>
+        <div class="rule"><b>⏲️ The 25-minute rule</b>
+            Stuck for 25 minutes? Read the hint, finish with it, and put the question on your re-do list.
+            Grinding silently is exactly the habit that hurts you in a live interview — practice asking for a nudge instead.</div>
+        <div class="rule"><b>🔁 Keep a re-do list</b>
+            Every miss (failed tests, needed the hint, blew the time budget) goes on a list.
+            Re-solve it from scratch two days later — spaced repetition is what makes it stick.</div>
+        <div class="rule"><b>🐍 One language, all week</b>
+            Pick your interview language now (the course leans Python) and use it for everything.
+            Switching languages mid-week resets your muscle memory.</div>
+        <div class="rule"><b>⏱️ Timers always on</b>
+            Use the per-question timer in the course for every drill. By Thursday, time pressure
+            should feel like normal weather, not a storm.</div>
+        <div class="rule"><b>😴 Sleep beats cramming</b>
+            Memory consolidates during sleep. A tired brain narrating badly loses more points than
+            one unread module ever will. Hard stop every evening.</div>
+    </div>
+
+    <h2 class="section">🕐 How to shape a study day</h2>
+    <div class="rhythm">
+        <div class="block"><div class="when">Morning · ~3h</div>
+            <div class="what">Read the day's <b>new modules</b> — hardest thinking while you're freshest.
+            <span>Work in 50-minute focus blocks with 10-minute breaks (stand up, look far away).</span></div></div>
+        <div class="block"><div class="when">Midday · 1h+</div>
+            <div class="what">Real break. Food, a walk, no screens. <span>Your afternoon self will thank you.</span></div></div>
+        <div class="block"><div class="when">Afternoon · ~2.5h</div>
+            <div class="what"><b>Practice sets + LeetCode</b>, timers on, narrating aloud.
+            <span>This is rehearsal, not study — simulate interview conditions.</span></div></div>
+        <div class="block"><div class="when">Evening · ~1h</div>
+            <div class="what">Review today's misses, re-solve one item from the re-do list, skim tomorrow's module titles.
+            <span>Stop by 21:30 — nothing learned after that survives the night anyway.</span></div></div>
+    </div>
+
+    <h2 class="section">📅 The plan <small>click a day to expand · checkboxes save automatically</small></h2>
+    <div id="days"></div>
+
+    <footer>
+        Progress is stored locally in your browser (<code>odoo_logic</code>-style key: <code>odoo_roadmap_v1</code>).
+        · <a href="#" id="resetBtn">Reset all progress</a>
+    </footer>
+</div>
+
+<script>
+"use strict";
+
+const INTERVIEW_AT = new Date(2026, 6, 13, 13, 30, 0); // Mon 13 July 2026, 13:30 local
+
+// cat: read (course modules) | drill (practice sets) | code (LeetCode) | logic (simulator) | prep (logistics/mocks)
+const IF = "../interview-final/index.html";
+const LT = "../logictest/index.html";
+const lc = (slug, txt) => `<a href="https://leetcode.com/problems/${slug}/" target="_blank" rel="noopener">${txt}</a>`;
+
+const PLAN = [
+{
+    date: "2026-07-05", dow: "Sun", title: "Warm-up & Craft",
+    theme: "Get the recap out of the way and make the live-coding template second nature.",
+    tasks: [
+        { cat: "read",  est: 45,  label: `<a href="${IF}">Module 1 — Recap of Stage-1 Algorithms</a>. If any pillar feels shaky, note it — PS1 will confirm.` },
+        { cat: "drill", est: 75,  label: `Practice Set 1 (6 recap drills, incl. one SQL). Whichever drill blows its time budget marks tonight's re-read.` },
+        { cat: "read",  est: 40,  label: `<a href="${IF}">Module 2 — Live-Coding Craft</a>, including the day-of-interview checklist at the end.` },
+        { cat: "drill", est: 45,  label: `Practice Set 2 (3 easy drills) — but run the full 6-step template <em>aloud</em> on each. The problems are easy on purpose; the template is the workout.` },
+        { cat: "logic", est: 30,  label: `<a href="${LT}">Logic simulator, attempt 1</a> — baseline score. Don't study for it first; you want an honest number.` },
+        { cat: "code",  est: 45,  label: `LeetCode warm-up, timed &amp; narrated: ${lc("two-sum","Two Sum")} (E), ${lc("valid-parentheses","Valid Parentheses")} (E), ${lc("merge-two-sorted-lists","Merge Two Sorted Lists")} (E).` },
+        { cat: "prep",  est: 10,  label: `Read the “Rules of the week” above once, properly. Start your re-do list (a plain text file is fine).` },
+    ],
+},
+{
+    date: "2026-07-06", dow: "Mon", title: "Pointers, Numbers & Windows",
+    theme: "The stage-1 gap patch (linked lists, math, bits) plus advanced array technique.",
+    tasks: [
+        { cat: "read",  est: 60,  label: `<a href="${IF}">Module 2b — Linked Lists, Math &amp; Bit Tricks</a>. Draw the three-pointer surgery on paper at least once.` },
+        { cat: "drill", est: 100, label: `Practice Set 2b (8 drills). The linked-list four are the priority — pointer bugs are the classic live-interview time sink.` },
+        { cat: "read",  est: 50,  label: `<a href="${IF}">Module 3 — Arrays &amp; Windows, Advanced</a>.` },
+        { cat: "drill", est: 90,  label: `Practice Set 3 (6 drills).` },
+        { cat: "code",  est: 80,  label: `LeetCode: ${lc("reverse-linked-list","Reverse Linked List")} (E), ${lc("linked-list-cycle","Linked List Cycle")} (E), ${lc("longest-substring-without-repeating-characters","Longest Substring Without Repeating Characters")} (M), ${lc("minimum-size-subarray-sum","Minimum Size Subarray Sum")} (M).` },
+    ],
+},
+{
+    date: "2026-07-07", dow: "Tue", title: "Hashing & Backtracking",
+    theme: "The two most-reported Odoo interview topics after arrays.",
+    tasks: [
+        { cat: "read",  est: 45,  label: `<a href="${IF}">Module 4 — Hash Maps, Sets &amp; Counting</a>.` },
+        { cat: "drill", est: 60,  label: `Practice Set 4 (4 drills).` },
+        { cat: "read",  est: 50,  label: `<a href="${IF}">Module 5 — Recursion &amp; Backtracking</a>. Be able to write the choose–explore–unchoose skeleton from memory.` },
+        { cat: "drill", est: 85,  label: `Practice Set 5 (5 drills).` },
+        { cat: "code",  est: 90,  label: `LeetCode: ${lc("group-anagrams","Group Anagrams")} (M), ${lc("subarray-sum-equals-k","Subarray Sum Equals K")} (M), ${lc("subsets","Subsets")} (M), ${lc("permutations","Permutations")} (M).` },
+        { cat: "prep",  est: 20,  label: `Evening: re-solve one Day-1 miss from your re-do list, from scratch.` },
+    ],
+},
+{
+    date: "2026-07-08", dow: "Wed", title: "Binary Search & Trees",
+    theme: "Invariants and recursion on structure — the topics where narration impresses most.",
+    tasks: [
+        { cat: "read",  est: 45,  label: `<a href="${IF}">Module 6 — Binary Search Mastery</a>. Own the lo/hi invariant; never debug boundaries by trial and error again.` },
+        { cat: "drill", est: 80,  label: `Practice Set 6 (5 drills).` },
+        { cat: "read",  est: 50,  label: `<a href="${IF}">Module 7 — Trees Deep Dive</a>.` },
+        { cat: "drill", est: 85,  label: `Practice Set 7 (5 drills).` },
+        { cat: "code",  est: 100, label: `LeetCode: ${lc("search-in-rotated-sorted-array","Search in Rotated Sorted Array")} (M), ${lc("find-minimum-in-rotated-sorted-array","Find Minimum in Rotated Sorted Array")} (M), ${lc("binary-tree-level-order-traversal","Binary Tree Level Order Traversal")} (M), ${lc("validate-binary-search-tree","Validate BST")} (M), ${lc("lowest-common-ancestor-of-a-binary-tree","Lowest Common Ancestor")} (M).` },
+        { cat: "logic", est: 30,  label: `<a href="${LT}">Logic simulator, attempt 2</a>. Compare per-category scores with attempt 1 — drill your weakest category's question style.` },
+    ],
+},
+{
+    date: "2026-07-09", dow: "Thu", title: "Graphs & Dynamic Programming",
+    theme: "The heaviest day — schedule it with your best energy, nothing else planned.",
+    tasks: [
+        { cat: "read",  est: 55,  label: `<a href="${IF}">Module 8 — Graphs Deep Dive</a>. BFS/DFS/topological sort as reflexes, grid-as-graph included.` },
+        { cat: "drill", est: 90,  label: `Practice Set 8 (5 drills).` },
+        { cat: "read",  est: 55,  label: `<a href="${IF}">Module 9 — Dynamic Programming</a>. For every problem, state the subproblem in one sentence before any code.` },
+        { cat: "drill", est: 100, label: `Practice Set 9 (6 drills).` },
+        { cat: "code",  est: 90,  label: `LeetCode: ${lc("number-of-islands","Number of Islands")} (M), ${lc("course-schedule","Course Schedule")} (M), ${lc("house-robber","House Robber")} (M), ${lc("coin-change","Coin Change")} (M).` },
+    ],
+},
+{
+    date: "2026-07-10", dow: "Fri", title: "Greedy, Heaps & SQL",
+    theme: "Close out algorithms, then give SQL the attention a guaranteed interview task deserves.",
+    tasks: [
+        { cat: "read",  est: 40,  label: `<a href="${IF}">Module 10 — Greedy &amp; Intervals</a>.` },
+        { cat: "drill", est: 75,  label: `Practice Set 10 (5 drills).` },
+        { cat: "read",  est: 40,  label: `<a href="${IF}">Module 11 — Heaps &amp; Priority Queues</a>.` },
+        { cat: "drill", est: 60,  label: `Practice Set 11 (4 drills).` },
+        { cat: "read",  est: 50,  label: `<a href="${IF}">Module 12 — SQL Deep Dive</a>. One of your three interview tasks is SQL/DB — this module pays rent.` },
+        { cat: "drill", est: 90,  label: `Practice Set 12 (6 runnable SQL drills).` },
+        { cat: "code",  est: 45,  label: `LeetCode SQL: ${lc("combine-two-tables","Combine Two Tables")} (E), ${lc("department-highest-salary","Department Highest Salary")} (M), ${lc("consecutive-numbers","Consecutive Numbers")} (M).` },
+        { cat: "logic", est: 30,  label: `<a href="${LT}">Logic simulator, attempt 3</a>.` },
+    ],
+},
+{
+    date: "2026-07-11", dow: "Sat", title: "Design Day + First Mock Exam",
+    theme: "Schema design, OOP and system design — then the first full dress rehearsal.",
+    tasks: [
+        { cat: "read",  est: 45,  label: `<a href="${IF}">Module 13 — Database Design &amp; Indexes</a>. Clustered vs non-clustered was asked verbatim in a real Odoo final interview.` },
+        { cat: "drill", est: 60,  label: `Practice Set 13 (4 design questions). Answer each <em>aloud, completely</em> before hitting Reveal.` },
+        { cat: "read",  est: 45,  label: `<a href="${IF}">Module 14 — OOP &amp; Design Patterns</a>.` },
+        { cat: "drill", est: 60,  label: `Practice Set 14 (5 questions, same aloud-then-reveal discipline).` },
+        { cat: "read",  est: 50,  label: `<a href="${IF}">Module 15 — System Design, Application-Level</a>.` },
+        { cat: "drill", est: 75,  label: `Practice Set 15 (5 questions).` },
+        { cat: "prep",  est: 150, label: `<b>Final Exam, deal #1</b> — 12 questions (8 algorithm + 4 SQL), global timer on, no notes, treat it as the real thing.` },
+        { cat: "prep",  est: 30,  label: `Review every exam miss and write down which module each one maps to — that's tomorrow's review list.` },
+    ],
+},
+{
+    date: "2026-07-12", dow: "Sun", title: "Dress Rehearsal & Taper",
+    theme: "One more mock, patch the weak spots, then deliberately wind down.",
+    tasks: [
+        { cat: "prep",  est: 150, label: `<b>Final Exam, deal #2</b> (it deals different questions). Same conditions as yesterday.` },
+        { cat: "prep",  est: 40,  label: `Review misses. Compare with yesterday's list — repeated module = re-read that module's summary now.` },
+        { cat: "read",  est: 60,  label: `Revisit your two weakest modules (from the exam-miss notes), summaries and callouts only.` },
+        { cat: "code",  est: 40,  label: `At most two LeetCode problems (one M, one E) to stay warm. <em>Do not</em> start a hard-problem spiral today.` },
+        { cat: "logic", est: 30,  label: `<a href="${LT}">Logic simulator, final attempt</a> — target ≥ 22/25 relaxed. You've seen every category now.` },
+        { cat: "prep",  est: 20,  label: `Run Module 2's day-of checklist: mic + webcam via a real Meet test call, IDE font size up, quiet room booked, water, phone silent.` },
+        { cat: "prep",  est: 5,   label: `<b>Disable Copilot / ChatGPT / all AI plugins tonight.</b> The recruiter said it plainly: they want to interview you, not a robot.` },
+        { cat: "prep",  est: 0,   label: `Early night. Sleep ≥ 8 hours; nothing new after 21:00. The prep is done — trust it.` },
+    ],
+},
+{
+    date: "2026-07-13", dow: "Mon", title: "Interview Day 🎯", interview: true,
+    theme: "Nothing new today. Warm fingers, calm head, template loaded.",
+    tasks: [
+        { cat: "prep",  est: 0,   label: `Normal breakfast, normal routine. No new topics, no doom-scrolling interview horror stories.` },
+        { cat: "code",  est: 20,  label: `One easy warm-up to get fingers moving: ${lc("merge-sorted-array","Merge Sorted Array")} (E), narrated aloud like it's the real thing.` },
+        { cat: "read",  est: 15,  label: `Skim Module 2's 6-step template one last time. That's the whole cheat-sheet: clarify → examples → approach → complexity → code → test.` },
+        { cat: "logic", est: 30,  label: `Take the <b>real Coderbyte logic test</b> (25 min) in a calm late-morning slot — done well before 13:00. A blank page at the end is normal; answers in any order; skip and return.` },
+        { cat: "prep",  est: 15,  label: `Re-run the checklist. Close every tab except the IDE and Meet. Water on the desk. Bathroom break at 13:10.` },
+        { cat: "prep",  est: 0,   label: `Join the Meet <b>10 minutes early</b>. During the interview: narrate, ask clarifying questions, test your code out loud — and remember the interviewer helping you is part of the format, not a bad sign. 🍀` },
+    ],
+},
+];
+
+// ---------- state ----------
+const KEY = "odoo_roadmap_v1";
+let state = { tasks: {}, open: {} };
+try { state = Object.assign(state, JSON.parse(localStorage.getItem(KEY) || "{}")); } catch (e) {}
+const save = () => localStorage.setItem(KEY, JSON.stringify(state));
+
+const todayStr = () => {
+    const n = new Date();
+    return n.getFullYear() + "-" + String(n.getMonth() + 1).padStart(2, "0") + "-" + String(n.getDate()).padStart(2, "0");
+};
+
+// ---------- render ----------
+const daysEl = document.getElementById("days");
+function fmtEst(mins) {
+    if (!mins) return "";
+    if (mins < 60) return mins + "m";
+    const h = Math.floor(mins / 60), m = mins % 60;
+    return h + "h" + (m ? String(m).padStart(2, "0") : "");
+}
+const CAT_LABEL = { read: "Read", drill: "Drill", code: "Code", logic: "Logic", prep: "Prep" };
+
+function render() {
+    const tstr = todayStr();
+    daysEl.innerHTML = "";
+    PLAN.forEach((day, di) => {
+        const isToday = day.date === tstr;
+        const isPast = day.date < tstr;
+        const defaultOpen = !isPast;
+        const open = state.open[di] !== undefined ? state.open[di] : (isToday || (defaultOpen && !isToday && di === 0));
+        const total = day.tasks.length;
+        const done = day.tasks.filter((_, ti) => state.tasks[di + "-" + ti]).length;
+        const pct = total ? Math.round((done / total) * 100) : 0;
+        const est = day.tasks.reduce((s, t) => s + (t.est || 0), 0);
+
+        const card = document.createElement("div");
+        card.className = "day" + (isToday ? " today" : "") + (isPast ? " past" : "") +
+            (open ? " open" : "") + (day.interview ? " interview-day" : "");
+        card.innerHTML = `
+            <div class="day-head">
+                <div class="day-num">${di + 1}<small>${day.dow} ${Number(day.date.slice(-2))}</small></div>
+                <div class="day-title">
+                    <b>${day.title}${isToday ? '<span class="today-chip">Today</span>' : ""}</b>
+                    <span>${day.theme}</span>
+                </div>
+                <div class="day-meta">
+                    <div class="pct">${pct}%</div>
+                    <div class="est">${done}/${total} · ~${fmtEst(est)}</div>
+                </div>
+                <div class="chev">▶</div>
+            </div>
+            <div class="day-bar"><div class="fill" style="width:${pct}%"></div></div>
+            <div class="day-body"></div>
+        `;
+        const body = card.querySelector(".day-body");
+        day.tasks.forEach((t, ti) => {
+            const id = di + "-" + ti;
+            const row = document.createElement("label");
+            row.className = "task" + (state.tasks[id] ? " done" : "");
+            row.innerHTML = `
+                <input type="checkbox" ${state.tasks[id] ? "checked" : ""}>
+                <span class="cat cat-${t.cat}">${CAT_LABEL[t.cat]}</span>
+                <span class="t-label">${t.label}</span>
+                <span class="t-est">${fmtEst(t.est)}</span>
+            `;
+            row.querySelector("input").addEventListener("change", (e) => {
+                if (e.target.checked) state.tasks[id] = true; else delete state.tasks[id];
+                save(); render();
+            });
+            body.appendChild(row);
+        });
+        if (day.date === "2026-07-12") {
+            const note = document.createElement("div");
+            note.className = "day-note";
+            note.innerHTML = "⚠️ <b>Taper day.</b> The goal today is confidence, not coverage. Under-doing it is correct.";
+            body.appendChild(note);
+        }
+        card.querySelector(".day-head").addEventListener("click", (e) => {
+            if (e.target.closest("a, input")) return;
+            state.open[di] = !card.classList.contains("open");
+            save(); render();
+        });
+        daysEl.appendChild(card);
+    });
+
+    // overall
+    const all = PLAN.reduce((s, d) => s + d.tasks.length, 0);
+    const doneAll = Object.keys(state.tasks).length;
+    const pct = Math.round((doneAll / all) * 100);
+    document.getElementById("overallFill").style.width = pct + "%";
+    document.getElementById("overallLbl").textContent = `${doneAll} of ${all} tasks done — ${pct}%`;
+}
+
+// ---------- countdown ----------
+const cdEl = document.getElementById("countdown");
+function tickCountdown() {
+    const ms = INTERVIEW_AT - new Date();
+    if (ms <= 0) {
+        cdEl.innerHTML = `<div class="cd-box" style="min-width:auto;padding:12px 22px"><b style="font-size:1.15rem">It's time — go get it! 🍀</b></div>`;
+        return;
+    }
+    const d = Math.floor(ms / 86400000);
+    const h = Math.floor(ms / 3600000) % 24;
+    const m = Math.floor(ms / 60000) % 60;
+    const s = Math.floor(ms / 1000) % 60;
+    cdEl.innerHTML = [
+        [d, d === 1 ? "day" : "days"], [h, "hours"], [m, "min"], [s, "sec"],
+    ].map(([v, l]) => `<div class="cd-box"><b>${v}</b><span>${l}</span></div>`).join("");
+}
+setInterval(tickCountdown, 1000);
+tickCountdown();
+
+document.getElementById("resetBtn").addEventListener("click", (e) => {
+    e.preventDefault();
+    if (confirm("Reset all roadmap progress?")) {
+        state = { tasks: {}, open: {} };
+        save(); render();
+    }
+});
+
+render();
+</script>
+</body>
+</html>

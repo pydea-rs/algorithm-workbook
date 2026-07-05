@@ -19,9 +19,10 @@ the content has expanded well past that scope. Today it is three things at once:
 
 1. A **workbook shell** at the repo root — an index page that auto-discovers every folder,
    embeds interactive tutorials, previews markdown/code files, and renders PDFs.
-2. Four **interactive tutorials** under `tutorials/` — an algorithms masterclass with a live
+2. Five **interactive tutorials** under `tutorials/` — an algorithms masterclass with a live
    Python + JS + SQL runner, a separate Odoo framework tutorial, a final-stage interview
-   prep course built on the same runner framework, and a timed logic-test simulator.
+   prep course built on the same runner framework, a timed logic-test simulator, and an
+   interactive final-week study roadmap.
 3. A **library of scratch solutions and long-form notes** — per-question code folders,
    deep-dive markdown, and reference PDFs.
 
@@ -43,7 +44,8 @@ sql.js, marked, highlight.js) are pulled from CDNs on demand.
 │   ├── algorithms/          # Interactive masterclass — 57 questions, Python + JS + SQL
 │   ├── odoo-framework/      # Standalone Odoo framework tutorial
 │   ├── interview-final/     # Final-stage (live interview) prep — same framework, harder content
-│   └── logictest/           # 25-minute aptitude & logical-reasoning test simulator
+│   ├── logictest/           # 25-minute aptitude & logical-reasoning test simulator
+│   └── roadmap/             # Interactive final-week study plan (countdown + daily checklists)
 │
 ├── interesting/             # Deep-dive notes written during study sessions
 │   ├── sql-joins.md
@@ -131,6 +133,20 @@ A single-file simulation of the timed aptitude & logical-reasoning screening tes
 - Results page with per-category score breakdown, then a **review mode** that walks back
   through every question read-only with your pick and the correct answer marked.
 - Attempt history (last/best score) persisted in `localStorage` under `odoo_logic_*`.
+
+### Final Week Roadmap — `tutorials/roadmap/`
+
+A single-file interactive study plan for the last week before the live interview:
+
+- **Live countdown** to the interview slot and an overall progress bar.
+- **9 day-cards** (warm-up day through interview day), each with checkable tasks —
+  which modules to read, which practice sets to drill, matched LeetCode problems
+  (with links), logic-simulator attempts, and two full mock exams on the weekend.
+- **Study guidance**: rules of the week (narrate aloud, the 25-minute rule, a spaced
+  re-do list, one language only) and a suggested daily rhythm (deep-work mornings,
+  rehearsal afternoons, review evenings, hard stop at night).
+- Progress persists in `localStorage` under `odoo_roadmap_v1`; today's card is
+  auto-highlighted and past days fold away.
 
 ## Long-form notes — `interesting/`
 
