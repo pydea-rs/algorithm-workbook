@@ -1392,6 +1392,554 @@ revisit the stage-1 tutorial's Module 4 — here, this compact version is all an
     ],
   },
 
+  M9: {
+    id: "M9",
+    title: "Module 9 — Dynamic Programming",
+    subtitle: "State design, memoization, the four core shapes",
+    practiceSet: "PS9",
+    body: [
+      {
+        kind: "html",
+        html: `
+<div class="hero">
+  <h1>Module 9 — Dynamic Programming</h1>
+  <p>DP is the most feared interview topic and the most mechanical once you have the recipe.
+  Stage 1 barely touched it; the final stage loves it. This module gives you a
+  <strong>four-step recipe</strong> that turns any DP problem into a fill-in-the-blanks exercise,
+  then walks the four shapes that cover ~90% of interview DP.</p>
+</div>
+
+<h2>1. The honest definition</h2>
+<p>Dynamic programming is <strong>recursion plus a notebook</strong>. Nothing more. If a brute-force
+recursion solves the problem but recomputes the same subproblems, caching those results <em>is</em> DP.
+The scary name hides a boring idea.</p>
+
+<p>Two properties must hold, and stating them out loud scores points:</p>
+<ul>
+  <li><strong>Optimal substructure</strong> — the best answer for the whole is built from best answers
+  for smaller pieces.</li>
+  <li><strong>Overlapping subproblems</strong> — the recursion visits the same smaller pieces many times.
+  (If it doesn't, plain divide &amp; conquer is enough — no cache needed.)</li>
+</ul>
+
+<h2>2. The four-step recipe (always top-down first)</h2>
+<ol>
+  <li><strong>Write the brute-force recursion.</strong> Don't optimize. Just answer:
+  "if I make one choice, what smaller problem remains?"</li>
+  <li><strong>Name the state.</strong> The state is exactly the set of arguments that change
+  between recursive calls. One changing index → 1D DP. Two → 2D. That's it.</li>
+  <li><strong>Memoize.</strong> In Python, slap <code>@functools.cache</code> on it
+  (or a dict keyed by the state). Complexity collapses from exponential to
+  (number of states) × (work per state).</li>
+  <li><strong>(Optional) Convert to a table.</strong> Bottom-up saves recursion overhead and enables
+  space tricks (keeping only the previous row). Do this only if asked or if recursion depth
+  is a risk — a working memoized solution is a <em>finished</em> solution.</li>
+</ol>
+
+<div class="callout tip"><div class="callout-title">The state-design question</div>
+<p>When stuck, ask: <em>"What is the minimum information about the decisions made so far that the
+rest of the problem needs?"</em> Not the full history — just what the future can see. In House Robber
+the future only needs to know <em>the index I'm at</em> and implicitly whether the previous house was
+taken; in Edit Distance it's <em>how much of each word is left</em>. Everything else is noise.</p></div>
+
+<h2>3. Shape 1 — 1D take / skip</h2>
+<p><strong>House Robber</strong>: rob non-adjacent houses for max loot. One choice per house:
+take it (skip the neighbor) or skip it.</p>
+<pre><code>def rob(nums):
+    take, skip = 0, 0          # best ending with/without robbing previous house
+    for x in nums:
+        take, skip = skip + x, max(take, skip)
+    return max(take, skip)</code></pre>
+<p>Note the shape: the "table" collapsed to two rolling variables because state <code>i</code> only
+looks back one step. Say that out loud — <em>"dp[i] depends only on dp[i-1] and dp[i-2], so I keep
+two variables instead of an array"</em> — it's a free space-optimization point.</p>
+
+<div class="callout warn"><div class="callout-title">Tuple-assignment trap, again</div>
+<p><code>take, skip = skip + x, max(take, skip)</code> works because Python evaluates the whole
+right side first. If you write it as two separate statements, the second line sees the
+<em>new</em> <code>take</code> and the answer is silently wrong. Same trap as the array-swap in Module 4.</p></div>
+
+<h2>4. Shape 2 — unbounded choice (Coin Change)</h2>
+<p>Minimum coins to make <code>amount</code>, unlimited supply. State: the remaining amount.
+Transition: try every coin.</p>
+<pre><code>def coin_change(coins, amount):
+    INF = amount + 1                      # impossible marker
+    dp = [0] + [INF] * amount             # dp[a] = min coins for amount a
+    for a in range(1, amount + 1):
+        for c in coins:
+            if c &lt;= a:
+                dp[a] = min(dp[a], dp[a - c] + 1)
+    return dp[amount] if dp[amount] &lt;= amount else -1</code></pre>
+
+<div class="callout warn"><div class="callout-title">Loop order changes the meaning</div>
+<p>For <em>counting ways</em> problems: coins in the <strong>outer</strong> loop counts
+<em>combinations</em> (order doesn't matter); amount in the outer loop counts
+<em>permutations</em> (order matters — that variant is "Combination Sum IV"). For min-coins it makes
+no difference, but interviewers probe this exact distinction. If asked "how many ways to make
+change?", pause and ask whether <code>1+2</code> and <code>2+1</code> are the same way.</p></div>
+
+<h2>5. Shape 3 — 2D grid over two sequences</h2>
+<p><strong>Longest Common Subsequence</strong> is the archetype. State: <code>(i, j)</code> = answer
+for <code>text1[i:]</code> vs <code>text2[j:]</code>. Characters match → take both and move on;
+otherwise best of skipping one from either side.</p>
+<pre><code>def longest_common_subsequence(t1, t2):
+    m, n = len(t1), len(t2)
+    dp = [[0] * (n + 1) for _ in range(m + 1)]   # dp[i][j]: LCS of t1[i:], t2[j:]
+    for i in range(m - 1, -1, -1):
+        for j in range(n - 1, -1, -1):
+            if t1[i] == t2[j]:
+                dp[i][j] = 1 + dp[i + 1][j + 1]
+            else:
+                dp[i][j] = max(dp[i + 1][j], dp[i][j + 1])
+    return dp[0][0]</code></pre>
+<p><strong>Edit Distance</strong> is the same skeleton with three transitions instead of two:
+match/replace (diagonal), delete (down), insert (right) — each non-match costs 1. If you can write
+LCS, you can write Edit Distance; only the transition line changes. The same family covers
+Distinct Subsequences and Interleaving String.</p>
+
+<h2>6. Shape 4 — sequence DP with a twist: LIS</h2>
+<p><strong>Longest Increasing Subsequence</strong>: the O(n²) DP is
+"<code>dp[i]</code> = longest ending at <code>i</code>; check all earlier smaller elements".
+Say it, then offer the upgrade:</p>
+<pre><code>import bisect
+def length_of_lis(nums):
+    tails = []     # tails[k] = smallest tail of an increasing subseq of length k+1
+    for x in nums:
+        i = bisect.bisect_left(tails, x)
+        if i == len(tails): tails.append(x)
+        else: tails[i] = x
+    return len(tails)</code></pre>
+<p>Why it works: <code>tails</code> stays sorted, and replacing <code>tails[i]</code> with a smaller
+value never shortens any existing subsequence — it only makes future extensions easier. The array is
+<em>not</em> an actual subsequence; only its length is meaningful. Mentioning that caveat shows real
+understanding. O(n log n) via the Module 6 boundary search.</p>
+
+<h2>7. DP over cut points — Word Break</h2>
+<p>"Can <code>s</code> be split into dictionary words?" State: a position in the string.
+<code>dp[i]</code> = "is <code>s[:i]</code> breakable?" — true if some earlier breakable
+position <code>j</code> has <code>s[j:i]</code> in the dictionary.</p>
+<pre><code>def word_break(s, word_dict):
+    words = set(word_dict)
+    dp = [True] + [False] * len(s)
+    for i in range(1, len(s) + 1):
+        for j in range(i):
+            if dp[j] and s[j:i] in words:
+                dp[i] = True
+                break
+    return dp[len(s)]</code></pre>
+<p>Same shape covers Palindrome Partitioning II and similar "split the string" problems. The tell:
+<em>the answer for a prefix depends on answers for shorter prefixes plus a validity check on the gap</em>.</p>
+
+<h2>8. Choosing DP vs greedy vs backtracking</h2>
+<table class="tbl">
+  <tr><th>Ask</th><th>If yes →</th></tr>
+  <tr><td>Does a locally best choice provably never hurt? (exchange argument works)</td><td>Greedy — O(n log n) or better</td></tr>
+  <tr><td>Need the count/min/max over exponentially many paths, and subproblems repeat?</td><td>DP</td></tr>
+  <tr><td>Need to <em>enumerate</em> the actual solutions, or constraints ≤ ~20?</td><td>Backtracking</td></tr>
+</table>
+<p>Practical tell: <em>"how many ways"</em> / <em>"minimum cost"</em> with n up to 10³–10⁴ screams DP;
+<em>"return all"</em> screams backtracking; n up to 10⁵ with a sort-friendly structure hints greedy
+(next module).</p>
+
+<div class="callout good"><div class="callout-title">Pacing note</div>
+<p>In a live interview, a memoized top-down solution earns nearly full marks. Convert to bottom-up
+only if the interviewer asks, or recursion depth could blow (Python default ~1000 — flag it, as in
+Module 7). Don't burn 15 minutes converting a working solution nobody asked you to convert.</p></div>
+`,
+      },
+      {
+        kind: "mcq",
+        q: "For \"how many ways can you make amount N from these coins (order doesn't matter)\", which loop structure is correct?",
+        options: [
+          { label: "for coin in coins: for a in range(coin, N+1): dp[a] += dp[a-coin]", correct: true },
+          { label: "for a in range(1, N+1): for coin in coins: dp[a] += dp[a-coin]", correct: false },
+          { label: "Either — loop order never affects a DP result.", correct: false },
+          { label: "Neither — counting ways requires backtracking.", correct: false },
+        ],
+        explain:
+          "<p>Coins outer means each coin type is 'decided' once: all ways using only the first k coin types are counted before the next type enters, so <code>1+2</code> and <code>2+1</code> collapse into one combination. Amount outer counts ordered sequences (permutations) — a different, also-valid problem (Combination Sum IV), but the wrong answer here. Loop order absolutely changes DP semantics when the transition sums over choices.</p>",
+      },
+      {
+        kind: "mcq",
+        q: "You wrote a brute-force recursion with signature solve(i, j, used_flag). How many dimensions does your memo table need?",
+        options: [
+          { label: "Three — one per changing argument: i, j, and used_flag.", correct: true },
+          { label: "Two — booleans don't count as state.", correct: false },
+          { label: "One — you can always collapse state into a single index.", correct: false },
+          { label: "It depends on the input size, not the signature.", correct: false },
+        ],
+        explain:
+          "<p>The state <em>is</em> the tuple of changing arguments — nothing more, nothing less. A boolean doubles the state space (×2), it doesn't vanish. This is why the recipe says 'write the recursion first': the memo dimensions read directly off the signature, and state count × work per state gives you the complexity answer the interviewer will ask for next.</p>",
+      },
+      {
+        kind: "mcq",
+        q: "In the O(n log n) LIS solution, what does the tails array contain after processing [10, 9, 2, 5, 3, 7]?",
+        options: [
+          { label: "[2, 3, 7] — smallest possible tail for each subsequence length.", correct: true },
+          { label: "[2, 5, 7] — an actual longest increasing subsequence.", correct: false },
+          { label: "[10, 9, 7] — the largest elements seen.", correct: false },
+          { label: "[2, 3] — lengths are capped at the number of replacements.", correct: false },
+        ],
+        explain:
+          "<p>Trace: 10 → [10]; 9 replaces → [9]; 2 replaces → [2]; 5 appends → [2,5]; 3 replaces 5 → [2,3]; 7 appends → [2,3,7]. The array holds 'best (smallest) tail per length', not an actual subsequence — after replacements it can be a sequence that never appeared in order. Only its <em>length</em> is the answer. Interviewers love asking exactly this.</p>",
+      },
+    ],
+  },
+
+  M10: {
+    id: "M10",
+    title: "Module 10 — Greedy & Intervals",
+    subtitle: "Exchange arguments, sweep lines, the interval toolkit",
+    practiceSet: "PS10",
+    body: [
+      {
+        kind: "html",
+        html: `
+<div class="hero">
+  <h1>Module 10 — Greedy &amp; Intervals</h1>
+  <p>Greedy solutions are short — three to ten lines — which makes them dangerous: the code is easy,
+  <em>knowing it's correct</em> is the hard part. Interval problems are the most common greedy
+  playground. This module gives you the two proof techniques and a sort-key decision table that
+  together crack nearly every interval question.</p>
+</div>
+
+<h2>1. What greedy really claims</h2>
+<p>A greedy algorithm makes the locally best choice and <strong>never reconsiders</strong>. That's a
+strong claim — most problems punish it (that's why DP exists). It's valid only when you can argue one
+of two things:</p>
+<ul>
+  <li><strong>Exchange argument</strong>: take any optimal solution that disagrees with greedy at some
+  first step; swap in greedy's choice; show the result is no worse. Repeat → greedy is optimal.
+  You met this in Module 3 (Container With Most Water).</li>
+  <li><strong>Staying ahead</strong>: after every step, greedy's partial solution is at least as good
+  as any other strategy's partial solution, by induction.</li>
+</ul>
+<p>In an interview you don't write a formal proof — you <em>say the argument</em>:
+"if an optimal schedule doesn't pick the meeting that ends earliest, I can swap that meeting in
+without breaking anything, so picking earliest-end first is safe."</p>
+
+<h2>2. The interval toolkit — sort key decides everything</h2>
+<table class="tbl">
+  <tr><th>Goal</th><th>Sort by</th><th>Then</th></tr>
+  <tr><td>Merge overlapping intervals</td><td><strong>start</strong></td><td>extend current merged block while <code>next.start ≤ cur.end</code></td></tr>
+  <tr><td>Keep max non-overlapping set (= remove min to de-overlap)</td><td><strong>end</strong></td><td>take every interval that starts at/after the last taken end</td></tr>
+  <tr><td>Min rooms / max concurrent overlap</td><td>events</td><td>sweep line: +1 at start, −1 at end, track running max</td></tr>
+  <tr><td>"Can attend all?"</td><td>start</td><td>any <code>next.start &lt; cur.end</code> → no</td></tr>
+</table>
+
+<p><strong>Merge Intervals</strong> — the bread-and-butter version:</p>
+<pre><code>def merge(intervals):
+    intervals.sort()
+    out = []
+    for s, e in intervals:
+        if out and s &lt;= out[-1][1]:
+            out[-1][1] = max(out[-1][1], e)   # extend (careful: max, not just e!)
+        else:
+            out.append([s, e])
+    return out</code></pre>
+
+<div class="callout warn"><div class="callout-title">The classic merge bug</div>
+<p><code>out[-1][1] = e</code> instead of <code>max(out[-1][1], e)</code> fails when a short interval
+is swallowed by a longer one: merging <code>[1,10]</code> with <code>[2,3]</code> must stay
+<code>[1,10]</code>, not shrink to <code>[1,3]</code>. Sorting by start does <em>not</em> sort by end.
+Every interviewer has seen this bug; don't be the next person to write it.</p></div>
+
+<p><strong>Why sort by end for selection?</strong> (Non-overlapping Intervals / Activity Selection):
+the meeting that ends earliest leaves the most room for everything after it. Exchange argument:
+any optimal selection's first meeting can be swapped for the earliest-ending one without conflict.
+Sorting by start instead is the trap — a long early-starting interval can block many short ones.</p>
+
+<h2>3. Sweep line — the +1/−1 trick</h2>
+<p><strong>Meeting Rooms II</strong>: minimum rooms = maximum number of meetings alive at once.
+Turn every interval into two events and sweep:</p>
+<pre><code>def min_meeting_rooms(intervals):
+    events = []
+    for s, e in intervals:
+        events.append((s, 1))      # meeting starts: need a room
+        events.append((e, -1))     # meeting ends: free a room
+    events.sort()                  # ties: (t,-1) before (t,1) — end frees before start takes
+    rooms = best = 0
+    for _, d in events:
+        rooms += d
+        best = max(best, rooms)
+    return best</code></pre>
+<p>The tie-break matters and Python gives it to you free: tuples sort by second element on time ties,
+and −1 &lt; 1, so a meeting ending at 10 releases its room before one starting at 10 claims it —
+back-to-back meetings share a room. If the problem says touching intervals <em>do</em> conflict,
+flip the tie-break. <strong>Ask which convention applies</strong> — it's a great clarifying question.</p>
+<p>The same trick answers "max concurrent users", "min platforms for trains", and any
+"peak simultaneous X" question — including as a SQL question (you'll see it again in the database
+modules).</p>
+
+<h2>4. Greedy in disguise — Jump Game II</h2>
+<p>"Min jumps to reach the end" looks like DP, and O(n²) DP works — but the O(n) greedy is really
+<strong>BFS over an implicit graph</strong> (Module 8 thinking!): layer k is the set of indices
+reachable in k jumps.</p>
+<pre><code>def jump(nums):
+    jumps = cur_end = farthest = 0
+    for i in range(len(nums) - 1):       # note: never process the last index
+        farthest = max(farthest, i + nums[i])
+        if i == cur_end:                 # finished current BFS layer
+            jumps += 1
+            cur_end = farthest           # next layer's frontier
+    return jumps</code></pre>
+<p>Narrate it as BFS layers and the correctness is obvious — each "jump" expands the frontier as far
+as anything in the current layer can reach. This reframe (greedy = frontier expansion) also explains
+Gas Station and Video Stitching.</p>
+
+<h2>5. The Gas Station lemma</h2>
+<p>Circular tour: find a start so the tank never goes negative. Two facts crack it:</p>
+<ol>
+  <li>If total gas ≥ total cost, an answer <strong>exists</strong> (and it's unique per problem statement).</li>
+  <li>If starting at <code>s</code> you first fail when leaving station <code>i</code>, then <em>no
+  station in <code>s..i</code> works</em> — any such start reaches <code>i</code> with less (or equal)
+  fuel than you had, since you arrived at it with tank ≥ 0. So restart from <code>i+1</code>.</li>
+</ol>
+<pre><code>def can_complete_circuit(gas, cost):
+    total = tank = start = 0
+    for i in range(len(gas)):
+        diff = gas[i] - cost[i]
+        total += diff
+        tank += diff
+        if tank &lt; 0:            # everything from start..i is disqualified
+            start, tank = i + 1, 0
+    return start if total &gt;= 0 else -1</code></pre>
+<p>One pass, and the "skip the whole failed prefix" lemma is the whole interview — say it clearly
+and the code writes itself.</p>
+
+<div class="callout tip"><div class="callout-title">When greedy fails, say why</div>
+<p>Coin change with coins <code>[1, 3, 4]</code> and amount 6: greedy takes 4+1+1 (three coins),
+optimal is 3+3 (two). Keep this counterexample in your pocket — producing it instantly when an
+interviewer asks "would greedy work here?" is a strong signal. Greedy works for <em>canonical</em>
+coin systems (like real currencies), not arbitrary ones; when in doubt, DP.</p></div>
+`,
+      },
+      {
+        kind: "mcq",
+        q: "For \"remove the minimum number of intervals so none overlap\", why sort by end time rather than start time?",
+        options: [
+          { label: "Earliest-ending interval leaves maximal room; an exchange argument shows swapping it into any optimal solution never hurts.", correct: true },
+          { label: "Sorting by end is O(n log n) while sorting by start is O(n²).", correct: false },
+          { label: "It handles negative interval bounds correctly.", correct: false },
+          { label: "Both sort keys give correct answers; end is just conventional.", correct: false },
+        ],
+        explain:
+          "<p>Both sorts cost O(n log n) — the difference is correctness of the greedy choice, not speed. Counterexample for sort-by-start: [1,100], [2,3], [4,5] — start order picks [1,100] first and rejects both short ones; end order picks [2,3], [4,5] and rejects only [1,100]. The earliest-ending choice can replace the first interval of any optimal solution without creating conflicts, which is the exchange argument in one sentence.</p>",
+      },
+      {
+        kind: "mcq",
+        q: "In the sweep-line room counter, meetings [1,3] and [3,5] should share one room. What makes that work?",
+        options: [
+          { label: "End events sort before start events at the same timestamp, so the room frees before it's claimed.", correct: true },
+          { label: "The +1/−1 deltas cancel out over the whole sweep.", correct: false },
+          { label: "Sorting the intervals by duration first.", correct: false },
+          { label: "It doesn't work — sweep line always counts touching intervals as overlapping.", correct: false },
+        ],
+        explain:
+          "<p>At time 3 there are two events: (3, −1) from the first meeting ending and (3, +1) from the second starting. Tuple sort puts −1 first, so the counter dips to 0 before rising back to 1 — max stays 1, one room. If the problem's convention is that touching intervals conflict, you must flip the tie-break (starts before ends). Knowing the tie-break is <em>a decision, not an accident</em> is the point of this question.</p>",
+      },
+    ],
+  },
+
+  M11: {
+    id: "M11",
+    title: "Module 11 — Heaps & Priority Queues",
+    subtitle: "Top-K, two heaps, k-way merge — and a heap you can write in JS",
+    practiceSet: "PS11",
+    body: [
+      {
+        kind: "html",
+        html: `
+<div class="hero">
+  <h1>Module 11 — Heaps &amp; Priority Queues</h1>
+  <p>A heap answers one question fast, over and over: <strong>"what's the smallest thing right
+  now?"</strong> — O(log n) insert, O(log n) extract-min, O(1) peek. You already used one inside
+  Dijkstra (Module 8); this module makes heaps a first-class tool: the three interview patterns,
+  Python's <code>heapq</code> idioms, and — because JavaScript has no built-in heap — a
+  20-line MinHeap you can write from memory.</p>
+</div>
+
+<h2>1. What a heap is (60-second version)</h2>
+<p>A <strong>complete binary tree stored in a flat array</strong> where every parent ≤ its children
+(min-heap). No pointers needed — index math is the tree:</p>
+<pre><code>parent(i) = (i - 1) // 2
+left(i)   = 2*i + 1
+right(i)  = 2*i + 2</code></pre>
+<ul>
+  <li><strong>push</strong>: append at the end, <em>sift up</em> — swap with parent while smaller. O(log n).</li>
+  <li><strong>pop-min</strong>: save root, move last element to root, <em>sift down</em> — swap with
+  the smaller child while larger. O(log n).</li>
+  <li><strong>heapify</strong> an existing array: sift down from the middle backwards —
+  <strong>O(n)</strong>, not O(n log n). A classic trivia question; the intuition is that most nodes
+  are near the bottom and sift almost nowhere.</li>
+</ul>
+<p>The heap is <em>partially</em> ordered: the root is the min, but siblings are in no particular
+order and iterating the array does <strong>not</strong> visit sorted values. Saying "I'd iterate the
+heap in order" is an instant red flag — popping n times is how you get sorted output (that's heapsort,
+O(n log n)).</p>
+
+<h2>2. Python: heapq idioms</h2>
+<pre><code>import heapq
+h = []
+heapq.heappush(h, 5)
+smallest = heapq.heappop(h)
+heapq.heapify(existing_list)          # in-place, O(n)
+h[0]                                  # peek min, O(1)</code></pre>
+<table class="tbl">
+  <tr><th>Need</th><th>Idiom</th></tr>
+  <tr><td>Max-heap</td><td>push <code>-x</code>, negate on pop (heapq is min-only)</td></tr>
+  <tr><td>Sort by key, carry payload</td><td>push tuples: <code>(priority, payload)</code> — compares element-wise</td></tr>
+  <tr><td>Payloads that can't be compared</td><td>add a tiebreaker: <code>(priority, i, payload)</code> with a counter <code>i</code></td></tr>
+  <tr><td>Quick top-k</td><td><code>heapq.nlargest(k, items, key=...)</code> / <code>nsmallest</code></td></tr>
+</table>
+<div class="callout warn"><div class="callout-title">The tuple-comparison crash</div>
+<p><code>heappush(h, (dist, node_object))</code> works until two entries tie on <code>dist</code> —
+then Python tries to compare the node objects and throws <code>TypeError</code>. The counter
+tiebreaker <code>(dist, i, node)</code> fixes it and guarantees stable ordering. This bites people
+live, mid-Dijkstra, under time pressure. Pre-empt it.</p></div>
+
+<h2>3. JavaScript: bring your own heap</h2>
+<p>JS has no standard-library heap. In an interview you have three honest options — pick by size:</p>
+<ol>
+  <li><strong>n is small (≤ ~10⁴)</strong>: keep a sorted array; binary-search the insertion point
+  (Module 6!) and <code>splice</code>. O(n) insert but tiny constants — say the trade-off out loud.</li>
+  <li><strong>Simulate</strong>: re-sort per step or scan for the min — fine for O(V²) Dijkstra on
+  small graphs.</li>
+  <li><strong>Write the heap</strong> — 20 lines, worth memorizing the shape:</li>
+</ol>
+<pre><code>class MinHeap {
+  constructor() { this.a = []; }
+  get size() { return this.a.length; }
+  peek() { return this.a[0]; }
+  push(x) {
+    const a = this.a; a.push(x);
+    let i = a.length - 1;
+    while (i &gt; 0) {
+      const p = (i - 1) &gt;&gt; 1;
+      if (a[p] &lt;= a[i]) break;
+      [a[p], a[i]] = [a[i], a[p]]; i = p;
+    }
+  }
+  pop() {
+    const a = this.a, top = a[0], last = a.pop();
+    if (a.length) {
+      a[0] = last;
+      let i = 0;
+      while (true) {
+        const l = 2 * i + 1, r = l + 1;
+        let m = i;
+        if (l &lt; a.length &amp;&amp; a[l] &lt; a[m]) m = l;
+        if (r &lt; a.length &amp;&amp; a[r] &lt; a[m]) m = r;
+        if (m === i) break;
+        [a[m], a[i]] = [a[i], a[m]]; i = m;
+      }
+    }
+    return top;
+  }
+}</code></pre>
+<p>For tuples/objects, compare on a key (<code>a[p][0] &lt;= a[i][0]</code>) instead. If you interview
+in JavaScript, write this class once a day until it's muscle memory — it converts every heap problem
+from "impossible in JS" to "same as Python".</p>
+
+<h2>4. Pattern 1 — Top-K with a size-k heap</h2>
+<p>"K largest elements of a stream/array" — keep a <strong>min</strong>-heap of size k. Yes, min:
+the heap holds the current k best, and its <em>root is the weakest of the best</em> — the only
+element a newcomer needs to beat.</p>
+<pre><code>def find_kth_largest(nums, k):
+    h = nums[:k]
+    heapq.heapify(h)
+    for x in nums[k:]:
+        if x &gt; h[0]:
+            heapq.heapreplace(h, x)   # pop min + push, one sift
+    return h[0]</code></pre>
+<p>O(n log k) — beats full sort O(n log n) when k ≪ n, and works on streams (you never store more
+than k items). The follow-up "can you do better?" points at <strong>quickselect</strong>: average
+O(n) by partitioning like quicksort but recursing into one side only. Offer it verbally; code the
+heap version — quickselect's worst case and in-place partition are easy to fumble live.</p>
+
+<h2>5. Pattern 2 — two heaps (streaming median)</h2>
+<p>Maintain the median of a growing stream: split the numbers into a <strong>max-heap of the small
+half</strong> and a <strong>min-heap of the large half</strong>, keeping sizes balanced
+(small may hold one extra).</p>
+<pre><code>small, large = [], []            # small: max-heap via negation
+def add(x):
+    heapq.heappush(small, -x)                       # 1. into small
+    heapq.heappush(large, -heapq.heappop(small))    # 2. move small's max over
+    if len(large) &gt; len(small):                     # 3. rebalance sizes
+        heapq.heappush(small, -heapq.heappop(large))
+def median():
+    if len(small) &gt; len(large): return -small[0]
+    return (-small[0] + large[0]) / 2</code></pre>
+<p>The push–move–rebalance dance keeps both invariants (every small ≤ every large; sizes within 1)
+with no case analysis. The median is always at the roots: O(log n) insert, O(1) query.</p>
+
+<h2>6. Pattern 3 — k-way merge</h2>
+<p>Merge k sorted lists: the heap holds <strong>one candidate per list</strong> — the smallest unmerged
+element of each. Pop the global min, push that list's next element. Each element enters and leaves the
+heap once: <strong>O(N log k)</strong> for N total elements.</p>
+<pre><code>def merge_k_lists(lists):
+    h = [(lst[0], i, 0) for i, lst in enumerate(lists) if lst]
+    heapq.heapify(h)
+    out = []
+    while h:
+        val, i, j = heapq.heappop(h)
+        out.append(val)
+        if j + 1 &lt; len(lists[i]):
+            heapq.heappush(h, (lists[i][j + 1], i, j + 1))
+    return out</code></pre>
+<p>Same skeleton solves "kth smallest in a sorted matrix" and "smallest range covering k lists".
+The <code>i</code> in the tuple doubles as the tie-breaker from section 2.</p>
+
+<h2>7. Choosing: heap vs sort vs quickselect</h2>
+<table class="tbl">
+  <tr><th>Situation</th><th>Tool</th><th>Cost</th></tr>
+  <tr><td>Need everything ordered, data static</td><td>sort</td><td>O(n log n)</td></tr>
+  <tr><td>Need top-k, k ≪ n, or data streams in</td><td>size-k heap</td><td>O(n log k)</td></tr>
+  <tr><td>Need k-th element once, array in memory, average case fine</td><td>quickselect</td><td>O(n) avg</td></tr>
+  <tr><td>Need min repeatedly while set mutates</td><td>heap</td><td>O(log n) per op</td></tr>
+  <tr><td>Need min <em>and</em> arbitrary delete/lookup</td><td>heap + lazy deletion (Module 8) or sorted container</td><td>O(log n)</td></tr>
+</table>
+`,
+      },
+      {
+        kind: "mcq",
+        q: "To keep the 5 largest values ever seen in a stream, which structure and why?",
+        options: [
+          { label: "A min-heap of size 5 — the root is the smallest of the current top-5, the only value a newcomer must beat.", correct: true },
+          { label: "A max-heap of size 5 — you want the largest values, so use a max-heap.", correct: false },
+          { label: "A max-heap of all values — pop 5 at the end.", correct: false },
+          { label: "A sorted array of all values, sliced at the end.", correct: false },
+        ],
+        explain:
+          "<p>The counter-intuitive classic: track the k <em>largest</em> with a <em>min</em>-heap. Its root is the gatekeeper — if a new value beats the weakest of the current best, replace the root (one O(log k) sift). A max-heap of size 5 can only tell you the <em>best</em> of the five instantly, but eviction requires finding the minimum, which a max-heap can't do cheaply. Storing everything (options 3–4) is O(n) memory and fails the streaming requirement.</p>",
+      },
+      {
+        kind: "mcq",
+        q: "heapq.heapify(lst) on n elements costs O(n), yet n pushes cost O(n log n). Where does the saving come from?",
+        options: [
+          { label: "Sift-down work is proportional to node height; most nodes sit near the bottom with height ~0, and the weighted sum telescopes to O(n).", correct: true },
+          { label: "heapify is implemented in C, so it's a constant-factor saving only.", correct: false },
+          { label: "heapify sorts the array with quicksort first.", correct: false },
+          { label: "It's actually O(n log n); O(n) is amortized marketing.", correct: false },
+        ],
+        explain:
+          "<p>Building bottom-up, each node sifts <em>down</em> at most its height: half the nodes have height 0 (leaves — free), a quarter have height 1, an eighth height 2… the sum n·Σ(h/2^h) converges to O(n). Pushing one-by-one sifts <em>up</em> to depth log n each time, hence O(n log n). Being written in C is true for CPython but irrelevant to the asymptotic answer — an interviewer will notice if you conflate the two.</p>",
+      },
+      {
+        kind: "mcq",
+        q: "In the two-heap median structure, why does add() always push into small, move small's max into large, then maybe rebalance — instead of choosing a heap by comparing x to the current median?",
+        options: [
+          { label: "The three fixed steps restore both invariants unconditionally — no branching on x, so no edge cases on empty heaps or duplicate values.", correct: true },
+          { label: "Comparing to the median first would be asymptotically slower.", correct: false },
+          { label: "Pushing directly into large would corrupt heapq's internal state.", correct: false },
+          { label: "It's arbitrary style; direct comparison is equally safe to write live.", correct: false },
+        ],
+        explain:
+          "<p>Both approaches are O(log n); the compare-first version is <em>correct</em> but demands careful case analysis (empty heaps, x equal to the median, which side to rebalance) — exactly where live-coding errors breed. The push–move–rebalance dance is unconditional: after step 2, every element of small ≤ every element of large by construction; after step 3, sizes differ by ≤ 1. Choosing the branch-free variant and saying why is itself a live-coding skill this course keeps preaching: prefer code whose correctness is structural, not case-by-case.</p>",
+      },
+    ],
+  },
+
 };
 
-window.MODULE_ORDER = ["M1", "M2", "M3", "M4", "M5", "M6", "M7", "M8"];
+window.MODULE_ORDER = ["M1", "M2", "M3", "M4", "M5", "M6", "M7", "M8", "M9", "M10", "M11"];

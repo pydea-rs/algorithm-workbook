@@ -895,6 +895,415 @@ function deserialize(data) {
       'result = result.map(p => p[0] + "," + p[1]).sort();',
   };
 
+  // ============ F31 — House Robber ============
+  J.F31 = {
+    functionName: "rob",
+    signature: "function rob(nums: number[]): number",
+    starter:
+`function rob(nums) {
+  // your code here
+}
+`,
+    solution:
+`function rob(nums) {
+  let take = 0, skip = 0;   // best ending with / without robbing previous house
+  for (const x of nums) {
+    const newTake = skip + x;          // capture before overwriting!
+    skip = Math.max(take, skip);
+    take = newTake;
+  }
+  return Math.max(take, skip);
+}`,
+  };
+
+  // ============ F32 — Coin Change ============
+  J.F32 = {
+    functionName: "coinChange",
+    signature: "function coinChange(coins: number[], amount: number): number",
+    starter:
+`function coinChange(coins, amount) {
+  // your code here
+}
+`,
+    solution:
+`function coinChange(coins, amount) {
+  const INF = amount + 1;                       // safe impossible marker
+  const dp = new Array(amount + 1).fill(INF);   // dp[a] = min coins for amount a
+  dp[0] = 0;
+  for (let a = 1; a <= amount; a++) {
+    for (const c of coins) {
+      if (c <= a && dp[a - c] + 1 < dp[a]) dp[a] = dp[a - c] + 1;
+    }
+  }
+  return dp[amount] <= amount ? dp[amount] : -1;
+}`,
+  };
+
+  // ============ F33 — Longest Increasing Subsequence ============
+  J.F33 = {
+    functionName: "lengthOfLIS",
+    signature: "function lengthOfLIS(nums: number[]): number",
+    starter:
+`function lengthOfLIS(nums) {
+  // your code here
+}
+`,
+    solution:
+`function lengthOfLIS(nums) {
+  const tails = [];   // tails[k] = smallest tail of an increasing subseq of length k+1
+  for (const x of nums) {
+    let lo = 0, hi = tails.length;   // bisect_left by hand (Module 6 boundary search)
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1;
+      if (tails[mid] < x) lo = mid + 1;
+      else hi = mid;
+    }
+    if (lo === tails.length) tails.push(x);
+    else tails[lo] = x;
+  }
+  return tails.length;
+}`,
+  };
+
+  // ============ F34 — Word Break ============
+  J.F34 = {
+    functionName: "wordBreak",
+    signature: "function wordBreak(s: string, wordDict: string[]): boolean",
+    starter:
+`function wordBreak(s, wordDict) {
+  // your code here
+}
+`,
+    solution:
+`function wordBreak(s, wordDict) {
+  const words = new Set(wordDict);
+  let maxLen = 0;
+  for (const w of words) maxLen = Math.max(maxLen, w.length);
+  const dp = new Array(s.length + 1).fill(false);   // dp[i]: s.slice(0, i) breakable
+  dp[0] = true;
+  for (let i = 1; i <= s.length; i++) {
+    for (let j = Math.max(0, i - maxLen); j < i; j++) {
+      if (dp[j] && words.has(s.slice(j, i))) { dp[i] = true; break; }
+    }
+  }
+  return dp[s.length];
+}`,
+  };
+
+  // ============ F35 — Longest Common Subsequence ============
+  J.F35 = {
+    functionName: "longestCommonSubsequence",
+    signature: "function longestCommonSubsequence(text1: string, text2: string): number",
+    starter:
+`function longestCommonSubsequence(text1, text2) {
+  // your code here
+}
+`,
+    solution:
+`function longestCommonSubsequence(t1, t2) {
+  const m = t1.length, n = t2.length;
+  // dp[i][j]: LCS of t1.slice(i), t2.slice(j) — extra row/col of zeros is the base case
+  const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+  for (let i = m - 1; i >= 0; i--) {
+    for (let j = n - 1; j >= 0; j--) {
+      dp[i][j] = t1[i] === t2[j]
+        ? 1 + dp[i + 1][j + 1]
+        : Math.max(dp[i + 1][j], dp[i][j + 1]);
+    }
+  }
+  return dp[0][0];
+}`,
+  };
+
+  // ============ F36 — Edit Distance ============
+  J.F36 = {
+    functionName: "minDistance",
+    signature: "function minDistance(word1: string, word2: string): number",
+    starter:
+`function minDistance(word1, word2) {
+  // your code here
+}
+`,
+    solution:
+`function minDistance(word1, word2) {
+  const m = word1.length, n = word2.length;
+  const dp = Array.from({ length: n + 1 }, (_, j) => j);   // row for empty word1
+  for (let i = 1; i <= m; i++) {
+    let prev = dp[0];        // dp[i-1][j-1] before we overwrite it
+    dp[0] = i;
+    for (let j = 1; j <= n; j++) {
+      const cur = dp[j];
+      if (word1[i - 1] === word2[j - 1]) dp[j] = prev;         // match: free
+      else dp[j] = 1 + Math.min(prev, cur, dp[j - 1]);         // replace/delete/insert
+      prev = cur;
+    }
+  }
+  return dp[n];
+}`,
+  };
+
+  // ============ F37 — Merge Intervals ============
+  J.F37 = {
+    functionName: "merge",
+    signature: "function merge(intervals: number[][]): number[][]",
+    starter:
+`function merge(intervals) {
+  // your code here
+}
+`,
+    solution:
+`function merge(intervals) {
+  intervals.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  const out = [];
+  for (const [s, e] of intervals) {
+    const last = out[out.length - 1];
+    if (last && s <= last[1]) {
+      last[1] = Math.max(last[1], e);   // max, not just e!
+    } else {
+      out.push([s, e]);
+    }
+  }
+  return out;
+}`,
+  };
+
+  // ============ F38 — Non-overlapping Intervals ============
+  J.F38 = {
+    functionName: "eraseOverlapIntervals",
+    signature: "function eraseOverlapIntervals(intervals: number[][]): number",
+    starter:
+`function eraseOverlapIntervals(intervals) {
+  // your code here
+}
+`,
+    solution:
+`function eraseOverlapIntervals(intervals) {
+  intervals.sort((a, b) => a[1] - b[1]);   // by END — the whole trick
+  let removed = 0, lastEnd = -Infinity;
+  for (const [s, e] of intervals) {
+    if (s >= lastEnd) lastEnd = e;         // keep it
+    else removed++;                        // conflicts with a kept one
+  }
+  return removed;
+}`,
+  };
+
+  // ============ F39 — Jump Game II ============
+  J.F39 = {
+    functionName: "jump",
+    signature: "function jump(nums: number[]): number",
+    starter:
+`function jump(nums) {
+  // your code here
+}
+`,
+    solution:
+`function jump(nums) {
+  let jumps = 0, curEnd = 0, farthest = 0;
+  for (let i = 0; i < nums.length - 1; i++) {   // never process the last index
+    farthest = Math.max(farthest, i + nums[i]);
+    if (i === curEnd) {                         // current BFS layer exhausted
+      jumps++;
+      curEnd = farthest;                        // next layer's right edge
+    }
+  }
+  return jumps;
+}`,
+  };
+
+  // ============ F40 — Meeting Rooms II ============
+  J.F40 = {
+    functionName: "minMeetingRooms",
+    signature: "function minMeetingRooms(intervals: number[][]): number",
+    starter:
+`function minMeetingRooms(intervals) {
+  // your code here
+}
+`,
+    solution:
+`function minMeetingRooms(intervals) {
+  const events = [];
+  for (const [s, e] of intervals) {
+    events.push([s, 1]);     // need a room
+    events.push([e, -1]);    // free a room
+  }
+  // ties: -1 sorts before +1 -> a room frees before it's claimed
+  events.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  let rooms = 0, best = 0;
+  for (const [, d] of events) {
+    rooms += d;
+    if (rooms > best) best = rooms;
+  }
+  return best;
+}`,
+  };
+
+  // ============ F41 — Gas Station ============
+  J.F41 = {
+    functionName: "canCompleteCircuit",
+    signature: "function canCompleteCircuit(gas: number[], cost: number[]): number",
+    starter:
+`function canCompleteCircuit(gas, cost) {
+  // your code here
+}
+`,
+    solution:
+`function canCompleteCircuit(gas, cost) {
+  let total = 0, tank = 0, start = 0;
+  for (let i = 0; i < gas.length; i++) {
+    const diff = gas[i] - cost[i];
+    total += diff;
+    tank += diff;
+    if (tank < 0) {          // everything in start..i is disqualified
+      start = i + 1;
+      tank = 0;
+    }
+  }
+  return total >= 0 ? start : -1;
+}`,
+  };
+
+  // ============ F42 — Kth Largest Element ============
+  J.F42 = {
+    functionName: "findKthLargest",
+    signature: "function findKthLargest(nums: number[], k: number): number",
+    starter:
+`function findKthLargest(nums, k) {
+  // your code here
+}
+`,
+    solution:
+`function findKthLargest(nums, k) {
+  // JS has no built-in heap — this compact MinHeap is worth memorizing (Module 11).
+  class MinHeap {
+    constructor() { this.a = []; }
+    get size() { return this.a.length; }
+    peek() { return this.a[0]; }
+    push(x) {
+      const a = this.a; a.push(x);
+      let i = a.length - 1;
+      while (i > 0) {
+        const p = (i - 1) >> 1;
+        if (a[p] <= a[i]) break;
+        [a[p], a[i]] = [a[i], a[p]]; i = p;
+      }
+    }
+    pop() {
+      const a = this.a, top = a[0], last = a.pop();
+      if (a.length) {
+        a[0] = last;
+        let i = 0;
+        for (;;) {
+          const l = 2 * i + 1, r = l + 1;
+          let m = i;
+          if (l < a.length && a[l] < a[m]) m = l;
+          if (r < a.length && a[r] < a[m]) m = r;
+          if (m === i) break;
+          [a[m], a[i]] = [a[i], a[m]]; i = m;
+        }
+      }
+      return top;
+    }
+  }
+
+  const h = new MinHeap();               // size-k min-heap of the k best
+  for (const x of nums) {
+    if (h.size < k) h.push(x);
+    else if (x > h.peek()) { h.pop(); h.push(x); }
+  }
+  return h.peek();
+}`,
+  };
+
+  // ============ F43 — Merge K Sorted Lists ============
+  J.F43 = {
+    functionName: "mergeKLists",
+    signature: "function mergeKLists(lists: number[][]): number[]",
+    starter:
+`function mergeKLists(lists) {
+  // your code here
+}
+`,
+    solution:
+`function mergeKLists(lists) {
+  // Divide & conquer pairwise merging: also O(N log k), and needs no heap —
+  // the honest JS answer. The heap version is the Python reference solution.
+  if (!lists.length) return [];
+
+  function mergeTwo(a, b) {
+    const out = [];
+    let i = 0, j = 0;
+    while (i < a.length && j < b.length) out.push(a[i] <= b[j] ? a[i++] : b[j++]);
+    while (i < a.length) out.push(a[i++]);
+    while (j < b.length) out.push(b[j++]);
+    return out;
+  }
+
+  let cur = lists;
+  while (cur.length > 1) {               // halve the list count each round
+    const next = [];
+    for (let i = 0; i < cur.length; i += 2) {
+      next.push(i + 1 < cur.length ? mergeTwo(cur[i], cur[i + 1]) : cur[i]);
+    }
+    cur = next;
+  }
+  return cur[0];
+}`,
+  };
+
+  // ============ F44 — Running Median of a Stream ============
+  J.F44 = {
+    functionName: "runningMedian",
+    signature: "function runningMedian(nums: number[]): number[]",
+    starter:
+`function runningMedian(nums) {
+  // your code here
+}
+`,
+    solution:
+`function runningMedian(nums) {
+  // Sorted array + binary insert: splice is O(n) worst case, but simple and
+  // honest for interview-sized inputs — say the trade-off out loud. The
+  // O(log n) two-heap version is the Python reference solution (Module 11).
+  const a = [];
+  const out = [];
+  for (const x of nums) {
+    let lo = 0, hi = a.length;           // bisect_left by hand
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1;
+      if (a[mid] < x) lo = mid + 1;
+      else hi = mid;
+    }
+    a.splice(lo, 0, x);
+    const n = a.length;
+    out.push(n % 2 ? a[(n - 1) / 2] : (a[n / 2 - 1] + a[n / 2]) / 2);
+  }
+  return out;
+}`,
+  };
+
+  // ============ F45 — Task Scheduler ============
+  J.F45 = {
+    functionName: "leastInterval",
+    signature: "function leastInterval(tasks: string[], n: number): number",
+    starter:
+`function leastInterval(tasks, n) {
+  // your code here
+}
+`,
+    solution:
+`function leastInterval(tasks, n) {
+  const counts = new Map();
+  for (const t of tasks) counts.set(t, (counts.get(t) || 0) + 1);
+  let maxCount = 0, ties = 0;
+  for (const c of counts.values()) maxCount = Math.max(maxCount, c);
+  for (const c of counts.values()) if (c === maxCount) ties++;
+  // (maxCount-1) frames of width n+1, then one final slot per tied task;
+  // if tasks outnumber the frame slots, no idling happens at all.
+  return Math.max((maxCount - 1) * (n + 1) + ties, tasks.length);
+}`,
+  };
+
   // =================================================================
   // Apply all impls to window.QUESTIONS
   // =================================================================

@@ -1829,6 +1829,751 @@ def network_delay_time(times: list, n: int, k: int) -> int:
     ],
   },
 
+  F31: {
+    id: "F31",
+    title: "House Robber",
+    difficulty: "Medium",
+    time: "10-15 min",
+    tags: ["DP", "1D", "Take/Skip"],
+    type: "python",
+    statement:
+      "Write <code>rob(nums)</code> returning the maximum sum of non-adjacent elements " +
+      "(you can't rob two neighboring houses). The canonical 1D take/skip DP — " +
+      "and the canonical warm-up an interviewer uses before a harder DP. " +
+      "Aim for O(n) time, O(1) space.",
+    examples:
+      "Input:  [1,2,3,1]     -> 4   (rob 1 + 3)\n" +
+      "Input:  [2,7,9,3,1]   -> 12  (rob 2 + 9 + 1)\n" +
+      "Input:  [2,1,1,2]     -> 4   (rob the two 2s — greedy 'every other house' fails!)\n" +
+      "Input:  [5]           -> 5",
+    hint: "Two rolling variables: best total if the previous house was robbed vs not. One tuple assignment per house.",
+    functionName: "rob",
+    signature: "rob(nums: list[int]) -> int",
+    starter:
+      "def rob(nums):\n" +
+      "    # your code here\n" +
+      "    pass\n",
+    solution:
+`def rob(nums: list) -> int:
+    take, skip = 0, 0        # best ending with / without robbing previous house
+    for x in nums:
+        take, skip = skip + x, max(take, skip)
+    return max(take, skip)`,
+    explanation:
+      "dp[i] depends only on dp[i-1] and dp[i-2], so the table collapses to two variables. " +
+      "The tuple assignment evaluates the whole right side first — split it into two statements " +
+      "and the second sees the new `take`, silently corrupting the answer. Test [2,1,1,2] kills " +
+      "the tempting 'compare odd-indexed vs even-indexed sums' shortcut: the optimum skips two in a row.",
+    tests: [
+      { args: [[1, 2, 3, 1]], expected: 4 },
+      { args: [[2, 7, 9, 3, 1]], expected: 12 },
+      { args: [[2, 1, 1, 2]], expected: 4 },
+      { args: [[5]], expected: 5 },
+      { args: [[]], expected: 0 },
+      { args: [[100, 1, 1, 100, 1, 1, 100]], expected: 300 },
+    ],
+  },
+
+  F32: {
+    id: "F32",
+    title: "Coin Change (Fewest Coins)",
+    difficulty: "Medium",
+    time: "15-20 min",
+    tags: ["DP", "Unbounded Knapsack"],
+    type: "python",
+    statement:
+      "Write <code>coin_change(coins, amount)</code> returning the minimum number of coins " +
+      "(unlimited supply of each) that sum to <code>amount</code>, or <code>-1</code> if " +
+      "impossible. The archetypal unbounded-choice DP. Greedy fails on non-canonical coin " +
+      "systems — know the counterexample: coins [1,3,4], amount 6.",
+    examples:
+      "Input:  coins=[1,2,5], amount=11 -> 3   (5+5+1)\n" +
+      "Input:  coins=[2],     amount=3  -> -1\n" +
+      "Input:  coins=[1],     amount=0  -> 0\n" +
+      "Input:  coins=[1,3,4], amount=6  -> 2   (3+3; greedy 4+1+1 gives 3)",
+    hint: "dp[a] = min coins for amount a. dp[0]=0, everything else 'infinity'; for each amount try every coin.",
+    functionName: "coin_change",
+    signature: "coin_change(coins: list[int], amount: int) -> int",
+    starter:
+      "def coin_change(coins, amount):\n" +
+      "    # your code here\n" +
+      "    pass\n",
+    solution:
+`def coin_change(coins: list, amount: int) -> int:
+    INF = amount + 1                       # safe impossible marker
+    dp = [0] + [INF] * amount              # dp[a] = min coins for amount a
+    for a in range(1, amount + 1):
+        for c in coins:
+            if c <= a and dp[a - c] + 1 < dp[a]:
+                dp[a] = dp[a - c] + 1
+    return dp[amount] if dp[amount] <= amount else -1`,
+    explanation:
+      "O(amount x len(coins)). Using amount+1 as infinity avoids float('inf') and doubles as the " +
+      "impossibility check (any real answer uses at most `amount` coins of value >= 1). " +
+      "Follow-up you should expect: 'how many WAYS to make the amount?' — then loop order matters " +
+      "(coins outer = combinations, amount outer = permutations; see Module 9).",
+    tests: [
+      { args: [[1, 2, 5], 11], expected: 3 },
+      { args: [[2], 3], expected: -1 },
+      { args: [[1], 0], expected: 0 },
+      { args: [[1, 3, 4], 6], expected: 2 },
+      { args: [[186, 419, 83, 408], 6249], expected: 20 },
+      { args: [[2, 5, 10, 1], 27], expected: 4 },
+    ],
+  },
+
+  F33: {
+    id: "F33",
+    title: "Longest Increasing Subsequence",
+    difficulty: "Medium",
+    time: "20-25 min",
+    tags: ["DP", "Binary Search", "Patience Sorting"],
+    type: "python",
+    statement:
+      "Write <code>length_of_lis(nums)</code> returning the length of the longest strictly " +
+      "increasing subsequence (elements keep their order but need not be adjacent). " +
+      "State the O(n²) DP first, then deliver the O(n log n) tails/patience solution — " +
+      "this two-step presentation is exactly what interviewers want to see.",
+    examples:
+      "Input:  [10,9,2,5,3,7,101,18] -> 4   (2,3,7,101 or 2,3,7,18)\n" +
+      "Input:  [0,1,0,3,2,3]         -> 4   (0,1,2,3)\n" +
+      "Input:  [7,7,7,7]             -> 1   (strictly increasing!)",
+    hint: "tails[k] = smallest possible tail of an increasing subsequence of length k+1. Each element either extends tails or improves (lowers) one entry — found by bisect_left.",
+    functionName: "length_of_lis",
+    signature: "length_of_lis(nums: list[int]) -> int",
+    starter:
+      "def length_of_lis(nums):\n" +
+      "    # your code here\n" +
+      "    pass\n",
+    solution:
+`import bisect
+
+def length_of_lis(nums: list) -> int:
+    tails = []   # tails[k] = smallest tail of an increasing subseq of length k+1
+    for x in nums:
+        i = bisect.bisect_left(tails, x)
+        if i == len(tails):
+            tails.append(x)
+        else:
+            tails[i] = x
+    return len(tails)`,
+    explanation:
+      "tails stays sorted, so bisect applies. Replacing tails[i] with a smaller value never hurts: " +
+      "it keeps all existing lengths achievable while making future extensions easier. " +
+      "Crucial caveat to volunteer: tails is NOT an actual subsequence — only its length is valid. " +
+      "bisect_left gives strict increase; bisect_right would allow duplicates (non-decreasing variant).",
+    tests: [
+      { args: [[10, 9, 2, 5, 3, 7, 101, 18]], expected: 4 },
+      { args: [[0, 1, 0, 3, 2, 3]], expected: 4 },
+      { args: [[7, 7, 7, 7]], expected: 1 },
+      { args: [[4, 10, 4, 3, 8, 9]], expected: 3 },
+      { args: [[]], expected: 0 },
+      { args: [[1, 2, 3, 4, 5]], expected: 5 },
+      { args: [[5, 4, 3, 2, 1]], expected: 1 },
+    ],
+  },
+
+  F34: {
+    id: "F34",
+    title: "Word Break",
+    difficulty: "Medium",
+    time: "15-20 min",
+    tags: ["DP", "Cut Points", "Strings"],
+    type: "python",
+    statement:
+      "Write <code>word_break(s, word_dict)</code> returning whether <code>s</code> can be " +
+      "segmented into a sequence of dictionary words (words may repeat). " +
+      "The archetype of DP over cut points: the answer for a prefix depends on answers for " +
+      "shorter prefixes plus a dictionary check on the gap.",
+    examples:
+      'Input:  s="leetcode", dict=["leet","code"]                    -> true\n' +
+      'Input:  s="applepenapple", dict=["apple","pen"]               -> true\n' +
+      'Input:  s="catsandog", dict=["cats","dog","sand","and","cat"] -> false',
+    hint: "dp[i] = 'is s[:i] breakable?'. dp[0] = True. dp[i] is True if some j < i has dp[j] and s[j:i] in the word set. Bound j by the longest word for a free speed-up.",
+    functionName: "word_break",
+    signature: "word_break(s: str, word_dict: list[str]) -> bool",
+    starter:
+      "def word_break(s, word_dict):\n" +
+      "    # your code here\n" +
+      "    pass\n",
+    solution:
+`def word_break(s: str, word_dict: list) -> bool:
+    words = set(word_dict)
+    max_len = max(map(len, words), default=0)
+    dp = [True] + [False] * len(s)         # dp[i]: s[:i] is breakable
+    for i in range(1, len(s) + 1):
+        for j in range(max(0, i - max_len), i):
+            if dp[j] and s[j:i] in words:
+                dp[i] = True
+                break
+    return dp[len(s)]`,
+    explanation:
+      "Convert the list to a set FIRST — 'in list' inside the double loop silently turns " +
+      "O(n² · w) into O(n² · w · dict_size). Bounding j to the longest word length is a one-line " +
+      "optimization worth narrating. The classic follow-up, Word Break II ('return all sentences'), " +
+      "switches to backtracking with this DP as a feasibility prune.",
+    tests: [
+      { args: ["leetcode", ["leet", "code"]], expected: true },
+      { args: ["applepenapple", ["apple", "pen"]], expected: true },
+      { args: ["catsandog", ["cats", "dog", "sand", "and", "cat"]], expected: false },
+      { args: ["aaaaaaa", ["aaaa", "aaa"]], expected: true },
+      { args: ["", ["a"]], expected: true },
+      { args: ["ab", ["a", "b", "ab"]], expected: true },
+    ],
+  },
+
+  F35: {
+    id: "F35",
+    title: "Longest Common Subsequence",
+    difficulty: "Medium",
+    time: "20-25 min",
+    tags: ["DP", "2D", "Two Sequences"],
+    type: "python",
+    statement:
+      "Write <code>longest_common_subsequence(text1, text2)</code> returning the length of " +
+      "the longest subsequence present in both strings (order preserved, gaps allowed). " +
+      "This is the archetype 2D DP — master its grid and Edit Distance, Distinct Subsequences " +
+      "and Interleaving String all become variations on one skeleton.",
+    examples:
+      'Input:  "abcde", "ace" -> 3   ("ace")\n' +
+      'Input:  "abc",   "abc" -> 3\n' +
+      'Input:  "abc",   "def" -> 0',
+    hint: "dp[i][j] = LCS of text1[i:] and text2[j:]. Match -> 1 + diagonal; no match -> max of skipping one char from either string.",
+    functionName: "longest_common_subsequence",
+    signature: "longest_common_subsequence(text1: str, text2: str) -> int",
+    starter:
+      "def longest_common_subsequence(text1, text2):\n" +
+      "    # your code here\n" +
+      "    pass\n",
+    solution:
+`def longest_common_subsequence(t1: str, t2: str) -> int:
+    m, n = len(t1), len(t2)
+    dp = [[0] * (n + 1) for _ in range(m + 1)]   # dp[i][j]: LCS of t1[i:], t2[j:]
+    for i in range(m - 1, -1, -1):
+        for j in range(n - 1, -1, -1):
+            if t1[i] == t2[j]:
+                dp[i][j] = 1 + dp[i + 1][j + 1]
+            else:
+                dp[i][j] = max(dp[i + 1][j], dp[i][j + 1])
+    return dp[0][0]`,
+    explanation:
+      "O(mn) time and space; the extra row/column of zeros IS the base case (empty suffix -> LCS 0), " +
+      "which is why the loops never index out of bounds. Space optimization to offer verbally: only " +
+      "the next row is read, so two rows suffice — O(min(m,n)) space. " +
+      "Beware building the grid with [[0]*(n+1)]*(m+1): that aliases one row m+1 times (Module 4 trap).",
+    tests: [
+      { args: ["abcde", "ace"], expected: 3 },
+      { args: ["abc", "abc"], expected: 3 },
+      { args: ["abc", "def"], expected: 0 },
+      { args: ["bsbininm", "jmjkbkjkv"], expected: 1 },
+      { args: ["abcba", "abcbcba"], expected: 5 },
+      { args: ["", "abc"], expected: 0 },
+    ],
+  },
+
+  F36: {
+    id: "F36",
+    title: "Edit Distance",
+    difficulty: "Hard",
+    time: "25-30 min",
+    tags: ["DP", "2D", "Levenshtein"],
+    type: "python",
+    statement:
+      "Write <code>min_distance(word1, word2)</code> returning the minimum number of " +
+      "single-character operations (insert, delete, replace) to convert <code>word1</code> " +
+      "into <code>word2</code> — the Levenshtein distance. Same grid as LCS, three " +
+      "transitions instead of two. Powers spell-checkers, diff tools, and fuzzy search.",
+    examples:
+      'Input:  "horse", "ros"           -> 3   (horse->rorse->rose->ros)\n' +
+      'Input:  "intention", "execution" -> 5\n' +
+      'Input:  "", "abc"                -> 3   (three inserts)',
+    hint: "dp[i][j] = distance from word1[:i] to word2[:j]. Last chars equal -> diagonal free; else 1 + min(replace=diagonal, delete=up, insert=left). Base row/col = i and j (pure inserts/deletes).",
+    functionName: "min_distance",
+    signature: "min_distance(word1: str, word2: str) -> int",
+    starter:
+      "def min_distance(word1, word2):\n" +
+      "    # your code here\n" +
+      "    pass\n",
+    solution:
+`def min_distance(word1: str, word2: str) -> int:
+    m, n = len(word1), len(word2)
+    dp = list(range(n + 1))          # row for word1[:0]: j inserts to reach word2[:j]
+    for i in range(1, m + 1):
+        prev = dp[0]                 # dp[i-1][j-1] before overwrite
+        dp[0] = i                    # word2[:0]: i deletes
+        for j in range(1, n + 1):
+            cur = dp[j]
+            if word1[i - 1] == word2[j - 1]:
+                dp[j] = prev                          # match: free
+            else:
+                dp[j] = 1 + min(prev,                 # replace
+                                cur,                  # delete from word1
+                                dp[j - 1])            # insert into word1
+            prev = cur
+    return dp[n]`,
+    explanation:
+      "Shown in the one-row form to demonstrate the space optimization live: `prev` carries the " +
+      "diagonal dp[i-1][j-1] that the overwrite would destroy. If that juggling feels risky under " +
+      "pressure, write the full 2D table first — correct beats clever. Interview connection: " +
+      "'how would you suggest corrections for a typo?' -> edit distance <= 2 against a dictionary " +
+      "(plus smarter tricks like deletion-neighborhoods).",
+    tests: [
+      { args: ["horse", "ros"], expected: 3 },
+      { args: ["intention", "execution"], expected: 5 },
+      { args: ["", "abc"], expected: 3 },
+      { args: ["abc", "abc"], expected: 0 },
+      { args: ["kitten", "sitting"], expected: 3 },
+      { args: ["abcdef", ""], expected: 6 },
+    ],
+  },
+
+  F37: {
+    id: "F37",
+    title: "Merge Intervals",
+    difficulty: "Medium",
+    time: "10-15 min",
+    tags: ["Intervals", "Sorting"],
+    type: "python",
+    statement:
+      "Write <code>merge(intervals)</code> that merges all overlapping intervals and returns " +
+      "the result sorted by start. The single most common interval question — asked directly, " +
+      "or hiding inside calendar/booking problems. Touching intervals like [1,4] and [4,5] " +
+      "count as overlapping here.",
+    examples:
+      "Input:  [[1,3],[2,6],[8,10],[15,18]] -> [[1,6],[8,10],[15,18]]\n" +
+      "Input:  [[1,4],[4,5]]                -> [[1,5]]\n" +
+      "Input:  [[1,4],[2,3]]                -> [[1,4]]   (swallowed, not truncated!)",
+    hint: "Sort by start. Extend the last merged block while next.start <= block.end — and extend with max(ends), not blindly with the new end.",
+    functionName: "merge",
+    signature: "merge(intervals: list[list[int]]) -> list[list[int]]",
+    starter:
+      "def merge(intervals):\n" +
+      "    # your code here\n" +
+      "    pass\n",
+    solution:
+`def merge(intervals: list) -> list:
+    intervals.sort()
+    out = []
+    for s, e in intervals:
+        if out and s <= out[-1][1]:
+            out[-1][1] = max(out[-1][1], e)   # max, not just e!
+        else:
+            out.append([s, e])
+    return out`,
+    explanation:
+      "The bug everyone writes once: out[-1][1] = e. Sorting by start does not sort by end, so " +
+      "[1,10] followed by [2,3] must stay [1,10] — hence max(). Test 3 exists purely to catch that. " +
+      "O(n log n) for the sort, O(n) for the sweep. Follow-up to expect: 'insert one new interval " +
+      "into an already-merged list' — same idea, three phases (before / overlapping / after), no re-sort.",
+    tests: [
+      { args: [[[1, 3], [2, 6], [8, 10], [15, 18]]], expected: [[1, 6], [8, 10], [15, 18]] },
+      { args: [[[1, 4], [4, 5]]], expected: [[1, 5]] },
+      { args: [[[1, 4], [2, 3]]], expected: [[1, 4]] },
+      { args: [[[5, 6], [1, 2]]], expected: [[1, 2], [5, 6]] },
+      { args: [[[1, 4]]], expected: [[1, 4]] },
+      { args: [[[2, 3], [4, 5], [6, 7], [1, 10]]], expected: [[1, 10]] },
+    ],
+  },
+
+  F38: {
+    id: "F38",
+    title: "Non-overlapping Intervals",
+    difficulty: "Medium",
+    time: "15-20 min",
+    tags: ["Intervals", "Greedy", "Exchange Argument"],
+    type: "python",
+    statement:
+      "Write <code>erase_overlap_intervals(intervals)</code> returning the minimum number of " +
+      "intervals to remove so the rest don't overlap (touching endpoints like [1,2],[2,3] are " +
+      "fine). Equivalent to activity selection: keep the maximum non-overlapping set. " +
+      "The sort key IS the interview — by end, and be ready to say why.",
+    examples:
+      "Input:  [[1,2],[2,3],[3,4],[1,3]] -> 1   (drop [1,3])\n" +
+      "Input:  [[1,2],[1,2],[1,2]]       -> 2\n" +
+      "Input:  [[1,2],[2,3]]             -> 0",
+    hint: "Sort by END. Greedily keep every interval that starts at/after the last kept end; count the rest as removed. Exchange argument: the earliest-ending interval is always safe to keep.",
+    functionName: "erase_overlap_intervals",
+    signature: "erase_overlap_intervals(intervals: list[list[int]]) -> int",
+    starter:
+      "def erase_overlap_intervals(intervals):\n" +
+      "    # your code here\n" +
+      "    pass\n",
+    solution:
+`def erase_overlap_intervals(intervals: list) -> int:
+    intervals.sort(key=lambda iv: iv[1])   # by END — the whole trick
+    removed = 0
+    last_end = float("-inf")
+    for s, e in intervals:
+        if s >= last_end:
+            last_end = e                   # keep it
+        else:
+            removed += 1                   # conflicts with a kept one
+    return removed`,
+    explanation:
+      "Sort-by-start counterexample to keep handy: [[1,100],[11,22],[1,11],[2,12]] — start order " +
+      "keeps the long [1,100] and removes 3; end order keeps [1,11],[11,22] and removes only 2. " +
+      "The exchange argument in one line: any optimal solution's first interval can be swapped for " +
+      "the earliest-ending one without creating conflicts, so choosing it greedily is safe.",
+    tests: [
+      { args: [[[1, 2], [2, 3], [3, 4], [1, 3]]], expected: 1 },
+      { args: [[[1, 2], [1, 2], [1, 2]]], expected: 2 },
+      { args: [[[1, 2], [2, 3]]], expected: 0 },
+      { args: [[[1, 100], [11, 22], [1, 11], [2, 12]]], expected: 2 },
+      { args: [[[1, 5]]], expected: 0 },
+    ],
+  },
+
+  F39: {
+    id: "F39",
+    title: "Jump Game II",
+    difficulty: "Medium",
+    time: "15-20 min",
+    tags: ["Greedy", "Implicit BFS"],
+    type: "python",
+    statement:
+      "Write <code>jump(nums)</code> returning the minimum number of jumps to reach the last " +
+      "index, where <code>nums[i]</code> is the maximum jump length from <code>i</code> " +
+      "(reaching the end is guaranteed). O(n²) DP works; the O(n) greedy is really BFS over an " +
+      "implicit graph — narrate it as expanding frontier layers and correctness is obvious.",
+    examples:
+      "Input:  [2,3,1,1,4] -> 2   (0 -> 1 -> 4)\n" +
+      "Input:  [2,3,0,1,4] -> 2\n" +
+      "Input:  [0]         -> 0   (already there)",
+    hint: "Track the current BFS layer's right edge (cur_end) and the farthest anything in it reaches. Hitting cur_end = finishing a layer = one more jump.",
+    functionName: "jump",
+    signature: "jump(nums: list[int]) -> int",
+    starter:
+      "def jump(nums):\n" +
+      "    # your code here\n" +
+      "    pass\n",
+    solution:
+`def jump(nums: list) -> int:
+    jumps = cur_end = farthest = 0
+    for i in range(len(nums) - 1):        # never process the last index
+        farthest = max(farthest, i + nums[i])
+        if i == cur_end:                  # current BFS layer exhausted
+            jumps += 1
+            cur_end = farthest            # next layer's right edge
+    return jumps`,
+    explanation:
+      "Layer k = indices reachable in k jumps. Walking left to right, once i crosses the current " +
+      "layer's edge we must have jumped again — and the best possible next edge is the farthest " +
+      "reach seen so far. The `len(nums) - 1` bound is load-bearing: processing the last index " +
+      "would count a phantom extra jump when i == cur_end lands exactly on it.",
+    tests: [
+      { args: [[2, 3, 1, 1, 4]], expected: 2 },
+      { args: [[2, 3, 0, 1, 4]], expected: 2 },
+      { args: [[1, 1, 1, 1]], expected: 3 },
+      { args: [[0]], expected: 0 },
+      { args: [[1, 2, 3]], expected: 2 },
+      { args: [[5, 1, 1, 1, 1, 1]], expected: 1 },
+    ],
+  },
+
+  F40: {
+    id: "F40",
+    title: "Meeting Rooms II",
+    difficulty: "Medium",
+    time: "15-20 min",
+    tags: ["Intervals", "Sweep Line", "Heap"],
+    type: "python",
+    statement:
+      "Write <code>min_meeting_rooms(intervals)</code> returning the minimum number of rooms " +
+      "needed to host all meetings (a room frees exactly at end time, so [1,3] and [3,5] can " +
+      "share). Equals the maximum number of meetings alive at one instant. This exact question — " +
+      "'peak concurrent X' — also shows up as a SQL problem, so own it in both languages.",
+    examples:
+      "Input:  [[0,30],[5,10],[15,20]] -> 2\n" +
+      "Input:  [[7,10],[2,4]]          -> 1\n" +
+      "Input:  [[1,3],[3,5],[5,7]]     -> 1   (back-to-back share a room)",
+    hint: "Sweep line: emit (start,+1) and (end,-1) events, sort, track the running sum's max. Tuple sort puts (t,-1) before (t,+1) — exactly the tie-break you want.",
+    functionName: "min_meeting_rooms",
+    signature: "min_meeting_rooms(intervals: list[list[int]]) -> int",
+    starter:
+      "def min_meeting_rooms(intervals):\n" +
+      "    # your code here\n" +
+      "    pass\n",
+    solution:
+`def min_meeting_rooms(intervals: list) -> int:
+    events = []
+    for s, e in intervals:
+        events.append((s, 1))       # need a room
+        events.append((e, -1))      # free a room
+    events.sort()                   # ties: -1 sorts before +1 -> free before claim
+    rooms = best = 0
+    for _, d in events:
+        rooms += d
+        best = max(best, rooms)
+    return best`,
+    explanation:
+      "The tie-break is the interview: at time 3, (3,-1) sorting before (3,1) lets back-to-back " +
+      "meetings share — Python's tuple ordering gives it for free, but SAY it, don't let it look " +
+      "accidental. Alternative telling: sort starts; min-heap of end times; pop when the earliest " +
+      "end <= next start; heap's max size is the answer. Both are O(n log n) — the heap version " +
+      "also tells you WHICH room each meeting gets.",
+    tests: [
+      { args: [[[0, 30], [5, 10], [15, 20]]], expected: 2 },
+      { args: [[[7, 10], [2, 4]]], expected: 1 },
+      { args: [[[1, 5], [2, 6], [3, 7], [4, 8]]], expected: 4 },
+      { args: [[[1, 3], [3, 5], [5, 7]]], expected: 1 },
+      { args: [[]], expected: 0 },
+      { args: [[[1, 10], [2, 3], [4, 5], [6, 7]]], expected: 2 },
+    ],
+  },
+
+  F41: {
+    id: "F41",
+    title: "Gas Station",
+    difficulty: "Medium",
+    time: "15-20 min",
+    tags: ["Greedy", "Circular", "Lemma"],
+    type: "python",
+    statement:
+      "Write <code>can_complete_circuit(gas, cost)</code>: station <code>i</code> provides " +
+      "<code>gas[i]</code> fuel and driving to station <code>i+1</code> costs " +
+      "<code>cost[i]</code>. Return the unique starting index from which you can complete one " +
+      "full clockwise loop with an empty initial tank, or <code>-1</code>. One pass — the whole " +
+      "interview is stating the 'failed prefix is disqualified' lemma.",
+    examples:
+      "Input:  gas=[1,2,3,4,5], cost=[3,4,5,1,2] -> 3\n" +
+      "Input:  gas=[2,3,4],     cost=[3,4,3]     -> -1\n" +
+      "Input:  gas=[3,1,1],     cost=[1,2,2]     -> 0",
+    hint: "Two facts: (1) total gas >= total cost guarantees an answer exists; (2) if starting at s you first go negative leaving i, no station in s..i can work — restart from i+1 with an empty tank.",
+    functionName: "can_complete_circuit",
+    signature: "can_complete_circuit(gas: list[int], cost: list[int]) -> int",
+    starter:
+      "def can_complete_circuit(gas, cost):\n" +
+      "    # your code here\n" +
+      "    pass\n",
+    solution:
+`def can_complete_circuit(gas: list, cost: list) -> int:
+    total = tank = start = 0
+    for i in range(len(gas)):
+        diff = gas[i] - cost[i]
+        total += diff
+        tank += diff
+        if tank < 0:               # everything in start..i is disqualified
+            start, tank = i + 1, 0
+    return start if total >= 0 else -1`,
+    explanation:
+      "Why the lemma holds: any station m between start and i is reached with tank >= 0, so " +
+      "starting AT m (tank = 0) leaves you with less or equal fuel at every later point — if the " +
+      "original run died at i, m's run dies at or before i too. So one forward pass suffices; " +
+      "no nested restart loop, no O(n²). The final feasibility check uses fact (1): " +
+      "non-negative total guarantees the last candidate start actually wraps around.",
+    tests: [
+      { args: [[1, 2, 3, 4, 5], [3, 4, 5, 1, 2]], expected: 3 },
+      { args: [[2, 3, 4], [3, 4, 3]], expected: -1 },
+      { args: [[5, 1, 2, 3, 4], [4, 4, 1, 5, 1]], expected: 4 },
+      { args: [[3, 1, 1], [1, 2, 2]], expected: 0 },
+      { args: [[5], [4]], expected: 0 },
+    ],
+  },
+
+  F42: {
+    id: "F42",
+    title: "Kth Largest Element",
+    difficulty: "Medium",
+    time: "10-15 min",
+    tags: ["Heap", "Top-K", "Quickselect"],
+    type: "python",
+    statement:
+      "Write <code>find_kth_largest(nums, k)</code> returning the k-th largest element " +
+      "(by sorted position — duplicates count separately). Better than the O(n log n) full " +
+      "sort: a size-k min-heap gives O(n log k). Mention quickselect (O(n) average) as the " +
+      "follow-up answer, but code the heap — it's harder to fumble live.",
+    examples:
+      "Input:  nums=[3,2,1,5,6,4], k=2         -> 5\n" +
+      "Input:  nums=[3,2,3,1,2,4,5,5,6], k=4   -> 4\n" +
+      "Input:  nums=[1], k=1                   -> 1",
+    hint: "Min-heap of size k: its root is the weakest of the current k best — the only element a newcomer must beat. heapreplace does pop+push in one sift.",
+    functionName: "find_kth_largest",
+    signature: "find_kth_largest(nums: list[int], k: int) -> int",
+    starter:
+      "def find_kth_largest(nums, k):\n" +
+      "    # your code here\n" +
+      "    pass\n",
+    solution:
+`import heapq
+
+def find_kth_largest(nums: list, k: int) -> int:
+    h = nums[:k]
+    heapq.heapify(h)                     # O(k)
+    for x in nums[k:]:
+        if x > h[0]:                     # beats the weakest of the best?
+            heapq.heapreplace(h, x)      # pop min + push, one sift
+    return h[0]`,
+    explanation:
+      "The counter-intuitive core: track the k LARGEST with a MIN-heap, because eviction needs " +
+      "the smallest of the kept set in O(1). O(n log k) time, O(k) space — and it works on a " +
+      "stream, which the sort answer doesn't. Quickselect trades that for O(n) average / O(n²) " +
+      "worst on adversarial pivots; say 'random pivot fixes it in expectation' and move on.",
+    tests: [
+      { args: [[3, 2, 1, 5, 6, 4], 2], expected: 5 },
+      { args: [[3, 2, 3, 1, 2, 4, 5, 5, 6], 4], expected: 4 },
+      { args: [[1], 1], expected: 1 },
+      { args: [[7, 6, 5, 4, 3, 2, 1], 5], expected: 3 },
+      { args: [[2, 2, 2, 2], 3], expected: 2 },
+      { args: [[-1, -5, 0, 3], 2], expected: 0 },
+    ],
+  },
+
+  F43: {
+    id: "F43",
+    title: "Merge K Sorted Lists",
+    difficulty: "Hard",
+    time: "20-25 min",
+    tags: ["Heap", "K-way Merge"],
+    type: "python",
+    statement:
+      "Write <code>merge_k_lists(lists)</code> merging k sorted lists into one sorted list. " +
+      "The k-way merge pattern: a heap holding ONE candidate per list — the smallest unmerged " +
+      "element of each. O(N log k) for N total elements, versus O(N log N) for concat-and-sort " +
+      "and O(Nk) for k-way linear scanning. Know all three and why the heap wins.",
+    examples:
+      "Input:  [[1,4,5],[1,3,4],[2,6]] -> [1,1,2,3,4,4,5,6]\n" +
+      "Input:  []                      -> []\n" +
+      "Input:  [[]]                    -> []",
+    hint: "Heap entries (value, list_index, element_index). Pop the global min, push that list's next element. The list_index doubles as the tie-breaker when values collide.",
+    functionName: "merge_k_lists",
+    signature: "merge_k_lists(lists: list[list[int]]) -> list[int]",
+    starter:
+      "def merge_k_lists(lists):\n" +
+      "    # your code here\n" +
+      "    pass\n",
+    solution:
+`import heapq
+
+def merge_k_lists(lists: list) -> list:
+    h = [(lst[0], i, 0) for i, lst in enumerate(lists) if lst]
+    heapq.heapify(h)
+    out = []
+    while h:
+        val, i, j = heapq.heappop(h)
+        out.append(val)
+        if j + 1 < len(lists[i]):
+            heapq.heappush(h, (lists[i][j + 1], i, j + 1))
+    return out`,
+    explanation:
+      "Each element enters and leaves the heap exactly once and the heap never exceeds k entries: " +
+      "O(N log k). The tuple (val, i, j) needs i as tie-breaker — with equal values Python would " +
+      "otherwise compare the third elements, which is fine here, but with node objects (the " +
+      "LeetCode linked-list version) it CRASHES: TypeError on comparing nodes. Volunteering that " +
+      "detail is a strong signal. Divide-and-conquer pairwise merging matches O(N log k) too — " +
+      "acceptable alternative, especially in heap-less JavaScript.",
+    tests: [
+      { args: [[[1, 4, 5], [1, 3, 4], [2, 6]]], expected: [1, 1, 2, 3, 4, 4, 5, 6] },
+      { args: [[]], expected: [] },
+      { args: [[[]]], expected: [] },
+      { args: [[[5], [3], [1], [4], [2]]], expected: [1, 2, 3, 4, 5] },
+      { args: [[[1, 2, 3], [], [0]]], expected: [0, 1, 2, 3] },
+      { args: [[[1, 1, 1], [1, 1]]], expected: [1, 1, 1, 1, 1] },
+    ],
+  },
+
+  F44: {
+    id: "F44",
+    title: "Running Median of a Stream",
+    difficulty: "Hard",
+    time: "25-30 min",
+    tags: ["Heap", "Two Heaps", "Streaming"],
+    type: "python",
+    statement:
+      "Write <code>running_median(nums)</code> returning the median after each element of the " +
+      "stream is added: result[i] = median of nums[0..i]. Even count -> mean of the two middle " +
+      "values. Re-sorting per element is O(n² log n); the two-heap structure does O(log n) per " +
+      "insert, O(1) per query — the classic 'design a data structure' heap interview.",
+    examples:
+      "Input:  [2,3,4]        -> [2, 2.5, 3]\n" +
+      "Input:  [5,15,1,3]     -> [5, 10, 5, 4]\n" +
+      "Input:  [1]            -> [1]",
+    hint: "Max-heap of the small half (negate values — heapq is min-only) + min-heap of the large half; small may hold one extra. Insert: push to small, move small's max to large, rebalance if large grew bigger. Median lives at the roots.",
+    functionName: "running_median",
+    signature: "running_median(nums: list[int]) -> list[float]",
+    starter:
+      "def running_median(nums):\n" +
+      "    # your code here\n" +
+      "    pass\n",
+    solution:
+`import heapq
+
+def running_median(nums: list) -> list:
+    small, large = [], []      # small: max-heap via negation; large: min-heap
+    out = []
+    for x in nums:
+        heapq.heappush(small, -x)                     # 1. into small
+        heapq.heappush(large, -heapq.heappop(small))  # 2. small's max -> large
+        if len(large) > len(small):                   # 3. keep small >= large
+            heapq.heappush(small, -heapq.heappop(large))
+        if len(small) > len(large):
+            out.append(-small[0])
+        else:
+            out.append((-small[0] + large[0]) / 2)
+    return out`,
+    explanation:
+      "The push-move-rebalance dance is unconditional — no branching on x vs the current median, " +
+      "so no edge cases on empty heaps or duplicates. After step 2 every element of small <= every " +
+      "element of large by construction; after step 3 sizes differ by at most 1 with small holding " +
+      "any extra. Follow-ups to expect: 'median of a sliding window' (needs lazy deletion, " +
+      "Module 8 trick) and 'what if values are bounded 0-100?' (counting array beats heaps).",
+    tests: [
+      { args: [[2, 3, 4]], expected: [2, 2.5, 3] },
+      { args: [[1, 2]], expected: [1, 1.5] },
+      { args: [[5, 15, 1, 3]], expected: [5, 10, 5, 4] },
+      { args: [[1]], expected: [1] },
+      { args: [[-1, -2, -3, -4, -5]], expected: [-1, -1.5, -2, -2.5, -3] },
+      { args: [[7, 7, 7, 7]], expected: [7, 7, 7, 7] },
+    ],
+  },
+
+  F45: {
+    id: "F45",
+    title: "Task Scheduler",
+    difficulty: "Medium",
+    time: "20-25 min",
+    tags: ["Greedy", "Counting", "Scheduling"],
+    type: "python",
+    statement:
+      "Write <code>least_interval(tasks, n)</code>: identical tasks need a cooldown of " +
+      "<code>n</code> ticks between runs; each tick runs one task or idles. Return the minimum " +
+      "ticks to finish everything. Simulating with a heap works — but the O(n) counting " +
+      "formula, derived from a picture of frames, is the answer that impresses.",
+    examples:
+      'Input:  tasks=["A","A","A","B","B","B"], n=2 -> 8   (A B _ A B _ A B)\n' +
+      'Input:  tasks=["A","A","A","B","B","B"], n=0 -> 6\n' +
+      'Input:  tasks=["A","B","C","A","B","C"], n=1 -> 6   (no idling needed)',
+    hint: "Picture the most frequent task pinned first: (max_count - 1) frames of width n+1, then one final slot per task tied at max_count. Other tasks fill the gaps. Answer = max(formula, len(tasks)).",
+    functionName: "least_interval",
+    signature: "least_interval(tasks: list[str], n: int) -> int",
+    starter:
+      "def least_interval(tasks, n):\n" +
+      "    # your code here\n" +
+      "    pass\n",
+    solution:
+`from collections import Counter
+
+def least_interval(tasks: list, n: int) -> int:
+    counts = Counter(tasks)
+    max_count = max(counts.values())
+    max_ties = sum(1 for c in counts.values() if c == max_count)
+    frame = (max_count - 1) * (n + 1) + max_ties
+    return max(frame, len(tasks))`,
+    explanation:
+      "Lay the most frequent task out first: it forces (max_count - 1) gaps of width n, giving " +
+      "frames of width n+1, plus a final row holding every task tied at max_count. Everything " +
+      "else fills gaps without creating new idles. If there are MORE tasks than the frame has " +
+      "slots, no idling occurs at all and the answer is simply len(tasks) — that's the max(). " +
+      "Whiteboard the A B _ A B _ A B picture; the formula becomes self-evident and memorable.",
+    tests: [
+      { args: [["A", "A", "A", "B", "B", "B"], 2], expected: 8 },
+      { args: [["A", "A", "A", "B", "B", "B"], 0], expected: 6 },
+      { args: [["A", "A", "A", "A", "A", "A", "B", "C", "D", "E", "F", "G"], 2], expected: 16 },
+      { args: [["A", "B", "C", "A", "B", "C"], 1], expected: 6 },
+      { args: [["A"], 5], expected: 1 },
+      { args: [["A", "A", "B", "B"], 3], expected: 6 },
+    ],
+  },
+
 };
 
 // ----------------------------------------------------------------
@@ -1847,6 +2592,12 @@ window.PRACTICE_SETS = {
          qids: ["F21", "F22", "F23", "F24", "F25"] },
   PS8: { module: "M8", title: "Practice Set 8 — Graphs Deep Dive",
          qids: ["F26", "F27", "F28", "F29", "F30"] },
+  PS9: { module: "M9", title: "Practice Set 9 — Dynamic Programming",
+         qids: ["F31", "F32", "F33", "F34", "F35", "F36"] },
+  PS10: { module: "M10", title: "Practice Set 10 — Greedy & Intervals",
+          qids: ["F37", "F38", "F39", "F40", "F41"] },
+  PS11: { module: "M11", title: "Practice Set 11 — Heaps & Priority Queues",
+          qids: ["F42", "F43", "F44", "F45"] },
 };
 
 // Final exam pool — filled in as later modules land (held-back questions).
