@@ -41,6 +41,7 @@ $TUTORIAL_CHILDREN = [
     ["slug" => "algorithms",      "title" => "Algorithms"],
     ["slug" => "odoo-framework",  "title" => "Odoo Framework"],
     ["slug" => "interview-final", "title" => "Interview Final Stage"],
+    ["slug" => "logictest",       "title" => "Logic Test"],
 ];
 
 function parse_gitignore_php($root) {

@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-05T10:13:27Z",
+  "generated": "2026-07-05T13:32:30Z",
   "folders": [
     {
       "name": "bracketCount",
@@ -379,6 +379,53 @@
           "slug": "interview-final",
           "title": "Interview Final Stage",
           "entry": "tutorials/interview-final/index.html"
+        },
+        {
+          "slug": "logictest",
+          "title": "Logic Test",
+          "entry": "tutorials/logictest/index.html"
+        }
+      ]
+    },
+    {
+      "name": "twosum",
+      "kind": "code",
+      "files": [
+        {
+          "name": "another.c",
+          "ext": "c",
+          "kind": "code",
+          "size": 723
+        },
+        {
+          "name": "main.c",
+          "ext": "c",
+          "kind": "code",
+          "size": 637
+        },
+        {
+          "name": "main.cpp",
+          "ext": "cpp",
+          "kind": "code",
+          "size": 563
+        },
+        {
+          "name": "main.go",
+          "ext": "go",
+          "kind": "code",
+          "size": 223
+        },
+        {
+          "name": "main.py",
+          "ext": "py",
+          "kind": "code",
+          "size": 276
+        },
+        {
+          "name": "main.rs",
+          "ext": "rs",
+          "kind": "code",
+          "size": 420
         }
       ]
     },

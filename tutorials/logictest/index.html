@@ -1,0 +1,1829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Odoo Logic Test Simulator</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+        :root {
+            --primary: #714B67;
+            --primary-light: #8f6a85;
+            --primary-dark: #5a3a52;
+            --accent: #00A09D;
+            --accent-light: #e6f7f7;
+            --danger: #E74C3C;
+            --warning: #F39C12;
+            --success: #27AE60;
+            --info: #3498DB;
+            --bg: #f4f5f8;
+            --card-bg: #ffffff;
+            --text: #2c3e50;
+            --text-light: #7f8c8d;
+            --border: #e8e8e8;
+            --shadow: 0 4px 24px rgba(0,0,0,0.06);
+            --shadow-lg: 0 12px 40px rgba(0,0,0,0.12);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .bg-decoration {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+        .bg-decoration::before {
+            content: '';
+            position: absolute;
+            top: -10%; right: -10%;
+            width: 500px; height: 500px;
+            background: radial-gradient(circle, rgba(113,75,103,0.08) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+        .bg-decoration::after {
+            content: '';
+            position: absolute;
+            bottom: -10%; left: -10%;
+            width: 400px; height: 400px;
+            background: radial-gradient(circle, rgba(0,160,157,0.06) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        .container {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 24px;
+            position: relative;
+            z-index: 1;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(40px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(231,76,60,0.4); }
+            50% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(231,76,60,0); }
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-6px); }
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        @keyframes optionPop {
+            0% { transform: scale(0.95); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes confetti {
+            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(-100vh) rotate(720deg); opacity: 0; }
+        }
+
+        .animate-fade-in-up { animation: fadeInUp 0.6s ease-out forwards; }
+        .animate-slide-in { animation: slideInRight 0.5s ease-out forwards; }
+        .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
+
+        .header {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 20px 28px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            animation: fadeInUp 0.5s ease-out;
+            border: 1px solid rgba(0,0,0,0.04);
+        }
+
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .header-logo {
+            width: 44px; height: 44px;
+            background: var(--primary);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 1.3rem;
+            font-weight: 700;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .header-text h1 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text);
+            letter-spacing: -0.3px;
+        }
+        .header-text p {
+            font-size: 0.8rem;
+            color: var(--text-light);
+            margin-top: 2px;
+        }
+
+        .timer-box {
+            background: var(--primary);
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-size: 1.5rem;
+            font-weight: 700;
+            font-family: 'Courier New', monospace;
+            min-width: 130px;
+            text-align: center;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(113,75,103,0.3);
+        }
+
+        .timer-box.warning {
+            background: var(--warning);
+            animation: pulse 1.2s infinite;
+            box-shadow: 0 4px 16px rgba(243,156,18,0.4);
+        }
+        .timer-box.danger {
+            background: var(--danger);
+            animation: pulse 0.8s infinite;
+            box-shadow: 0 4px 16px rgba(231,76,60,0.4);
+        }
+
+        .progress-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 20px 24px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+            animation: fadeInUp 0.6s ease-out 0.1s both;
+            border: 1px solid rgba(0,0,0,0.04);
+        }
+
+        .progress-track {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-bottom: 14px;
+        }
+
+        .q-dot {
+            width: 34px; height: 34px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+            border: 2px solid var(--border);
+            background: #fff;
+            color: var(--text-light);
+            position: relative;
+        }
+
+        .q-dot:hover {
+            transform: scale(1.15);
+            border-color: var(--primary-light);
+            box-shadow: 0 2px 8px rgba(113,75,103,0.15);
+        }
+
+        .q-dot.answered {
+            background: var(--success);
+            border-color: var(--success);
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(39,174,96,0.25);
+        }
+
+        .q-dot.current {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(113,75,103,0.15);
+            transform: scale(1.1);
+            color: var(--primary);
+        }
+
+        .q-dot.skipped {
+            background: var(--warning);
+            border-color: var(--warning);
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(243,156,18,0.25);
+        }
+
+        .q-dot.flagged::after {
+            content: '!';
+            position: absolute;
+            top: -4px; right: -4px;
+            width: 14px; height: 14px;
+            background: var(--danger);
+            color: #fff;
+            font-size: 9px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+        }
+
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            color: var(--text-light);
+            font-weight: 500;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .progress-info span { display: flex; align-items: center; gap: 6px; }
+        .progress-info .dot-indicator {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .question-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 36px 40px;
+            box-shadow: var(--shadow-lg);
+            min-height: 420px;
+            animation: fadeInUp 0.6s ease-out 0.2s both;
+            border: 1px solid rgba(0,0,0,0.04);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .question-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 4px;
+            background: var(--primary);
+            border-radius: 20px 20px 0 0;
+        }
+
+        .question-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .question-number {
+            font-size: 0.8rem;
+            color: var(--primary);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            background: rgba(113,75,103,0.08);
+            padding: 6px 14px;
+            border-radius: 20px;
+        }
+
+        .question-category {
+            font-size: 0.75rem;
+            color: var(--accent);
+            font-weight: 600;
+            background: var(--accent-light);
+            padding: 4px 12px;
+            border-radius: 20px;
+        }
+
+        .question-text {
+            font-size: 1.2rem;
+            color: var(--text);
+            margin-bottom: 28px;
+            font-weight: 600;
+            line-height: 1.5;
+            letter-spacing: -0.2px;
+        }
+
+        .shape-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 20px 0 28px;
+            padding: 20px;
+            background: #fafbfc;
+            border-radius: 16px;
+            border: 2px solid var(--border);
+            min-height: 160px;
+        }
+
+        .shape-container svg {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .shape-option {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 14px 16px;
+            border: 2px solid var(--border);
+            border-radius: 14px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            background: #fafbfc;
+            gap: 10px;
+        }
+
+        .shape-option:hover {
+            border-color: var(--primary-light);
+            background: rgba(113,75,103,0.03);
+            transform: translateY(-2px);
+        }
+
+        .shape-option.selected {
+            border-color: var(--primary);
+            background: rgba(113,75,103,0.06);
+            box-shadow: 0 2px 12px rgba(113,75,103,0.1);
+        }
+
+        .shape-option .option-label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 14px;
+        }
+
+        .option {
+            display: flex;
+            align-items: center;
+            padding: 16px 20px;
+            border: 2px solid var(--border);
+            border-radius: 14px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            background: #fafbfc;
+            position: relative;
+            overflow: hidden;
+            animation: optionPop 0.3s ease-out both;
+        }
+
+        .option::before {
+            content: '';
+            position: absolute;
+            left: 0; top: 0; bottom: 0;
+            width: 4px;
+            background: var(--primary);
+            transform: scaleY(0);
+            transition: transform 0.25s ease;
+        }
+
+        .option:hover {
+            border-color: var(--primary-light);
+            background: rgba(113,75,103,0.03);
+            transform: translateX(4px);
+        }
+
+        .option:hover::before {
+            transform: scaleY(1);
+        }
+
+        .option.selected {
+            border-color: var(--primary);
+            background: rgba(113,75,103,0.06);
+            box-shadow: 0 2px 12px rgba(113,75,103,0.1);
+        }
+
+        .option.selected::before {
+            transform: scaleY(1);
+        }
+
+        .option input {
+            margin-right: 14px;
+            width: 20px; height: 20px;
+            accent-color: var(--primary);
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .option-label {
+            font-size: 1rem;
+            color: #444;
+            font-weight: 500;
+            flex: 1;
+        }
+
+        .option-key {
+            width: 28px; height: 28px;
+            border-radius: 6px;
+            background: rgba(113,75,103,0.08);
+            color: var(--primary);
+            font-size: 0.75rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 32px;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'Inter', sans-serif;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::after {
+            content: '';
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 0; height: 0;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.4s, height 0.4s;
+        }
+
+        .btn:active::after {
+            width: 200px; height: 200px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(113,75,103,0.3);
+        }
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(113,75,103,0.35);
+        }
+
+        .btn-secondary {
+            background: #f0f1f3;
+            color: #555;
+        }
+        .btn-secondary:hover {
+            background: #e4e5e8;
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: #fff0ed;
+            color: var(--danger);
+            border: 1px solid rgba(231,76,60,0.15);
+        }
+        .btn-danger:hover {
+            background: var(--danger);
+            color: #fff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(231,76,60,0.25);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(39,174,96,0.3);
+        }
+        .btn-success:hover {
+            background: #219a52;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(39,174,96,0.35);
+        }
+
+        .btn-warning {
+            background: #fff8e6;
+            color: var(--warning);
+            border: 1px solid rgba(243,156,18,0.15);
+        }
+        .btn-warning:hover {
+            background: var(--warning);
+            color: #fff;
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .keyboard-hint {
+            text-align: center;
+            margin-top: 16px;
+            font-size: 0.75rem;
+            color: var(--text-light);
+            opacity: 0.7;
+        }
+        .keyboard-hint kbd {
+            background: #f0f1f3;
+            border: 1px solid #d0d0d0;
+            border-radius: 4px;
+            padding: 2px 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        .start-screen, .end-screen {
+            background: var(--card-bg);
+            border-radius: 24px;
+            padding: 56px 48px;
+            box-shadow: var(--shadow-lg);
+            text-align: center;
+            animation: fadeInUp 0.7s ease-out;
+            border: 1px solid rgba(0,0,0,0.04);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .start-screen::before, .end-screen::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 5px;
+            background: var(--primary);
+        }
+
+        .start-screen h2, .end-screen h2 {
+            font-size: 2rem;
+            color: var(--text);
+            margin-bottom: 12px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+
+        .start-screen .subtitle, .end-screen .subtitle {
+            color: var(--text-light);
+            margin-bottom: 32px;
+            font-size: 1.05rem;
+            max-width: 520px;
+            margin-left: auto;
+            margin-right: auto;
+            line-height: 1.6;
+        }
+
+        .rules-list {
+            text-align: left;
+            max-width: 480px;
+            margin: 28px auto;
+            background: #f8f9fb;
+            padding: 28px 32px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+        }
+
+        .rules-list li {
+            margin-bottom: 14px;
+            color: #555;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        .rules-list li:last-child { margin-bottom: 0; }
+        .rules-list .icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 2px; }
+
+        .tip-box {
+            background: var(--accent-light);
+            border-left: 4px solid var(--accent);
+            padding: 14px 20px;
+            border-radius: 0 12px 12px 0;
+            margin: 20px auto 0;
+            max-width: 480px;
+            text-align: left;
+            font-size: 0.9rem;
+            color: #555;
+        }
+
+        .hidden { display: none !important; }
+
+        .score-section {
+            margin: 32px 0;
+        }
+
+        .score-circle {
+            width: 160px; height: 160px;
+            border-radius: 50%;
+            background: var(--success);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.4rem;
+            font-weight: 800;
+            margin: 24px auto;
+            box-shadow: 0 8px 24px rgba(39,174,96,0.3);
+            animation: fadeInUp 0.6s ease-out 0.3s both;
+            position: relative;
+        }
+
+        .score-circle.fail {
+            background: var(--danger);
+            box-shadow: 0 8px 24px rgba(231,76,60,0.3);
+        }
+        .score-circle.warning {
+            background: var(--warning);
+            box-shadow: 0 8px 24px rgba(243,156,18,0.3);
+        }
+
+        .score-circle::after {
+            content: '';
+            position: absolute;
+            inset: -8px;
+            border-radius: 50%;
+            border: 3px dashed rgba(255,255,255,0.3);
+            animation: spin 20s linear infinite;
+        }
+
+        .score-message {
+            font-size: 1.15rem;
+            color: var(--text);
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .score-detail {
+            color: var(--text-light);
+            font-size: 0.95rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 16px;
+            max-width: 600px;
+            margin: 28px auto;
+        }
+
+        .stat-card {
+            background: #f8f9fb;
+            padding: 20px 16px;
+            border-radius: 14px;
+            border: 1px solid var(--border);
+            transition: transform 0.2s;
+        }
+        .stat-card:hover { transform: translateY(-4px); }
+        .stat-value {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-light);
+            margin-top: 4px;
+            font-weight: 500;
+        }
+
+        .summary-card {
+            background: #f8f9fb;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px 28px;
+            margin: 24px auto;
+            max-width: 520px;
+            text-align: left;
+        }
+
+        .review-section {
+            margin-top: 40px;
+            text-align: left;
+            animation: fadeInUp 0.6s ease-out 0.5s both;
+        }
+
+        .review-section h3 {
+            font-size: 1.3rem;
+            color: var(--text);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .review-item {
+            background: #f8f9fb;
+            padding: 18px 22px;
+            border-radius: 14px;
+            margin-bottom: 12px;
+            border-left: 4px solid var(--border);
+            transition: all 0.2s;
+            animation: fadeInUp 0.4s ease-out both;
+        }
+        .review-item:hover {
+            transform: translateX(4px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+
+        .review-item.correct { border-left-color: var(--success); background: rgba(39,174,96,0.04); }
+        .review-item.wrong { border-left-color: var(--danger); background: rgba(231,76,60,0.04); }
+        .review-item.skipped-review { border-left-color: var(--warning); background: rgba(243,156,18,0.04); }
+
+        .review-q {
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+            line-height: 1.4;
+        }
+        .review-meta {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 6px;
+        }
+        .review-tag {
+            font-size: 0.7rem;
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .review-tag.correct { background: rgba(39,174,96,0.12); color: var(--success); }
+        .review-tag.wrong { background: rgba(231,76,60,0.12); color: var(--danger); }
+        .review-tag.skipped { background: rgba(243,156,18,0.12); color: var(--warning); }
+
+        .review-a {
+            font-size: 0.88rem;
+            color: #666;
+            line-height: 1.5;
+        }
+        .review-a .correct-ans { color: var(--success); font-weight: 600; }
+        .review-a .your-ans { color: var(--danger); font-weight: 600; }
+        .review-a .skipped-text { color: var(--warning); font-weight: 600; }
+
+        .confetti-container {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            pointer-events: none;
+            z-index: 9999;
+            overflow: hidden;
+        }
+        .confetti-piece {
+            position: absolute;
+            width: 10px; height: 10px;
+            top: -10px;
+            animation: confetti 3s ease-out forwards;
+        }
+
+        /* ===== Review mode ===== */
+        .timer-box.review {
+            background: var(--accent);
+            animation: none;
+            font-size: 1.05rem;
+            box-shadow: 0 4px 12px rgba(0,160,157,0.3);
+        }
+
+        .q-dot.wrong {
+            background: var(--danger);
+            border-color: var(--danger);
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(231,76,60,0.25);
+        }
+
+        .verdict-banner {
+            padding: 12px 18px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            margin-bottom: 20px;
+            animation: fadeInUp 0.35s ease-out;
+        }
+        .verdict-banner.correct {
+            background: rgba(39,174,96,0.1);
+            color: var(--success);
+            border: 1px solid rgba(39,174,96,0.25);
+        }
+        .verdict-banner.wrong {
+            background: rgba(231,76,60,0.08);
+            color: var(--danger);
+            border: 1px solid rgba(231,76,60,0.25);
+        }
+        .verdict-banner.skipped {
+            background: rgba(243,156,18,0.1);
+            color: #b7791f;
+            border: 1px solid rgba(243,156,18,0.3);
+        }
+
+        @keyframes shakeX {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-6px); }
+            40% { transform: translateX(5px); }
+            60% { transform: translateX(-3px); }
+            80% { transform: translateX(2px); }
+        }
+
+        .option.correct-answer, .shape-option.correct-answer {
+            border-color: var(--success);
+            background: rgba(39,174,96,0.07);
+            box-shadow: 0 2px 12px rgba(39,174,96,0.12);
+        }
+        .option.correct-answer .option-label::after,
+        .shape-option.correct-answer .option-label::after {
+            content: ' ✓';
+            color: var(--success);
+            font-weight: 800;
+        }
+        .option.wrong-selected, .shape-option.wrong-selected {
+            border-color: var(--danger);
+            background: rgba(231,76,60,0.06);
+            animation: shakeX 0.4s ease-out;
+        }
+        .option.wrong-selected .option-label::after,
+        .shape-option.wrong-selected .option-label::after {
+            content: ' ✗';
+            color: var(--danger);
+            font-weight: 800;
+        }
+
+        /* Options are inert while reviewing */
+        body.review-mode .option, body.review-mode .shape-option {
+            cursor: default;
+        }
+        body.review-mode .option:hover, body.review-mode .shape-option:hover {
+            transform: none;
+        }
+        body.review-mode .option:hover::before {
+            transform: scaleY(0);
+        }
+        body.review-mode .option.selected::before {
+            transform: scaleY(1);
+        }
+
+        /* ===== Misc polish ===== */
+        .shape-option { animation: optionPop 0.3s ease-out both; }
+
+        .history-line {
+            margin-top: 20px;
+            font-size: 0.9rem;
+            color: var(--text-light);
+        }
+        .history-line strong { color: var(--primary); }
+
+        .review-item { cursor: pointer; }
+
+        .btn:focus-visible, .option:focus-visible, .shape-option:focus-visible, .q-dot:focus-visible {
+            outline: 3px solid rgba(113,75,103,0.4);
+            outline-offset: 2px;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .container { padding: 12px; }
+            .question-card { padding: 24px 20px; }
+            .start-screen, .end-screen { padding: 36px 24px; }
+            .header { flex-direction: column; align-items: stretch; }
+            .timer-box { align-self: center; }
+            .nav-buttons { flex-direction: column; }
+            .nav-buttons .btn { width: 100%; justify-content: center; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .keyboard-hint { display: none; }
+            .options-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-decoration"></div>
+    <div class="confetti-container" id="confettiContainer"></div>
+    <div class="container">
+        <div class="header" id="header" style="display:none;">
+            <div class="header-brand">
+                <div class="header-logo">O</div>
+                <div class="header-text">
+                    <h1>Odoo Logic Test</h1>
+                    <p>Technical Assessment Simulator</p>
+                </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;">
+                <button class="btn btn-danger" id="finishBtn" onclick="confirmFinish()" style="padding:10px 20px;font-size:0.9rem;">🏁 Finish</button>
+                <div class="timer-box" id="timer">25:00</div>
+            </div>
+        </div>
+
+        <div class="start-screen" id="startScreen">
+            <h2>🧠 Odoo Logic Test Simulator</h2>
+            <p class="subtitle">Simulates the 25-minute Coderbyte aptitude & logical reasoning test before the final Odoo interview.</p>
+            <ul class="rules-list">
+                <li><span class="icon">⏱️</span> <strong>25 minutes</strong> total time</li>
+                <li><span class="icon">📋</span> <strong>25 questions</strong> randomly selected from a bank of 125+ real-style questions</li>
+                <li><span class="icon">🔷</span> Includes <strong>shape & spatial reasoning</strong> questions</li>
+                <li><span class="icon">⏭️</span> You can <strong>skip</strong> questions and return to them later</li>
+                <li><span class="icon">🚩</span> <strong>Flag</strong> questions for review</li>
+                <li><span class="icon">🎯</span> Answer in <strong>any order</strong> you prefer</li>
+                <li><span class="icon">✅</span> Only one answer is correct per question</li>
+                <li><span class="icon">⚠️</span> At the end of 25 minutes, the test auto-submits</li>
+            </ul>
+            <div class="tip-box">
+                💡 <strong>Pro Tip:</strong> If a question takes more than 90 seconds, skip it and come back. Aim for speed + accuracy.
+            </div>
+            <div class="history-line" id="historyLine"></div>
+            <button class="btn btn-success" style="margin-top:28px; font-size:1.1rem; padding:16px 40px;" onclick="startTest()">Start Test</button>
+        </div>
+
+        <div class="progress-card" id="progressBar" style="display:none;">
+            <div class="progress-track" id="progressTrack"></div>
+            <div class="progress-info" id="progressInfo">
+                <span><span class="dot-indicator" style="background:var(--success)"></span> Answered: <strong id="answeredCount">0</strong></span>
+                <span><span class="dot-indicator" style="background:var(--warning)"></span> Skipped: <strong id="skippedCount">0</strong></span>
+                <span><span class="dot-indicator" style="background:var(--danger)"></span> Flagged: <strong id="flaggedCount">0</strong></span>
+                <span><span class="dot-indicator" style="background:var(--primary)"></span> Current: <strong id="currentNum">1</strong></span>
+            </div>
+        </div>
+
+        <div class="question-card" id="questionCard" style="display:none;">
+            <div class="question-meta">
+                <div class="question-number" id="qNumber">Question 1 of 25</div>
+                <div class="question-category" id="qCategory">Numerical</div>
+            </div>
+            <div class="question-text" id="qText">Loading...</div>
+            <div id="shapeArea"></div>
+            <div id="verdictArea"></div>
+            <div class="options" id="options"></div>
+            <div class="nav-buttons">
+                <button class="btn btn-secondary" id="prevBtn" onclick="prevQuestion()">← Previous</button>
+                <button class="btn btn-warning" id="flagBtn" onclick="toggleFlag()">🚩 Flag</button>
+                <button class="btn btn-danger" id="skipBtn" onclick="skipQuestion()">Skip →</button>
+                <button class="btn btn-success hidden" id="backBtn" onclick="backToResults()">📊 Back to Results</button>
+                <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()">Next →</button>
+            </div>
+            <div class="keyboard-hint" id="keyboardHint">
+                <kbd>1</kbd>-<kbd>4</kbd> Select option &nbsp;|&nbsp; <kbd>←</kbd> Previous &nbsp;|&nbsp; <kbd>→</kbd> Next &nbsp;|&nbsp; <kbd>S</kbd> Skip &nbsp;|&nbsp; <kbd>F</kbd> Flag &nbsp;|&nbsp; <kbd>Enter</kbd> Submit
+            </div>
+        </div>
+
+        <div class="end-screen hidden" id="endScreen">
+            <h2>Test Complete</h2>
+            <p class="subtitle" id="endSubtitle">Here is how you performed</p>
+
+            <div class="score-section">
+                <div class="score-circle" id="scoreCircle">0/25</div>
+                <div class="score-message" id="scoreMessage">Calculating...</div>
+                <div class="score-detail" id="scoreDetail"></div>
+            </div>
+
+            <div class="stats-grid" id="statsGrid"></div>
+
+            <div class="summary-card" id="summaryCard">
+                <h4 style="font-size:1rem;color:var(--text);margin-bottom:16px;font-weight:700;">📊 Performance Summary</h4>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+                    <div style="text-align:center;padding:16px;background:#fff;border-radius:12px;border:1px solid var(--border);">
+                        <div style="font-size:1.8rem;font-weight:800;color:var(--success);" id="correctCount">0</div>
+                        <div style="font-size:0.8rem;color:var(--text-light);margin-top:4px;">Correct</div>
+                    </div>
+                    <div style="text-align:center;padding:16px;background:#fff;border-radius:12px;border:1px solid var(--border);">
+                        <div style="font-size:1.8rem;font-weight:800;color:var(--danger);" id="wrongCount">0</div>
+                        <div style="font-size:0.8rem;color:var(--text-light);margin-top:4px;">Wrong</div>
+                    </div>
+                    <div style="text-align:center;padding:16px;background:#fff;border-radius:12px;border:1px solid var(--border);">
+                        <div style="font-size:1.8rem;font-weight:800;color:var(--warning);" id="skippedCountResult">0</div>
+                        <div style="font-size:0.8rem;color:var(--text-light);margin-top:4px;">Skipped</div>
+                    </div>
+                    <div style="text-align:center;padding:16px;background:#fff;border-radius:12px;border:1px solid var(--border);">
+                        <div style="font-size:1.8rem;font-weight:800;color:var(--primary);" id="percentageResult">0%</div>
+                        <div style="font-size:0.8rem;color:var(--text-light);margin-top:4px;">Accuracy</div>
+                    </div>
+                </div>
+                <div style="background:#fff;border-radius:12px;padding:16px;border:1px solid var(--border);">
+                    <div style="font-size:0.85rem;color:var(--text-light);margin-bottom:8px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Analysis</div>
+                    <div id="analysisText" style="font-size:0.95rem;color:var(--text);line-height:1.5;"></div>
+                </div>
+            </div>
+
+            <div style="margin-top:24px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+                <button class="btn btn-success" onclick="enterReview()">📝 Review Answers</button>
+                <button class="btn btn-primary" onclick="location.reload()">🔄 Retake Test</button>
+            </div>
+
+            <div class="review-section" id="reviewSection"></div>
+        </div>
+    </div>
+
+    <script>
+        // ============================
+        // SHAPE SVG GENERATORS
+        // ============================
+        const shapeSVGs = {
+            // Counting triangles in a figure
+            triangleCount1: `<svg width="200" height="160" viewBox="0 0 200 160"><polygon points="100,20 180,140 20,140" fill="none" stroke="#714B67" stroke-width="2"/><line x1="100" y1="20" x2="100" y2="140" stroke="#714B67" stroke-width="1.5"/><line x1="100" y1="20" x2="60" y2="140" stroke="#714B67" stroke-width="1.5"/><line x1="100" y1="20" x2="140" y2="140" stroke="#714B67" stroke-width="1.5"/><line x1="60" y1="140" x2="140" y2="140" stroke="#714B67" stroke-width="1.5"/><line x1="60" y1="140" x2="100" y2="80" stroke="#714B67" stroke-width="1.5"/><line x1="140" y1="140" x2="100" y2="80" stroke="#714B67" stroke-width="1.5"/></svg>`,
+
+            triangleCount2: `<svg width="180" height="160" viewBox="0 0 180 160"><polygon points="90,20 170,140 10,140" fill="none" stroke="#714B67" stroke-width="2"/><line x1="90" y1="20" x2="90" y2="140" stroke="#714B67" stroke-width="1.5"/><line x1="50" y1="140" x2="90" y2="80" stroke="#714B67" stroke-width="1.5"/><line x1="130" y1="140" x2="90" y2="80" stroke="#714B67" stroke-width="1.5"/><line x1="50" y1="140" x2="130" y2="140" stroke="#714B67" stroke-width="1.5"/><line x1="90" y1="80" x2="90" y2="140" stroke="#714B67" stroke-width="1.5"/></svg>`,
+
+            // Counting squares — uniform 3×3 grid (9 + 4 + 1 = 14)
+            squareCount1: `<svg width="180" height="180" viewBox="0 0 180 180"><rect x="20" y="20" width="120" height="120" fill="none" stroke="#714B67" stroke-width="2"/><line x1="20" y1="60" x2="140" y2="60" stroke="#714B67" stroke-width="1.5"/><line x1="20" y1="100" x2="140" y2="100" stroke="#714B67" stroke-width="1.5"/><line x1="60" y1="20" x2="60" y2="140" stroke="#714B67" stroke-width="1.5"/><line x1="100" y1="20" x2="100" y2="140" stroke="#714B67" stroke-width="1.5"/></svg>`,
+
+            squareCount2: `<svg width="160" height="160" viewBox="0 0 160 160"><rect x="20" y="20" width="120" height="120" fill="none" stroke="#714B67" stroke-width="2"/><line x1="20" y1="70" x2="140" y2="70" stroke="#714B67" stroke-width="1.5"/><line x1="20" y1="120" x2="140" y2="120" stroke="#714B67" stroke-width="1.5"/><line x1="70" y1="20" x2="70" y2="140" stroke="#714B67" stroke-width="1.5"/><line x1="120" y1="20" x2="120" y2="140" stroke="#714B67" stroke-width="1.5"/></svg>`,
+
+            // Pattern continuation - shapes (repeating cycle: circle, square, triangle, ...)
+            patternShapes1: `<svg width="360" height="70" viewBox="0 0 360 70"><circle cx="35" cy="35" r="20" fill="none" stroke="#714B67" stroke-width="2"/><rect x="75" y="15" width="40" height="40" fill="none" stroke="#714B67" stroke-width="2"/><polygon points="155,15 175,55 135,55" fill="none" stroke="#714B67" stroke-width="2"/><circle cx="215" cy="35" r="20" fill="none" stroke="#714B67" stroke-width="2"/><rect x="255" y="15" width="40" height="40" fill="none" stroke="#714B67" stroke-width="2"/><text x="325" y="45" font-size="26" fill="#999">?</text></svg>`,
+
+            // Alternating fill + shape cycle: filled circle, empty square, filled triangle, empty circle, filled square, ?
+            patternShapes2: `<svg width="360" height="70" viewBox="0 0 360 70"><circle cx="35" cy="35" r="20" fill="#714B67"/><rect x="75" y="15" width="40" height="40" fill="none" stroke="#714B67" stroke-width="2"/><polygon points="155,15 175,55 135,55" fill="#714B67"/><circle cx="215" cy="35" r="20" fill="none" stroke="#714B67" stroke-width="2"/><rect x="255" y="15" width="40" height="40" fill="#714B67"/><text x="325" y="45" font-size="26" fill="#999">?</text></svg>`,
+
+            // Mirror image — asymmetric right triangle so the reflection is visibly different
+            mirrorShape1: `<svg width="200" height="100" viewBox="0 0 200 100"><polygon points="20,20 20,80 95,80" fill="none" stroke="#714B67" stroke-width="2"/><line x1="110" y1="10" x2="110" y2="90" stroke="#999" stroke-width="1" stroke-dasharray="5,5"/><text x="140" y="55" font-size="14" fill="#999">?</text></svg>`,
+
+            mirrorShape2: `<svg width="200" height="100" viewBox="0 0 200 100"><rect x="30" y="25" width="50" height="50" fill="none" stroke="#714B67" stroke-width="2"/><line x1="110" y1="10" x2="110" y2="90" stroke="#999" stroke-width="1" stroke-dasharray="5,5"/><text x="140" y="50" font-size="14" fill="#999">?</text></svg>`,
+
+            // Rotation
+            rotation1: `<svg width="200" height="100" viewBox="0 0 200 100"><polygon points="40,70 70,30 100,70" fill="none" stroke="#714B67" stroke-width="2"/><text x="120" y="50" font-size="20" fill="#999">→ 90° → ?</text></svg>`,
+
+            rotation2: `<svg width="200" height="100" viewBox="0 0 200 100"><rect x="30" y="30" width="40" height="40" fill="none" stroke="#714B67" stroke-width="2"/><text x="90" y="55" font-size="20" fill="#999">→ 180° → ?</text></svg>`,
+
+            // Unfolding cube — a valid 6-square cross net (vertical strip of 4 + left + right)
+            cubeUnfold1: `<svg width="220" height="220" viewBox="0 0 220 220"><rect x="70" y="10" width="50" height="50" fill="none" stroke="#714B67" stroke-width="2"/><rect x="70" y="60" width="50" height="50" fill="none" stroke="#714B67" stroke-width="2"/><rect x="20" y="60" width="50" height="50" fill="none" stroke="#714B67" stroke-width="2"/><rect x="120" y="60" width="50" height="50" fill="none" stroke="#714B67" stroke-width="2"/><rect x="70" y="110" width="50" height="50" fill="none" stroke="#714B67" stroke-width="2"/><rect x="70" y="160" width="50" height="50" fill="none" stroke="#714B67" stroke-width="2"/><circle cx="95" cy="35" r="8" fill="#714B67"/><text x="140" y="145" font-size="14" fill="#999">Folded = ?</text></svg>`,
+
+            // Embedded figure
+            embedded1: `<svg width="200" height="120" viewBox="0 0 200 120"><polygon points="30,100 100,10 170,100" fill="none" stroke="#714B67" stroke-width="2"/><circle cx="100" cy="60" r="25" fill="none" stroke="#00A09D" stroke-width="2"/><text x="140" y="60" font-size="12" fill="#999">Find this</text></svg>`,
+
+            embedded2: `<svg width="200" height="120" viewBox="0 0 200 120"><rect x="20" y="20" width="160" height="80" fill="none" stroke="#714B67" stroke-width="2"/><rect x="60" y="40" width="40" height="40" fill="none" stroke="#00A09D" stroke-width="2"/><text x="140" y="60" font-size="12" fill="#999">Find this</text></svg>`,
+
+            // Venn diagram style
+            venn1: `<svg width="200" height="140" viewBox="0 0 200 140"><circle cx="75" cy="70" r="50" fill="none" stroke="#714B67" stroke-width="2"/><circle cx="125" cy="70" r="50" fill="none" stroke="#00A09D" stroke-width="2"/><text x="55" y="75" font-size="12" fill="#714B67">A</text><text x="135" y="75" font-size="12" fill="#00A09D">B</text><text x="95" y="75" font-size="12" fill="#333">?</text></svg>`,
+
+            // Missing piece
+            missingPiece1: `<svg width="160" height="160" viewBox="0 0 160 160"><rect x="20" y="20" width="120" height="120" fill="none" stroke="#714B67" stroke-width="2"/><line x1="20" y1="70" x2="140" y2="70" stroke="#714B67" stroke-width="1.5"/><line x1="70" y1="20" x2="70" y2="140" stroke="#714B67" stroke-width="1.5"/><rect x="70" y="70" width="70" height="70" fill="#f0f0f0" stroke="#999" stroke-width="1" stroke-dasharray="4,4"/><text x="85" y="110" font-size="14" fill="#999">?</text></svg>`,
+
+            missingPiece2: `<svg width="180" height="100" viewBox="0 0 180 100"><rect x="10" y="30" width="40" height="40" fill="#714B67"/><rect x="60" y="30" width="40" height="40" fill="#714B67"/><rect x="110" y="30" width="40" height="40" fill="none" stroke="#999" stroke-width="2" stroke-dasharray="4,4"/><text x="125" y="55" font-size="14" fill="#999">?</text></svg>`,
+
+            // Shadow/Projection
+            shadow1: `<svg width="200" height="100" viewBox="0 0 200 100"><circle cx="50" cy="50" r="30" fill="none" stroke="#714B67" stroke-width="2"/><text x="100" y="55" font-size="16" fill="#999">Shadow = ?</text></svg>`,
+
+            // Water image
+            waterImage1: `<svg width="200" height="140" viewBox="0 0 200 140"><polygon points="50,30 80,70 50,110 20,70" fill="none" stroke="#714B67" stroke-width="2"/><line x1="10" y1="75" x2="100" y2="75" stroke="#00A09D" stroke-width="1" stroke-dasharray="3,3"/><text x="110" y="80" font-size="14" fill="#999">Water image?</text></svg>`,
+
+            // Paper folding
+            paperFold1: `<svg width="200" height="120" viewBox="0 0 200 120"><rect x="30" y="20" width="60" height="80" fill="none" stroke="#714B67" stroke-width="2"/><line x1="60" y1="20" x2="60" y2="100" stroke="#714B67" stroke-width="1" stroke-dasharray="3,3"/><circle cx="45" cy="50" r="6" fill="#714B67"/><text x="110" y="60" font-size="14" fill="#999">Unfolded = ?</text></svg>`,
+
+            // Counting rectangles
+            rectCount1: `<svg width="200" height="140" viewBox="0 0 200 140"><rect x="20" y="20" width="160" height="100" fill="none" stroke="#714B67" stroke-width="2"/><line x1="20" y1="70" x2="180" y2="70" stroke="#714B67" stroke-width="1.5"/><line x1="100" y1="20" x2="100" y2="120" stroke="#714B67" stroke-width="1.5"/></svg>`,
+
+            // Direction/arrow pattern
+            arrowPattern1: `<svg width="260" height="60" viewBox="0 0 260 60"><polygon points="30,10 50,30 30,50 10,30" fill="#714B67"/><polygon points="90,10 110,30 90,50 70,30" fill="none" stroke="#714B67" stroke-width="2"/><polygon points="150,10 170,30 150,50 130,30" fill="#714B67"/><polygon points="210,10 230,30 210,50 190,30" fill="none" stroke="#714B67" stroke-width="2"/><text x="240" y="35" font-size="18" fill="#999">?</text></svg>`,
+
+            // Overlapping shapes
+            overlap1: `<svg width="200" height="120" viewBox="0 0 200 120"><circle cx="70" cy="60" r="40" fill="none" stroke="#714B67" stroke-width="2"/><circle cx="110" cy="60" r="40" fill="none" stroke="#00A09D" stroke-width="2"/><text x="140" y="65" font-size="14" fill="#999">How many regions?</text></svg>`,
+
+            // Series of shapes
+            shapeSeries1: `<svg width="320" height="80" viewBox="0 0 320 80"><circle cx="40" cy="40" r="20" fill="none" stroke="#714B67" stroke-width="2"/><circle cx="110" cy="40" r="20" fill="#714B67"/><circle cx="180" cy="40" r="20" fill="none" stroke="#714B67" stroke-width="2"/><text x="220" y="45" font-size="20" fill="#999">? ?</text></svg>`,
+
+            // Analogy shapes
+            analogy1: `<svg width="280" height="100" viewBox="0 0 280 100"><rect x="20" y="30" width="40" height="40" fill="none" stroke="#714B67" stroke-width="2"/><text x="70" y="55" font-size="20" fill="#999">:</text><circle cx="110" cy="50" r="20" fill="none" stroke="#714B67" stroke-width="2"/><text x="150" y="55" font-size="20" fill="#999">::</text><polygon points="200,30 230,70 170,70" fill="none" stroke="#714B67" stroke-width="2"/><text x="250" y="55" font-size="20" fill="#999">:</text><text x="270" y="55" font-size="20" fill="#999">?</text></svg>`,
+
+            // Counting circles
+            circleCount1: `<svg width="180" height="120" viewBox="0 0 180 120"><circle cx="50" cy="40" r="25" fill="none" stroke="#714B67" stroke-width="2"/><circle cx="90" cy="40" r="25" fill="none" stroke="#714B67" stroke-width="2"/><circle cx="130" cy="40" r="25" fill="none" stroke="#714B67" stroke-width="2"/><circle cx="70" cy="80" r="25" fill="none" stroke="#714B67" stroke-width="2"/><circle cx="110" cy="80" r="25" fill="none" stroke="#714B67" stroke-width="2"/></svg>`,
+
+            // Dice face
+            diceFace1: `<svg width="160" height="160" viewBox="0 0 160 160"><rect x="20" y="20" width="120" height="120" fill="none" stroke="#714B67" stroke-width="2" rx="8"/><circle cx="50" cy="50" r="8" fill="#714B67"/><circle cx="110" cy="50" r="8" fill="#714B67"/><circle cx="50" cy="110" r="8" fill="#714B67"/><circle cx="110" cy="110" r="8" fill="#714B67"/><text x="130" y="150" font-size="12" fill="#999">Opposite face?</text></svg>`,
+
+            // Tangram style
+            tangram1: `<svg width="200" height="160" viewBox="0 0 200 160"><polygon points="20,140 100,20 180,140" fill="none" stroke="#714B67" stroke-width="2"/><line x1="60" y1="80" x2="140" y2="80" stroke="#714B67" stroke-width="1.5"/><line x1="100" y1="20" x2="100" y2="140" stroke="#714B67" stroke-width="1.5"/></svg>`,
+
+            // Next in 3D sequence
+            sequence3d1: `<svg width="240" height="80" viewBox="0 0 240 80"><rect x="20" y="20" width="40" height="40" fill="none" stroke="#714B67" stroke-width="2"/><rect x="80" y="15" width="50" height="50" fill="none" stroke="#714B67" stroke-width="2"/><rect x="150" y="10" width="60" height="60" fill="none" stroke="#714B67" stroke-width="2"/><text x="220" y="45" font-size="20" fill="#999">?</text></svg>`,
+
+            // Clock hand positions
+            clockHands1: `<svg width="120" height="120" viewBox="0 0 120 120"><circle cx="60" cy="60" r="50" fill="none" stroke="#714B67" stroke-width="2"/><line x1="60" y1="60" x2="60" y2="25" stroke="#714B67" stroke-width="3"/><line x1="60" y1="60" x2="85" y2="60" stroke="#E74C3C" stroke-width="2"/><text x="130" y="65" font-size="14" fill="#999">What time?</text></svg>`,
+
+            // Counting hexagons
+            hexCount1: `<svg width="200" height="180" viewBox="0 0 200 180"><polygon points="100,20 170,55 170,125 100,160 30,125 30,55" fill="none" stroke="#714B67" stroke-width="2"/><line x1="100" y1="20" x2="100" y2="160" stroke="#714B67" stroke-width="1.5"/><line x1="30" y1="55" x2="170" y2="125" stroke="#714B67" stroke-width="1.5"/><line x1="170" y1="55" x2="30" y2="125" stroke="#714B67" stroke-width="1.5"/></svg>`,
+
+            // Shape completion
+            completion1: `<svg width="180" height="120" viewBox="0 0 180 120"><rect x="20" y="20" width="60" height="60" fill="none" stroke="#714B67" stroke-width="2"/><rect x="80" y="20" width="60" height="60" fill="none" stroke="#714B67" stroke-width="2"/><rect x="20" y="80" width="60" height="60" fill="none" stroke="#714B67" stroke-width="2"/><rect x="80" y="80" width="60" height="60" fill="#f0f0f0" stroke="#999" stroke-width="1" stroke-dasharray="4,4"/><text x="95" y="115" font-size="14" fill="#999">?</text></svg>`
+        };
+
+        // ============================
+        // QUESTION BANK (129 questions)
+        // ============================
+        const allQuestions = [
+            // NUMERICAL REASONING (25)
+            { q: "What is 15% of 240?", options: ["30", "32", "34", "36"], ans: 3, cat: "Numerical" },
+            { q: "A shop gives a 20% discount followed by a 10% discount on the discounted price. What is the equivalent single discount?", options: ["28%", "30%", "25%", "32%"], ans: 0, cat: "Numerical" },
+            { q: "If a product costs $75 and is marked down by 20%, what is the new price?", options: ["$55", "$58", "$60", "$62"], ans: 2, cat: "Numerical" },
+            { q: "A store sells a shirt for $40 after a 10% discount. What was the original price?", options: ["$42", "$44", "$44.44", "$45"], ans: 2, cat: "Numerical" },
+            { q: "If an item costs $50 and the sales tax is 8%, what is the total cost?", options: ["$52", "$53", "$54", "$55"], ans: 2, cat: "Numerical" },
+            { q: "A company's revenue increased from $500,000 to $750,000 in one year. What is the percentage increase?", options: ["40%", "45%", "50%", "55%"], ans: 2, cat: "Numerical" },
+            { q: "A company's profit increased from $2 million to $2.5 million. What's the percentage increase to two decimal places?", options: ["20.00%", "22.50%", "25.00%", "30.00%"], ans: 2, cat: "Numerical" },
+            { q: "A product's price is increased by 10% and then decreased by 10%. What's the overall percentage change?", options: ["0%", "-1%", "+1%", "-2%"], ans: 1, cat: "Numerical" },
+            { q: "If 15% of customers churn each quarter, what percentage of customers remain after a full year?", options: ["52.2%", "55.0%", "48.0%", "60.0%"], ans: 0, cat: "Numerical" },
+            { q: "If a bank offers an interest rate of 5% per year, how much interest will be earned on a $1,000 deposit after 3 years (simple interest)?", options: ["$140", "$150", "$157.63", "$160"], ans: 1, cat: "Numerical" },
+            { q: "Two numbers are in the ratio 3:5. If their sum is 72, what is the larger number?", options: ["40", "42", "45", "48"], ans: 2, cat: "Numerical" },
+            { q: "A team of 5 analysts can process 1000 data points in 2 hours. How many analysts are needed to process 3000 data points in 3 hours?", options: ["8", "9", "10", "12"], ans: 2, cat: "Numerical" },
+            { q: "A company's revenue is split 70-30 between two products. If total revenue is $10 million, what's Product B's revenue?", options: ["$2M", "$2.5M", "$3M", "$3.5M"], ans: 2, cat: "Numerical" },
+            { q: "You buy 3 items for $15 each and 2 items for $20 each. What is the total cost?", options: ["$80", "$82", "$85", "$88"], ans: 2, cat: "Numerical" },
+            { q: "If a recipe calls for 2 cups of flour and serves 4 people, how much flour is needed to serve 10 people?", options: ["4 cups", "5 cups", "6 cups", "8 cups"], ans: 1, cat: "Numerical" },
+            { q: "A car's fuel efficiency is 30 miles per gallon. How many gallons are needed to drive 180 miles?", options: ["5", "6", "7", "8"], ans: 1, cat: "Numerical" },
+            { q: "In a survey, 80% of respondents preferred Product A over Product B. If 200 people were surveyed, how many preferred Product A?", options: ["140", "150", "160", "170"], ans: 2, cat: "Numerical" },
+            { q: "A factory produces 150 toys every hour. How many toys will it produce in a 7-hour shift?", options: ["950", "1000", "1050", "1100"], ans: 2, cat: "Numerical" },
+            { q: "If the total cost of 5 notebooks is $15, what is the cost of one notebook?", options: ["$2", "$2.50", "$3", "$3.50"], ans: 2, cat: "Numerical" },
+            { q: "A company spends $250,000 on salaries, $100,000 on rent, and $50,000 on utilities. What percentage is spent on rent?", options: ["20%", "22%", "25%", "30%"], ans: 2, cat: "Numerical" },
+            { q: "If 3 apples and 4 oranges cost $2.50, and 2 apples and 3 oranges cost $1.80, what is the cost of 1 apple?", options: ["$0.30", "$0.40", "$0.50", "$0.60"], ans: 0, cat: "Numerical" },
+            { q: "A shirt is priced at $80. After a 25% discount, an additional 10% discount is applied. What is the final price?", options: ["$52", "$54", "$56", "$58"], ans: 1, cat: "Numerical" },
+            { q: "If a number is increased by 20% and then decreased by 20%, what is the net change?", options: ["0%", "-4%", "+4%", "-2%"], ans: 1, cat: "Numerical" },
+            { q: "The average of 5 numbers is 24. If one number is removed and the average becomes 20, what was the removed number?", options: ["30", "35", "40", "45"], ans: 2, cat: "Numerical" },
+            { q: "A mixture contains alcohol and water in the ratio 4:1. If there are 25 liters of mixture, how much water is there?", options: ["4 liters", "5 liters", "6 liters", "8 liters"], ans: 1, cat: "Numerical" },
+
+            // WORK RATE & TIME (12)
+            { q: "If 2 workers can build 2 walls in 2 days, how many days will it take 4 workers to build 4 walls?", options: ["2 days", "4 days", "1 day", "8 days"], ans: 0, cat: "Work Rate" },
+            { q: "If it takes 5 machines 5 minutes to make 5 widgets, how long would it take 100 machines to make 100 widgets?", options: ["5 minutes", "100 minutes", "20 minutes", "1 minute"], ans: 0, cat: "Work Rate" },
+            { q: "If a project takes 6 people 10 days to complete, how long would it take 8 people to complete the same project?", options: ["6.5 days", "7.5 days", "8 days", "9 days"], ans: 1, cat: "Work Rate" },
+            { q: "A train travels 60 km in 45 minutes. At this speed, how far will it travel in 2 hours?", options: ["120 km", "150 km", "160 km", "180 km"], ans: 2, cat: "Work Rate" },
+            { q: "If a train leaves the station at 2 PM traveling at 60 miles per hour, how far will it have traveled by 4 PM?", options: ["100 miles", "110 miles", "120 miles", "140 miles"], ans: 2, cat: "Work Rate" },
+            { q: "A machine produces 100 units in 4 hours. How many units will it produce in 6 days if it runs for 20 hours each day?", options: ["2500", "2800", "3000", "3200"], ans: 2, cat: "Work Rate" },
+            { q: "A snail climbs 5 meters up a well during the day and slips back 4 meters at night. The well is 20 meters deep. How many days to escape?", options: ["15", "16", "20", "24"], ans: 1, cat: "Work Rate" },
+            { q: "Three people need to cross a bridge at night. They have one torch. The bridge holds max 2 people. Crossing times: 1 min, 2 min, 5 min. What is the minimum total time?", options: ["8 minutes", "9 minutes", "10 minutes", "12 minutes"], ans: 0, cat: "Work Rate" },
+            { q: "A clock loses 10 minutes every hour. If set correctly at noon, what time will it show when the actual time is 6:00 PM?", options: ["4:00 PM", "5:00 PM", "5:30 PM", "6:00 PM"], ans: 1, cat: "Work Rate" },
+            { q: "If a pipe can fill a tank in 6 hours and another can empty it in 8 hours, how long to fill the tank if both are open?", options: ["20 hours", "22 hours", "24 hours", "26 hours"], ans: 2, cat: "Work Rate" },
+            { q: "A can complete a job in 12 days and B in 18 days. Working together, how many days to complete it?", options: ["6.5 days", "7.2 days", "8 days", "9 days"], ans: 1, cat: "Work Rate" },
+            { q: "If 8 men can dig a trench in 4 hours, how many men are needed to dig it in 2 hours?", options: ["12", "14", "16", "18"], ans: 2, cat: "Work Rate" },
+
+            // PATTERNS & SEQUENCES (18)
+            { q: "What is the next number in the sequence: 2, 6, 12, 20, 30, ?", options: ["40", "42", "44", "46"], ans: 1, cat: "Patterns" },
+            { q: "What is the missing number? 8, 27, 64, 125, ?", options: ["216", "196", "225", "256"], ans: 0, cat: "Patterns" },
+            { q: "What comes next: O, T, T, F, F, S, S, E, ?", options: ["N", "T", "E", "O"], ans: 0, cat: "Patterns" },
+            { q: "What is the next letter: B, C, E, G, K, ?", options: ["M", "N", "O", "P"], ans: 0, cat: "Patterns" },
+            { q: "What comes next in the sequence: 1, 1, 2, 3, 5, 8, ?", options: ["11", "12", "13", "14"], ans: 2, cat: "Patterns" },
+            { q: "Find the next number: 3, 9, 27, 81, ?", options: ["162", "243", "324", "405"], ans: 1, cat: "Patterns" },
+            { q: "What is the next number: 1, 4, 9, 16, 25, ?", options: ["30", "34", "36", "40"], ans: 2, cat: "Patterns" },
+            { q: "Complete the series: 2, 3, 5, 7, 11, ?", options: ["12", "13", "14", "15"], ans: 1, cat: "Patterns" },
+            { q: "What number should replace the question mark? 1, 4, 9, 16, 25, 36, ?", options: ["42", "45", "48", "49"], ans: 3, cat: "Patterns" },
+            { q: "Find the odd one out: 16, 25, 36, 49, 64, 100, 144", options: ["25", "36", "100", "None — all are perfect squares"], ans: 3, cat: "Patterns" },
+            { q: "What comes next: 5, 10, 20, 40, 80, ?", options: ["120", "140", "160", "180"], ans: 2, cat: "Patterns" },
+            { q: "If A = 1, B = 2, C = 3, ..., what is the sum of the letters in the word 'CODE'?", options: ["24", "26", "27", "30"], ans: 2, cat: "Patterns" },
+            { q: "In a code where CAT = 3120, DOG = 4157, what does FISH equal?", options: ["69198", "69189", "61989", "69199"], ans: 0, cat: "Patterns" },
+            { q: "If you rearrange the letters 'CIFAIPC', you get the name of a:", options: ["City", "Animal", "Ocean", "Country"], ans: 2, cat: "Patterns" },
+            { q: "What comes next: J, F, M, A, M, J, ?", options: ["A", "J", "S", "O"], ans: 1, cat: "Patterns" },
+            { q: "Find the next number: 0, 1, 1, 2, 3, 5, 8, 13, ?", options: ["18", "19", "20", "21"], ans: 3, cat: "Patterns" },
+            { q: "What is the next term: AZ, BY, CX, DW, ?", options: ["EV", "EU", "FV", "FU"], ans: 0, cat: "Patterns" },
+            { q: "Complete: 64, 32, 16, 8, ?", options: ["2", "4", "6", "0"], ans: 1, cat: "Patterns" },
+
+            // LOGICAL DEDUCTION (12)
+            { q: "If all Bloops are Razzies and all Razzies are Lazzies, then which statement is true?", options: ["All Bloops are Lazzies", "All Lazzies are Bloops", "No Bloops are Lazzies", "Some Razzies are not Bloops"], ans: 0, cat: "Logic" },
+            { q: "All roses are flowers. Some flowers fade quickly. Therefore:", options: ["All roses fade quickly", "Some roses fade quickly", "No conclusion can be drawn", "Roses never fade quickly"], ans: 2, cat: "Logic" },
+            { q: "No mammals are fish. All whales are mammals. Therefore:", options: ["No whales are fish", "Some whales are fish", "All whales are fish", "No conclusion can be drawn"], ans: 0, cat: "Logic" },
+            { q: "If it rains, the ground gets wet. The ground is wet. Therefore:", options: ["It rained", "It might have rained", "It definitely did not rain", "The ground is always wet"], ans: 1, cat: "Logic" },
+            { q: "All doctors are smart. Some smart people are rich. Therefore:", options: ["All doctors are rich", "Some doctors are rich", "No doctors are rich", "No conclusion can be drawn"], ans: 3, cat: "Logic" },
+            { q: "If A > B and B > C, then:", options: ["A > C", "C > A", "A = C", "Cannot be determined"], ans: 0, cat: "Logic" },
+            { q: "Some A are B. All B are C. Therefore:", options: ["All A are C", "Some A are C", "No A are C", "All C are A"], ans: 1, cat: "Logic" },
+            { q: "If no X is Y, and some Y is Z, then:", options: ["Some X is Z", "No X is Z", "Some X is not Z", "No conclusion can be drawn"], ans: 3, cat: "Logic" },
+            { q: "All pens are books. Some books are pencils. Therefore:", options: ["All pens are pencils", "Some pens are pencils", "No pen is a pencil", "No conclusion can be drawn"], ans: 3, cat: "Logic" },
+            { q: "If all cats are animals and some animals are wild, then:", options: ["All cats are wild", "Some cats are wild", "No cat is wild", "No conclusion can be drawn"], ans: 3, cat: "Logic" },
+            { q: "No circle is a square. All squares are rectangles. Therefore:", options: ["No circle is a rectangle", "Some circles are rectangles", "No conclusion can be drawn", "All rectangles are squares"], ans: 2, cat: "Logic" },
+            { q: "If P implies Q, and Q is false, then:", options: ["P is true", "P is false", "P may be true", "Cannot determine"], ans: 1, cat: "Logic" },
+
+            // TRICK / ATTENTION (12)
+            { q: "A bat and a ball cost $11 in total. The bat costs $10 more than the ball. How much does the ball cost?", options: ["$0.50", "$1", "$1.50", "$2"], ans: 0, cat: "Trick" },
+            { q: "If the day before yesterday was Saturday, what day is tomorrow?", options: ["Monday", "Tuesday", "Wednesday", "Thursday"], ans: 1, cat: "Trick" },
+            { q: "A father is 4 times as old as his son. In 20 years, he will be twice as old. How old is the son now?", options: ["5", "10", "15", "20"], ans: 1, cat: "Trick" },
+            { q: "In a row of 25 students, Pedram is 14th from the left and Sarah is 18th from the right. How many students are between them?", options: ["5", "6", "7", "8"], ans: 0, cat: "Trick" },
+            { q: "What is the angle between the hour and minute hands at 3:15?", options: ["0°", "7.5°", "15°", "30°"], ans: 1, cat: "Trick" },
+            { q: "A cube has all faces painted red. It is cut into 27 smaller cubes. How many small cubes have exactly 2 red faces?", options: ["8", "12", "16", "20"], ans: 1, cat: "Trick" },
+            { q: "How many times do the hands of a clock overlap in 12 hours?", options: ["10", "11", "12", "13"], ans: 1, cat: "Trick" },
+            { q: "If you have a 3-gallon jug and a 5-gallon jug, how can you measure exactly 4 gallons?", options: ["Fill 5, pour to 3, empty 3, pour remaining 2 to 3, fill 5, pour 1 to 3", "Fill 3 twice into 5", "Fill 5, pour half out", "Impossible"], ans: 0, cat: "Trick" },
+            { q: "A farmer has 17 sheep. All but 9 die. How many are left?", options: ["7", "8", "9", "17"], ans: 2, cat: "Trick" },
+            { q: "If there are 12 apples and you take away 3, how many do you have?", options: ["3", "9", "12", "15"], ans: 0, cat: "Trick" },
+            { q: "Mary's father has 5 daughters: Nana, Nene, Nini, Nono. What is the fifth daughter's name?", options: ["Nunu", "Nana", "Mary", "Nono"], ans: 2, cat: "Trick" },
+            { q: "If 2 + 3 = 10, 7 + 2 = 63, 6 + 5 = 66, then 8 + 4 = ?", options: ["48", "72", "96", "32"], ans: 2, cat: "Trick" },
+
+            // GEOMETRY (5)
+            { q: "What is the area of a rectangle with length 8 cm and width 5 cm?", options: ["26 cm²", "30 cm²", "35 cm²", "40 cm²"], ans: 3, cat: "Geometry" },
+            { q: "The perimeter of a square is 36 cm. What is its area?", options: ["72 cm²", "81 cm²", "90 cm²", "100 cm²"], ans: 1, cat: "Geometry" },
+            { q: "What is the volume of a cube with side length 4 cm?", options: ["48 cm³", "56 cm³", "64 cm³", "72 cm³"], ans: 2, cat: "Geometry" },
+            { q: "A circle has radius 7 cm. What is its approximate circumference? (π ≈ 22/7)", options: ["38 cm", "40 cm", "42 cm", "44 cm"], ans: 3, cat: "Geometry" },
+            { q: "How many diagonals does a hexagon have?", options: ["6", "8", "9", "12"], ans: 2, cat: "Geometry" },
+
+            // DATA INTERPRETATION (5)
+            { q: "Quarterly sales: Q1 $120K, Q2 $135K, Q3 $150K. What was the percentage growth from Q1 to Q2?", options: ["10%", "12.5%", "15%", "20%"], ans: 1, cat: "Data" },
+            { q: "Department A has 40 employees, B has 60, C has 50. What percentage of total employees work in B?", options: ["30%", "33.3%", "35%", "40%"], ans: 3, cat: "Data" },
+            { q: "A company's sales grew by 5% each year for 3 years. If current sales are $1,000,000, what were sales 3 years ago?", options: ["$850,000", "$863,838", "$875,000", "$900,000"], ans: 1, cat: "Data" },
+            { q: "If a dataset has a mean of 50 and a standard deviation of 10, what percentage of data falls within one standard deviation of the mean?", options: ["50%", "68%", "75%", "95%"], ans: 1, cat: "Data" },
+            { q: "A marketing campaign costs $50,000 and generates 2,500 leads. If 10% convert to sales with an average value of $300, what is the ROI?", options: ["25%", "50%", "75%", "100%"], ans: 1, cat: "Data" },
+
+            // GENERAL KNOWLEDGE (8)
+            { q: "Which number does not belong: 2, 3, 5, 9, 11, 13?", options: ["2", "3", "9", "13"], ans: 2, cat: "General" },
+            { q: "Which is the odd one out: Mercury, Venus, Mars, Saturn, Moon?", options: ["Mercury", "Venus", "Mars", "Moon"], ans: 3, cat: "General" },
+            { q: "Which is the odd one out: Python, Java, C++, HTML, Ruby?", options: ["Python", "Java", "C++", "HTML"], ans: 3, cat: "General" },
+            { q: "Which is the odd one out: Kilogram, Meter, Second, Watt?", options: ["Kilogram", "Meter", "Second", "Watt"], ans: 3, cat: "General" },
+            { q: "Pointing to a man, a woman said, 'His mother is the only daughter of my mother.' How is the woman related to the man?", options: ["Mother", "Sister", "Daughter", "Aunt"], ans: 0, cat: "General" },
+            { q: "If WATER is written as YCVGT, then what is written as HKTG?", options: ["FIRE", "FARE", "FIVE", "FACE"], ans: 0, cat: "General" },
+            { q: "A man walks 5 km north, 3 km east, 5 km south, and 3 km west. Where is he relative to the start?", options: ["5 km north", "3 km east", "At the starting point", "5 km south"], ans: 2, cat: "General" },
+            { q: "If in a certain code, COMPUTER is written as RFUVQNPC, how is MEDICINE written?", options: ["EOJDJEFM", "EOJDJFEM", "FMEJDJEO", "EOJDJEFN"], ans: 0, cat: "General" },
+
+            // SHAPE / SPATIAL REASONING (24)
+            { q: "How many triangles are in this figure?", options: ["10", "12", "15", "16"], ans: 2, cat: "Shapes", shape: "triangleCount1" },
+            { q: "How many triangles are in this figure?", options: ["5", "6", "7", "9"], ans: 1, cat: "Shapes", shape: "triangleCount2" },
+            { q: "How many squares are in this figure (all sizes)?", options: ["9", "14", "16", "20"], ans: 1, cat: "Shapes", shape: "squareCount1" },
+            { q: "How many squares are in this figure (all sizes — careful, the grid is not uniform)?", options: ["7", "8", "12", "14"], ans: 1, cat: "Shapes", shape: "squareCount2" },
+            { q: "What comes next in this repeating pattern?", options: ["Circle", "Square", "Triangle", "Diamond"], ans: 2, cat: "Shapes", shape: "patternShapes1" },
+            { q: "The shapes cycle circle → square → triangle while the fill alternates. What comes next?", options: ["Empty triangle", "Filled triangle", "Empty circle", "Filled square"], ans: 0, cat: "Shapes", shape: "patternShapes2" },
+            { q: "The shape is reflected across the dashed vertical line. How does the reflection compare to the original?", options: ["Identical to the original", "Flipped horizontally", "Rotated 90°", "Flipped vertically"], ans: 1, cat: "Shapes", shape: "mirrorShape1" },
+            { q: "The square is reflected across the dashed vertical line. How does the reflection look?", options: ["Identical — a square is symmetric", "Visibly flipped", "Rotated 45°", "Smaller version"], ans: 0, cat: "Shapes", shape: "mirrorShape2" },
+            { q: "This triangle points up. If it is rotated 90° clockwise, which way does it point?", options: ["Left", "Right", "Up", "Down"], ans: 1, cat: "Shapes", shape: "rotation1" },
+            { q: "If this square is rotated 180°, what does it look like?", options: ["Exactly the same", "Flipped", "A diamond", "A rectangle"], ans: 0, cat: "Shapes", shape: "rotation2" },
+            { q: "If this net is folded into a cube, which face is opposite the face with the dot?", options: ["Top", "Bottom", "Left", "Right"], ans: 1, cat: "Shapes", shape: "cubeUnfold1" },
+            { q: "Into how many regions do these two overlapping circles divide the plane (counting the outside region)?", options: ["2", "3", "4", "5"], ans: 2, cat: "Shapes", shape: "overlap1" },
+            { q: "How many circles are in this figure?", options: ["3", "4", "5", "6"], ans: 2, cat: "Shapes", shape: "circleCount1" },
+            { q: "What is the missing piece in this pattern?", options: ["Empty square", "Filled square", "Circle", "Triangle"], ans: 0, cat: "Shapes", shape: "missingPiece1" },
+            { q: "What comes next in this 2D sequence?", options: ["Smaller square", "Larger square", "Rectangle", "Circle"], ans: 1, cat: "Shapes", shape: "sequence3d1" },
+            { q: "How many rectangles are in this figure (all sizes)?", options: ["4", "6", "8", "9"], ans: 3, cat: "Shapes", shape: "rectCount1" },
+            { q: "What time is shown on this clock? (the short hand is the hour hand)", options: ["3:00", "2:45", "3:15", "12:15"], ans: 0, cat: "Shapes", shape: "clockHands1" },
+            { q: "How many triangles are in this figure (a hexagon with its three main diagonals)?", options: ["6", "8", "10", "12"], ans: 0, cat: "Shapes", shape: "hexCount1" },
+            { q: "On a standard die, opposite faces always add up to 7. Which number is on the face opposite the one shown?", options: ["1", "2", "3", "5"], ans: 2, cat: "Shapes", shape: "diceFace1" },
+            { q: "A sheet of paper is folded in half along the dashed line, then a hole is punched through both layers as shown. How many holes are there when the sheet is unfolded?", options: ["1", "2", "3", "4"], ans: 1, cat: "Shapes", shape: "paperFold1" },
+            { q: "The diamond is reflected in the water line below it. How does the reflection compare to the original?", options: ["It looks identical — the diamond is symmetric about the water line", "It is flipped left-right", "It is rotated 90°", "It is half the size"], ans: 0, cat: "Shapes", shape: "waterImage1" },
+            { q: "In this Venn diagram, what does the '?' region (where the circles overlap) represent?", options: ["Items in A only", "Items in B only", "Items in both A and B", "Items in neither A nor B"], ans: 2, cat: "Shapes", shape: "venn1" },
+            { q: "The diamonds alternate filled and empty. What comes next?", options: ["Filled diamond", "Empty diamond", "Filled circle", "Empty square"], ans: 0, cat: "Shapes", shape: "arrowPattern1" },
+            { q: "How many triangles are in this figure?", options: ["4", "5", "6", "8"], ans: 2, cat: "Shapes", shape: "tangram1" },
+
+            // ADDED — analogies, probability, ordering (8)
+            { q: "Book is to Reading as Fork is to:", options: ["Drawing", "Eating", "Cooking", "Cutting"], ans: 1, cat: "General" },
+            { q: "Odometer is to distance as compass is to:", options: ["Speed", "Hiking", "Direction", "Needle"], ans: 2, cat: "General" },
+            { q: "A solid sphere sits on a table, lit from directly above. What is the shape of its shadow on the table?", options: ["Circle", "Ellipse", "Square", "Point"], ans: 0, cat: "Shapes", shape: "shadow1" },
+            { q: "A bag contains 3 red, 4 blue and 5 green balls. If one ball is drawn at random, what is the probability that it is blue?", options: ["1/4", "1/3", "5/12", "1/2"], ans: 1, cat: "Numerical" },
+            { q: "Two fair coins are tossed together. What is the probability of getting exactly one head?", options: ["1/4", "1/3", "1/2", "3/4"], ans: 2, cat: "Numerical" },
+            { q: "A fair six-sided die is rolled once. What is the probability of rolling a number greater than 4?", options: ["1/6", "1/3", "1/2", "2/3"], ans: 1, cat: "Numerical" },
+            { q: "Five friends sit in a row. E sits at the far left. A is to the right of C but to the left of B. D is to the right of B. Who sits in the middle?", options: ["A", "B", "C", "D"], ans: 0, cat: "Logic" },
+            { q: "In a race, Maya finished ahead of Noah but behind Lila. Omar finished ahead of Maya but behind Lila. Who finished second?", options: ["Lila", "Omar", "Maya", "Noah"], ans: 1, cat: "Logic" }
+        ];
+
+        // ============================
+        // STATE
+        // ============================
+        let questions = [];
+        let currentQ = 0;
+        let answers = [];
+        let skipped = [];
+        let flagged = [];
+        let timeLeft = 25 * 60;
+        let timerInterval;
+        let testEnded = false;
+        let reviewMode = false;
+
+        const HISTORY_KEY = 'odoo_logic_history_v1';
+        function loadHistory() {
+            try { return JSON.parse(localStorage.getItem(HISTORY_KEY)) || []; }
+            catch (e) { return []; }
+        }
+        function saveAttempt(entry) {
+            try {
+                const h = loadHistory();
+                h.push(entry);
+                localStorage.setItem(HISTORY_KEY, JSON.stringify(h.slice(-50)));
+            } catch (e) { /* private mode etc. — history is a nicety */ }
+        }
+        function fmtTime(totalSecs) {
+            const m = Math.floor(totalSecs / 60);
+            const s = totalSecs % 60;
+            return `${m}:${s.toString().padStart(2, '0')}`;
+        }
+
+        // ============================
+        // UTILITIES
+        // ============================
+        function shuffleArray(array) {
+            const arr = [...array];
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        function selectRandomQuestions() {
+            // Separate shape questions from others
+            const shapeQuestions = allQuestions.filter(q => q.cat === 'Shapes');
+            const otherQuestions = allQuestions.filter(q => q.cat !== 'Shapes');
+
+            // Shuffle both pools
+            const shuffledShapes = shuffleArray(shapeQuestions);
+            const shuffledOthers = shuffleArray(otherQuestions);
+
+            // Pick exactly 4 shape questions (guaranteed)
+            const selectedShapes = shuffledShapes.slice(0, 4);
+
+            // Pick 21 from others to make 25 total
+            const selectedOthers = shuffledOthers.slice(0, 21);
+
+            // Combine and shuffle again so shapes are distributed throughout
+            const combined = [...selectedShapes, ...selectedOthers];
+            return shuffleArray(combined);
+        }
+
+        // ============================
+        // TEST FLOW
+        // ============================
+        function startTest() {
+            questions = selectRandomQuestions();
+            answers = new Array(questions.length).fill(null);
+            skipped = new Array(questions.length).fill(false);
+            flagged = new Array(questions.length).fill(false);
+
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('header').style.display = 'flex';
+            document.getElementById('progressBar').style.display = 'block';
+            document.getElementById('questionCard').style.display = 'block';
+
+            buildProgressDots();
+            showQuestion(0);
+            startTimer();
+        }
+
+        function buildProgressDots() {
+            const track = document.getElementById('progressTrack');
+            track.innerHTML = '';
+            for (let i = 0; i < questions.length; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'q-dot';
+                dot.textContent = i + 1;
+                dot.onclick = () => showQuestion(i);
+                track.appendChild(dot);
+            }
+        }
+
+        function updateProgress() {
+            const dots = document.querySelectorAll('.q-dot');
+            let answered = 0, skipCount = 0, flagCount = 0;
+            let correctN = 0, wrongN = 0;
+            dots.forEach((dot, i) => {
+                dot.classList.remove('current', 'answered', 'skipped', 'flagged', 'wrong');
+                if (i === currentQ) dot.classList.add('current');
+                if (reviewMode) {
+                    if (answers[i] === null) {
+                        dot.classList.add('skipped');
+                        skipCount++;
+                    } else if (answers[i] === questions[i].ans) {
+                        dot.classList.add('answered');
+                        correctN++;
+                    } else {
+                        dot.classList.add('wrong');
+                        wrongN++;
+                    }
+                } else {
+                    if (answers[i] !== null) {
+                        dot.classList.add('answered');
+                        answered++;
+                    } else if (skipped[i]) {
+                        dot.classList.add('skipped');
+                        skipCount++;
+                    }
+                }
+                if (flagged[i]) {
+                    dot.classList.add('flagged');
+                    flagCount++;
+                }
+            });
+            const info = document.getElementById('progressInfo');
+            if (reviewMode) {
+                info.innerHTML = `
+                    <span><span class="dot-indicator" style="background:var(--success)"></span> Correct: <strong>${correctN}</strong></span>
+                    <span><span class="dot-indicator" style="background:var(--danger)"></span> Wrong: <strong>${wrongN}</strong></span>
+                    <span><span class="dot-indicator" style="background:var(--warning)"></span> Skipped: <strong>${skipCount}</strong></span>
+                    <span><span class="dot-indicator" style="background:var(--primary)"></span> Viewing: <strong>${currentQ + 1}</strong></span>`;
+            } else {
+                info.innerHTML = `
+                    <span><span class="dot-indicator" style="background:var(--success)"></span> Answered: <strong>${answered}</strong></span>
+                    <span><span class="dot-indicator" style="background:var(--warning)"></span> Skipped: <strong>${skipCount}</strong></span>
+                    <span><span class="dot-indicator" style="background:var(--danger)"></span> Flagged: <strong>${flagCount}</strong></span>
+                    <span><span class="dot-indicator" style="background:var(--primary)"></span> Current: <strong>${currentQ + 1}</strong></span>`;
+            }
+        }
+
+        function showQuestion(index) {
+            if (testEnded && !reviewMode) return;
+            currentQ = index;
+            const q = questions[index];
+
+            const card = document.getElementById('questionCard');
+            card.style.animation = 'none';
+            card.offsetHeight;
+            card.style.animation = 'fadeInUp 0.4s ease-out';
+
+            document.getElementById('qNumber').textContent = `Question ${index + 1} of ${questions.length}`;
+            document.getElementById('qCategory').textContent = q.cat;
+            document.getElementById('qText').textContent = q.q;
+
+            // Handle shape display
+            const shapeArea = document.getElementById('shapeArea');
+            if (q.shape && shapeSVGs[q.shape]) {
+                shapeArea.innerHTML = `<div class="shape-container">${shapeSVGs[q.shape]}</div>`;
+                shapeArea.style.display = 'block';
+            } else {
+                shapeArea.innerHTML = '';
+                shapeArea.style.display = 'none';
+            }
+
+            // Review verdict banner
+            const verdictArea = document.getElementById('verdictArea');
+            if (reviewMode) {
+                const isSkipped = answers[index] === null;
+                const isCorrect = answers[index] === q.ans;
+                const cls = isSkipped ? 'skipped' : (isCorrect ? 'correct' : 'wrong');
+                const label = isSkipped
+                    ? `⏭️ You skipped this one — the correct answer is “${q.options[q.ans]}”`
+                    : (isCorrect
+                        ? '✅ You answered this correctly'
+                        : `❌ Not quite — the correct answer is “${q.options[q.ans]}”`);
+                verdictArea.innerHTML = `<div class="verdict-banner ${cls}">${label}</div>`;
+            } else {
+                verdictArea.innerHTML = '';
+            }
+
+            const optsDiv = document.getElementById('options');
+            optsDiv.innerHTML = '';
+
+            // Use grid layout for shape questions, column for text questions
+            if (q.cat === 'Shapes') {
+                optsDiv.className = 'options-grid';
+            } else {
+                optsDiv.className = 'options';
+            }
+
+            q.options.forEach((opt, i) => {
+                const div = document.createElement('div');
+                const picked = answers[index] === i;
+                let reviewCls = '';
+                if (reviewMode) {
+                    if (i === q.ans) reviewCls = ' correct-answer';
+                    else if (picked) reviewCls = ' wrong-selected';
+                }
+                if (q.cat === 'Shapes') {
+                    div.className = 'shape-option' + (picked ? ' selected' : '') + reviewCls;
+                    div.style.animationDelay = `${i * 0.05}s`;
+                    div.innerHTML = `<span class="option-label">${opt}</span>`;
+                } else {
+                    div.className = 'option' + (picked ? ' selected' : '') + reviewCls;
+                    div.style.animationDelay = `${i * 0.05}s`;
+                    div.innerHTML = `
+                        <span class="option-key">${i + 1}</span>
+                        <input type="radio" name="q${index}" ${picked ? 'checked' : ''} ${reviewMode ? 'disabled' : ''}>
+                        <span class="option-label">${opt}</span>
+                    `;
+                }
+                if (!reviewMode) div.onclick = () => selectOption(i);
+                optsDiv.appendChild(div);
+            });
+
+            updateProgress();
+        }
+
+        function selectOption(optIndex) {
+            if (testEnded) return;
+            answers[currentQ] = optIndex;
+            skipped[currentQ] = false;
+            // Update in place — a full re-render would replay the entry animations on every click.
+            document.querySelectorAll('#options > div').forEach((div, i) => {
+                div.classList.toggle('selected', i === optIndex);
+                const radio = div.querySelector('input');
+                if (radio) radio.checked = (i === optIndex);
+            });
+            updateProgress();
+        }
+
+        function toggleFlag() {
+            if (testEnded) return;
+            flagged[currentQ] = !flagged[currentQ];
+            updateProgress();
+        }
+
+        function nextQuestion() {
+            if (currentQ < questions.length - 1) {
+                showQuestion(currentQ + 1);
+                return;
+            }
+            if (reviewMode) return; // stay on the last question while reviewing
+            const firstUnanswered = answers.findIndex(a => a === null);
+            if (firstUnanswered !== -1) {
+                showQuestion(firstUnanswered);
+            } else {
+                confirmFinish(); // never auto-submit without asking
+            }
+        }
+
+        function prevQuestion() {
+            if (currentQ > 0) showQuestion(currentQ - 1);
+        }
+
+        function skipQuestion() {
+            if (testEnded) return;
+            skipped[currentQ] = true;
+            answers[currentQ] = null;
+            let next = currentQ + 1;
+            while (next < questions.length && answers[next] !== null) next++;
+            if (next < questions.length) {
+                showQuestion(next);
+            } else {
+                const firstUnanswered = answers.findIndex(a => a === null);
+                if (firstUnanswered !== -1) showQuestion(firstUnanswered);
+            }
+        }
+
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                const mins = Math.floor(timeLeft / 60);
+                const secs = timeLeft % 60;
+                const timerBox = document.getElementById('timer');
+                timerBox.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+
+                if (timeLeft <= 300 && timeLeft > 60) timerBox.classList.add('warning');
+                if (timeLeft <= 60) {
+                    timerBox.classList.remove('warning');
+                    timerBox.classList.add('danger');
+                }
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    endTest();
+                }
+            }, 1000);
+        }
+
+        // ============================
+        // REVIEW MODE — walk back through the questions read-only,
+        // with the correct answer and your pick marked on every card.
+        // ============================
+        function enterReview(startIndex = 0) {
+            reviewMode = true;
+            document.body.classList.add('review-mode');
+            document.getElementById('endScreen').classList.add('hidden');
+            document.getElementById('header').style.display = 'flex';
+            document.getElementById('progressBar').style.display = 'block';
+            document.getElementById('questionCard').style.display = 'block';
+            document.getElementById('finishBtn').style.display = 'none';
+            const timerBox = document.getElementById('timer');
+            timerBox.className = 'timer-box review';
+            timerBox.textContent = '📝 Review';
+            document.getElementById('flagBtn').classList.add('hidden');
+            document.getElementById('skipBtn').classList.add('hidden');
+            document.getElementById('backBtn').classList.remove('hidden');
+            document.getElementById('keyboardHint').innerHTML =
+                '<kbd>←</kbd> <kbd>→</kbd> Navigate &nbsp;|&nbsp; <kbd>Esc</kbd> Back to results';
+            showQuestion(typeof startIndex === 'number' ? startIndex : 0);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function backToResults() {
+            reviewMode = false;
+            document.body.classList.remove('review-mode');
+            document.getElementById('header').style.display = 'none';
+            document.getElementById('progressBar').style.display = 'none';
+            document.getElementById('questionCard').style.display = 'none';
+            document.getElementById('endScreen').classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function confirmFinish() {
+            if (testEnded) return;
+            const answered = answers.filter(a => a !== null).length;
+            const total = questions.length;
+            if (confirm(`You have answered ${answered} out of ${total} questions. Are you sure you want to finish?`)) {
+                endTest();
+            }
+        }
+
+        function spawnConfetti() {
+            const container = document.getElementById('confettiContainer');
+            const colors = ['#714B67', '#00A09D', '#27AE60', '#F39C12', '#E74C3C', '#3498DB'];
+            for (let i = 0; i < 50; i++) {
+                const piece = document.createElement('div');
+                piece.className = 'confetti-piece';
+                piece.style.left = Math.random() * 100 + 'vw';
+                piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+                piece.style.animationDuration = (2 + Math.random() * 2) + 's';
+                piece.style.animationDelay = Math.random() * 2 + 's';
+                piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+                container.appendChild(piece);
+            }
+            setTimeout(() => container.innerHTML = '', 5000);
+        }
+
+        function endTest() {
+            testEnded = true;
+            clearInterval(timerInterval);
+            document.getElementById('header').style.display = 'none';
+            document.getElementById('progressBar').style.display = 'none';
+            document.getElementById('questionCard').style.display = 'none';
+            document.getElementById('endScreen').classList.remove('hidden');
+
+            let score = 0;
+            let correctByCat = {};
+            let totalByCat = {};
+
+            questions.forEach((q, i) => {
+                const cat = q.cat;
+                if (!totalByCat[cat]) totalByCat[cat] = 0;
+                if (!correctByCat[cat]) correctByCat[cat] = 0;
+                totalByCat[cat]++;
+                if (answers[i] === q.ans) {
+                    score++;
+                    correctByCat[cat]++;
+                }
+            });
+
+            const pct = Math.round((score / questions.length) * 100);
+            const timeUsed = 25 * 60 - Math.max(0, timeLeft);
+            const scoreCircle = document.getElementById('scoreCircle');
+            if (pct >= 70) scoreCircle.className = 'score-circle';
+            else if (pct >= 50) scoreCircle.className = 'score-circle warning';
+            else scoreCircle.className = 'score-circle fail';
+
+            // Count the score up instead of showing it instantly
+            let shown = 0;
+            scoreCircle.textContent = `0/${questions.length}`;
+            const countUp = setInterval(() => {
+                shown++;
+                if (shown >= score) {
+                    shown = score;
+                    clearInterval(countUp);
+                }
+                scoreCircle.textContent = `${shown}/${questions.length}`;
+            }, 45);
+
+            saveAttempt({
+                score,
+                total: questions.length,
+                pct,
+                timeUsed,
+                date: new Date().toISOString(),
+            });
+
+            let msg = "";
+            if (pct >= 80) { msg = "Excellent! You're well prepared for the Odoo logic test."; spawnConfetti(); }
+            else if (pct >= 60) msg = "Good job! A bit more practice and you'll be ready.";
+            else if (pct >= 40) msg = "Decent. Focus on the questions you missed and retake.";
+            else msg = "Keep practicing! Review the explanations and try again.";
+
+            document.getElementById('scoreMessage').textContent = `You scored ${score} out of ${questions.length}`;
+            document.getElementById('scoreDetail').textContent = msg;
+
+            const wrongCount = questions.length - score - answers.filter(a => a === null).length;
+            const skippedCount = answers.filter(a => a === null).length;
+            document.getElementById('correctCount').textContent = score;
+            document.getElementById('wrongCount').textContent = wrongCount;
+            document.getElementById('skippedCountResult').textContent = skippedCount;
+            document.getElementById('percentageResult').textContent = pct + '%';
+
+            let analysis = '';
+            if (pct >= 80) {
+                analysis = '🌟 <strong>Outstanding performance!</strong> You demonstrate exceptional numerical reasoning, logical deduction, and spatial awareness. This level indicates you are very well-prepared for the Odoo logic test. Keep this momentum going into the final technical interview!';
+            } else if (pct >= 60) {
+                analysis = '👍 <strong>Solid performance.</strong> You have a good grasp of core concepts. To push into the top tier: (1) Speed up numerical calculations, (2) Practice shape counting and pattern recognition, (3) Review syllogism-style deductions. A few more runs should get you to 80%+.';
+            } else if (pct >= 40) {
+                analysis = '⚠️ <strong>Needs improvement.</strong> You understand some concepts but struggle with time pressure or specific types. Priority areas: (1) Master percentage/ratio calculations, (2) Learn common sequence patterns, (3) Practice counting shapes in complex figures, (4) Review lateral thinking questions. Retake 3–4 times and review every wrong answer.';
+            } else {
+                analysis = '🔧 <strong>Significant gaps detected.</strong> The Odoo logic test will be challenging at this level. Start with: (1) Mental math for percentages and fractions, (2) Common logical reasoning patterns (all/some/none), (3) Basic shape counting (triangles in a figure, squares in a grid), (4) Attention-to-detail questions daily. Use the category breakdown to identify weakest areas. Consistent practice yields results.';
+            }
+            document.getElementById('analysisText').innerHTML = analysis;
+
+            const statsGrid = document.getElementById('statsGrid');
+            let statsHTML = `
+                <div class="stat-card">
+                    <div class="stat-value">${fmtTime(timeUsed)}</div>
+                    <div class="stat-label">Time Used</div>
+                </div>
+            `;
+            for (const cat in totalByCat) {
+                const c = correctByCat[cat] || 0;
+                const t = totalByCat[cat];
+                statsHTML += `
+                    <div class="stat-card">
+                        <div class="stat-value">${c}/${t}</div>
+                        <div class="stat-label">${cat}</div>
+                    </div>
+                `;
+            }
+            statsGrid.innerHTML = statsHTML;
+
+            let reviewHTML = '<h3>Detailed Review</h3><p style="text-align:center;font-size:0.85rem;color:var(--text-light);margin-bottom:16px;">Click any item to revisit that question with the answers revealed.</p>';
+            questions.forEach((q, i) => {
+                const isCorrect = answers[i] === q.ans;
+                const isSkipped = answers[i] === null;
+                let cls = isSkipped ? 'skipped-review' : (isCorrect ? 'correct' : 'wrong');
+                let status = isSkipped ? 'Skipped' : (isCorrect ? 'Correct' : 'Wrong');
+                let tagCls = isSkipped ? 'skipped' : (isCorrect ? 'correct' : 'wrong');
+                let yourAns = isSkipped ? '—' : q.options[answers[i]];
+                let correctAns = q.options[q.ans];
+                let flagIcon = flagged[i] ? ' 🚩' : '';
+                let shapeNote = q.shape ? ' [Shape]' : '';
+
+                reviewHTML += `
+                    <div class="review-item ${cls}" style="animation-delay:${i * 0.03}s" onclick="enterReview(${i})" title="Open this question in review mode">
+                        <div class="review-meta">
+                            <span class="review-tag ${tagCls}">${status}${flagIcon}</span>
+                            <span class="review-tag" style="background:rgba(113,75,103,0.08);color:var(--primary)">${q.cat}${shapeNote}</span>
+                        </div>
+                        <div class="review-q">Q${i+1}. ${q.q}</div>
+                        <div class="review-a">
+                            Your answer: <span class="${isSkipped ? 'skipped-text' : 'your-ans'}">${yourAns}</span> &nbsp;|&nbsp;
+                            Correct answer: <span class="correct-ans">${correctAns}</span>
+                        </div>
+                    </div>
+                `;
+            });
+            document.getElementById('reviewSection').innerHTML = reviewHTML;
+        }
+
+        // ============================
+        // KEYBOARD SHORTCUTS
+        // ============================
+        document.addEventListener('keydown', (e) => {
+            if (document.getElementById('startScreen').classList.contains('hidden') === false) {
+                if (e.key === 'Enter') startTest();
+                return;
+            }
+
+            if (reviewMode) {
+                if (e.key === 'ArrowRight' || e.key === 'n' || e.key === 'N') nextQuestion();
+                if (e.key === 'ArrowLeft' || e.key === 'p' || e.key === 'P') prevQuestion();
+                if (e.key === 'Escape') backToResults();
+                return;
+            }
+
+            if (testEnded) return;
+
+            if (e.key >= '1' && e.key <= '4') {
+                const idx = parseInt(e.key) - 1;
+                if (idx < questions[currentQ].options.length) selectOption(idx);
+            }
+            if (e.key === 'ArrowRight' || e.key === 'n' || e.key === 'N') nextQuestion();
+            if (e.key === 'ArrowLeft' || e.key === 'p' || e.key === 'P') prevQuestion();
+            if (e.key === 's' || e.key === 'S') skipQuestion();
+            if (e.key === 'f' || e.key === 'F') toggleFlag();
+            if (e.key === 'Enter' && !e.shiftKey) {
+                const allAnswered = answers.every(a => a !== null);
+                if (allAnswered) confirmFinish();
+            }
+        });
+
+        // ============================
+        // START-SCREEN HISTORY
+        // ============================
+        (function initHistoryLine() {
+            const h = loadHistory();
+            if (!h.length) return;
+            const last = h[h.length - 1];
+            const best = h.reduce((m, a) => (a.score > m.score ? a : m), h[0]);
+            document.getElementById('historyLine').innerHTML =
+                `📈 Attempts so far: <strong>${h.length}</strong> &nbsp;·&nbsp; ` +
+                `last score <strong>${last.score}/${last.total}</strong> &nbsp;·&nbsp; ` +
+                `best <strong>${best.score}/${best.total}</strong>`;
+        })();
+    </script>
+</body>
+</html>

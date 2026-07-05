@@ -19,9 +19,9 @@ the content has expanded well past that scope. Today it is three things at once:
 
 1. A **workbook shell** at the repo root — an index page that auto-discovers every folder,
    embeds interactive tutorials, previews markdown/code files, and renders PDFs.
-2. Three **interactive tutorials** under `tutorials/` — an algorithms masterclass with a live
-   Python + JS + SQL runner, a separate Odoo framework tutorial, and a final-stage interview
-   prep course built on the same runner framework.
+2. Four **interactive tutorials** under `tutorials/` — an algorithms masterclass with a live
+   Python + JS + SQL runner, a separate Odoo framework tutorial, a final-stage interview
+   prep course built on the same runner framework, and a timed logic-test simulator.
 3. A **library of scratch solutions and long-form notes** — per-question code folders,
    deep-dive markdown, and reference PDFs.
 
@@ -42,7 +42,8 @@ sql.js, marked, highlight.js) are pulled from CDNs on demand.
 ├── tutorials/
 │   ├── algorithms/          # Interactive masterclass — 57 questions, Python + JS + SQL
 │   ├── odoo-framework/      # Standalone Odoo framework tutorial
-│   └── interview-final/     # Final-stage (live interview) prep — same framework, harder content
+│   ├── interview-final/     # Final-stage (live interview) prep — same framework, harder content
+│   └── logictest/           # 25-minute aptitude & logical-reasoning test simulator
 │
 ├── interesting/             # Deep-dive notes written during study sessions
 │   ├── sql-joins.md
@@ -113,6 +114,20 @@ algorithms framework — Python/JS/SQL sandboxes, practice sets, final exam — 
 
 See [tutorials/interview-final/README.md](tutorials/interview-final/README.md) for the
 question-type breakdown, module map, and editing format.
+
+### Logic Test Simulator — `tutorials/logictest/`
+
+A single-file simulation of the timed aptitude & logical-reasoning screening test:
+
+- **25 questions in 25 minutes**, dealt at random from a bank of ~130 questions across
+  9 categories — numerical reasoning, work rate, patterns & sequences, logical deduction,
+  trick/attention questions, geometry, data interpretation, general reasoning, and
+  SVG-rendered **shape & spatial reasoning** puzzles.
+- Coderbyte-style flow: answer in any order, **skip** and return, **flag** for review,
+  auto-submit when the clock runs out, keyboard shortcuts throughout.
+- Results page with per-category score breakdown, then a **review mode** that walks back
+  through every question read-only with your pick and the correct answer marked.
+- Attempt history (last/best score) persisted in `localStorage` under `odoo_logic_*`.
 
 ## Long-form notes — `interesting/`
 
