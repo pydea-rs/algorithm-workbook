@@ -460,8 +460,8 @@
   <li><strong>Modules 3+</strong> are the deep dives, each ending in a Practice Set of
   medium/hard questions. Attempt every question <em>out loud</em>, as if the interviewer
   were watching.</li>
-  <li><strong>Final Exam</strong> draws from a held-back pool once all modules land — try it
-  last, as a dress rehearsal.</li>
+  <li><strong>Final Exam</strong> deals 12 random questions from a curated pool spanning the
+  whole course (algorithms + SQL, all runnable) — try it last, as a dress rehearsal.</li>
 </ul>
 <h2>The code workbench</h2>
 <ul>
@@ -684,17 +684,20 @@ all of it and start fresh.</p>
 
     wrap.appendChild(el("div", { class: "card", html: `
 <h2>Final Exam</h2>
-<p>Twelve questions drawn from a pool that was deliberately held back from the Practice Sets.
-Topics are mixed across all eight modules. <strong>Work each problem to completion before
-revealing the answer.</strong> Coverage updates live as you pass tests.</p>
+<p>Twelve questions dealt at random from a curated pool spanning the whole course — algorithm
+problems plus runnable SQL, in roughly the real interview's 2:1 ratio. You may have met some in
+the practice sets; solving them again <em>cold</em>, without the module's context around them, is
+the point. <strong>Work each problem to completion before revealing the answer.</strong> Coverage
+updates live as you pass tests.</p>
 <div class="callout tip" style="margin-top:14px">
   <div class="callout-title">Topic tags are hidden</div>
   Only difficulty and time-estimate are shown next to each question — the algorithm family
   (DP, Sliding Window, BFS, ...) is intentionally withheld so the problem statement is your
-  only clue, just like the real assessment.
+  only clue, just like the live interview.
 </div>
-<p class="note-soft">Tip: simulate the real test — give yourself 5 minutes per question and a
-hard 60-minute cap. If you're not done after 60, finish for learning's sake but score honestly.</p>
+<p class="note-soft">Tip: simulate interview pressure — narrate out loud, cap yourself at
+~10 minutes per question (2 hours for the dozen). If you're not done at the cap, finish for
+learning's sake but score honestly.</p>
 ` }));
 
     // Track per-question state for the scoreboard.

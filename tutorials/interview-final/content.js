@@ -42,7 +42,8 @@ window.MODULES = {
     system-design reveal-solution questions.</li>
 </ul>
 <p>Each algorithmic module ends with a Practice Set. Skip questions you find trivial; spend real
-time on the ones that stretch you. There's a Final Exam at the end drawing from a held-back pool.</p>
+time on the ones that stretch you. A Final Exam at the end deals 12 random questions from a
+curated pool spanning the whole course — save it for a dress rehearsal.</p>
 
 <div class="callout tip">
   <div class="callout-title">Study method for this stage</div>
@@ -385,8 +386,9 @@ in another language.</strong> Reasons:</p>
     comprehensions cut lines of code.</li>
   <li>Readable — you can narrate line by line without translating.</li>
   <li>You've been prepping in Python; muscle memory matters when fatigued.</li>
-  <li>Slight downside: Pyodide-style timeouts don't matter here (real CPython), and interpreter
-    speed is fine for interview-scale n.</li>
+  <li>Worried Python is "slow"? At interview input sizes it never matters — you're graded on
+    your algorithm's complexity, not the interpreter's constant factor. (And the interview runs
+    real CPython, not the browser Pyodide this tutorial uses.)</li>
 </ul>
 <p>JavaScript is fine too. C++ is fine if that's your daily driver. Don't switch to "impress" — a
 comfortable language is worth 10× a fancy one when a stranger is watching.</p>
@@ -521,6 +523,13 @@ always true about the window <code>s[left..right]</code>.</p>
   <tr><td>Minimum window containing all of T</td><td>need/have counts</td><td>(inverted: shrink while <em>valid</em>)</td></tr>
   <tr><td>Max sum subarray of length ≤ k</td><td>running sum</td><td>window longer than k</td></tr>
 </table>
+
+<p>The third row deserves a footnote, because it flips the template. For <em>longest</em>-style
+problems the window shrinks while the invariant is <em>broken</em>, and you record the answer once
+it holds again. For <em>Minimum</em> Window Substring the goal inverts: expand right until the
+window is <em>valid</em> (covers all of T), then shrink from the left <em>while it stays valid</em>,
+recording the shrinking window each step — the smallest valid window appears just before a shrink
+finally breaks it. Same two pointers, opposite recording moment.</p>
 
 <div class="callout tip">
   <div class="callout-title">Why it's O(n) and how to say it out loud</div>
@@ -1450,7 +1459,11 @@ take it (skip the neighbor) or skip it.</p>
     for x in nums:
         take, skip = skip + x, max(take, skip)
     return max(take, skip)</code></pre>
-<p>Note the shape: the "table" collapsed to two rolling variables because state <code>i</code> only
+<p>Read the two variables as an invariant: after each loop step, <code>take</code> is the best
+loot among plans that <em>robbed the house just processed</em>, and <code>skip</code> the best among
+plans that skipped it. That's why the next house's <code>take</code> builds on the old
+<code>skip</code> (the neighbor wasn't robbed), while the next <code>skip</code> is free to take the
+better of the two previous plans. Note the shape: the "table" collapsed to two rolling variables because state <code>i</code> only
 looks back one step. Say that out loud — <em>"dp[i] depends only on dp[i-1] and dp[i-2], so I keep
 two variables instead of an array"</em> — it's a free space-optimization point.</p>
 
@@ -2465,7 +2478,7 @@ schema walk-through of Module 13 wearing classes instead of tables. Same recipe,
   <h1>Module 15 — System Design, Application-Level</h1>
   <p>At this interview's level, "system design" rarely means planetary-scale distributed systems.
   It means: <strong>can you take a product sentence — "build a URL shortener" — and produce a data
-  model, an API, and defensible scaling decisions, out loud?</strong> That's Modules 13's schema
+  model, an API, and defensible scaling decisions, out loud?</strong> That's Module 13's schema
   skills plus a vocabulary of building blocks. The practice set is discussion-style: think first,
   then reveal.</p>
 </div>
@@ -2497,7 +2510,7 @@ them is the fastest way to look senior.</p></div>
   <tr><td>One beefy SQL box handles</td><td>~thousands of simple QPS</td><td>"do we even need to scale?" — usually no</td></tr>
   <tr><td>Redis / memcached GET</td><td>~0.1 ms, 100k+ ops/s</td><td>read-path relief</td></tr>
   <tr><td>Seconds per day</td><td>~86 400 (≈10⁵)</td><td>1M requests/day ≈ <strong>12 QPS</strong> — tiny!</td></tr>
-  <tr><td>UUID/row storage</td><td>~100 B–1 KB per row</td><td>100M rows ≈ tens of GB — one disk</td></tr>
+  <tr><td>Typical table row</td><td>~100 B–1 KB per row</td><td>100M rows ≈ tens of GB — one disk</td></tr>
 </table>
 <p>That third row is the interview's secret weapon: candidates hear "one million users" and panic
 into microservices; 1M requests/day is 12 per second — a single Postgres with the right indexes

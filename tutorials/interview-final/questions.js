@@ -105,7 +105,7 @@ window.QUESTIONS = {
     examples:
       "Input:  nums=[1,1,1], k=2          -> 2   ([1,1] twice)\n" +
       "Input:  nums=[1,2,3], k=3          -> 2   ([1,2] and [3])\n" +
-      "Input:  nums=[1,-1,0], k=0         -> 3   ([1,-1], [-1,... wait: [1,-1], [0], [1,-1,0])\n" +
+      "Input:  nums=[1,-1,0], k=0         -> 3   ([1,-1], [0], [1,-1,0])\n" +
       "Input:  nums=[-1,-1,1], k=0        -> 1",
     hint: "sum(i..j) = P[j+1] - P[i]. Count earlier prefixes equal to current_prefix - k with a hash map.",
     functionName: "subarray_sum",
@@ -304,7 +304,7 @@ def max_sliding_window(nums: list, k: int) -> list:
       'Input:  s="ADOBECODEBANC", t="ABC" -> "BANC"\n' +
       'Input:  s="a", t="a"               -> "a"\n' +
       'Input:  s="a", t="aa"              -> ""   (needs two a\'s)',
-    hint: "Track need (counts of t) and have (how many chars currently satisfied); shrink from the left while have == len(need)-distinct... use a satisfied-counter, not a dict comparison.",
+    hint: "Count what t needs, then expand right while decrementing a single `missing` counter; the moment missing hits 0 the window is valid — shrink from the left while it stays valid, recording the smallest window seen.",
     functionName: "min_window",
     signature: "min_window(s: str, t: str) -> str",
     starter:
@@ -561,8 +561,10 @@ def top_k_frequent(nums: list, k: int) -> list:
     explanation:
       "Every swap puts at least one value in its final home, so total swaps <= n -> O(n) despite " +
       "the nested while. The guard `nums[nums[i]-1] != nums[i]` (not `nums[i] != i+1`) is what " +
-      "prevents infinite loops on duplicates. And the j-first swap avoids the tuple-assignment " +
-      "index trap from the module text.",
+      "prevents infinite loops on duplicates. And computing `j = nums[i] - 1` before the swap " +
+      "matters: in a one-line tuple swap Python evaluates the right side first but assigns " +
+      "left-to-right, so `nums[nums[i]-1]` on the left would index with the freshly overwritten " +
+      "`nums[i]`.",
     tests: [
       { args: [[1, 2, 0]], expected: 3 },
       { args: [[3, 4, -1, 1]], expected: 2 },
@@ -4025,7 +4027,7 @@ WHY EACH PATTERN EARNS ITS PLACE (the actual question)
   The threshold is a tunable, not a constant - say that.
 
 3. WRITE PATH (push side)
-  post INSERT -> enqueue fanout job (the F63 machine!) -> workers page
+  post INSERT -> enqueue fanout job (the F63 job-queue design) -> workers page
   through followers (keyset on follower_id, batches of ~1000) -> batch
   INSERT feed_items. At-least-once queue -> PK (user_id, ..., post_id)
   makes duplicate fanout idempotent: ON CONFLICT DO NOTHING.
@@ -4186,5 +4188,21 @@ window.PRACTICE_SETS = {
           qids: ["F61", "F62", "F63", "F64", "F65"] },
 };
 
-// Final exam pool — filled in as later modules land (held-back questions).
-window.FINAL_EXAM_POOL = [];
+// Final exam pool — a curated, runnable-only subset (python + SQL with fixtures).
+// Design questions are excluded on purpose: their cards have no test runner, so
+// they can never fire onPass and would leave the exam scoreboard incompletable.
+// The mix mirrors the real interview's ratio (~2 algorithm : 1 SQL per draw).
+window.FINAL_EXAM_POOL = [
+  // Arrays & windows / hashing (M3–M4)
+  "F01", "F04", "F06", "F08", "F10",
+  // Recursion & binary search (M5–M6)
+  "F12", "F13", "F16", "F18",
+  // Trees & graphs (M7–M8)
+  "F21", "F24", "F26", "F28",
+  // DP, greedy, heaps (M9–M11)
+  "F32", "F34", "F36", "F37", "F40", "F42", "F44",
+  // SQL (M12–M13)
+  "F46", "F48", "F49", "F51", "F52",
+  // Data structures in code (M14)
+  "F56", "F57",
+];
