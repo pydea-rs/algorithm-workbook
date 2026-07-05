@@ -290,11 +290,13 @@
     },
     {
       title: "Tutorial Modules",
-      items: window.MODULE_ORDER.map((mid, i) => ({
+      items: window.MODULE_ORDER.map((mid) => ({
         kind: "module",
         id: mid,
         label: window.MODULES[mid].title,
-        num: i + 1,
+        // Number from the id (M2B -> 2b), not the index — an inserted module
+        // must not shift every later module's chip off its title.
+        num: mid.replace(/^M/, "").toLowerCase(),
       })),
     },
     {
@@ -302,9 +304,9 @@
       items: Object.keys(window.PRACTICE_SETS).map((pid) => ({
         kind: "practice",
         id: pid,
-        label: window.PRACTICE_SETS[pid].title.replace(/^Practice Set \d+ — /, ""),
-        // Number by the set's own id (PS3 -> 3) so it matches its module.
-        num: parseInt(pid.replace(/\D/g, ""), 10) || "·",
+        label: window.PRACTICE_SETS[pid].title.replace(/^Practice Set \d+[a-z]? — /, ""),
+        // Number by the set's own id (PS3 -> 3, PS2B -> 2b) so it matches its module.
+        num: pid.replace(/^PS/, "").toLowerCase() || "·",
       })),
     },
     {
@@ -453,15 +455,19 @@
       el("div", { class: "card", html: `
 <h2>How to navigate</h2>
 <ul>
-  <li><strong>Module 1</strong> is a compressed recap of the stage-1 algorithms tutorial —
-  use it to find gaps worth re-reading.</li>
+  <li><strong>Module 1</strong> is a compressed recap of the stage-1 algorithms tutorial, with a
+  drill set (PS1) that tells you which pillar to re-read if it blows its time budget.</li>
   <li><strong>Module 2</strong> is the live-coding craft chapter: the 6-step template,
-  narration, hints, follow-ups. Read it before any of the problem modules.</li>
+  narration, hints, follow-ups, and the day-of-interview checklist. Read it before any of the
+  problem modules.</li>
+  <li><strong>Module 2b</strong> restores the two stage-1 toolboxes the recap compressed away —
+  linked-list pointer surgery and math/bit tricks — with eight runnable drills.</li>
   <li><strong>Modules 3+</strong> are the deep dives, each ending in a Practice Set of
   medium/hard questions. Attempt every question <em>out loud</em>, as if the interviewer
   were watching.</li>
-  <li><strong>Final Exam</strong> deals 12 random questions from a curated pool spanning the
-  whole course (algorithms + SQL, all runnable) — try it last, as a dress rehearsal.</li>
+  <li><strong>Final Exam</strong> deals 12 questions — always 8 algorithm + 4 SQL, the real
+  interview's ratio — from a pool spanning every module family. Try it last, as a dress
+  rehearsal.</li>
 </ul>
 <h2>The code workbench</h2>
 <ul>
@@ -651,8 +657,18 @@ all of it and start fresh.</p>
     }
     if (state.examSeed == null) state.examSeed = Math.floor(Math.random() * 1e9);
     const seed = state.examSeed;
+    // Stratified deal: always 4 SQL + 8 algorithm questions (the real interview's
+    // 2:1 ratio, exactly) — a plain shuffle could deal an all-algorithm exam.
     const pool = window.FINAL_EXAM_POOL.slice();
-    const chosen = stableShuffle(pool, seed).slice(0, Math.min(12, pool.length));
+    const sqlPool = pool.filter((id) => (window.QUESTIONS[id] || {}).type === "sql");
+    const algoPool = pool.filter((id) => (window.QUESTIONS[id] || {}).type !== "sql");
+    const nSql = Math.min(4, sqlPool.length);
+    const nAlgo = Math.min(12 - nSql, algoPool.length);
+    const chosen = stableShuffle(
+      stableShuffle(sqlPool, seed + 1).slice(0, nSql)
+        .concat(stableShuffle(algoPool, seed + 2).slice(0, nAlgo)),
+      seed
+    );
 
     const wrap = el("div", { class: "view-narrow" });
 
@@ -685,8 +701,9 @@ all of it and start fresh.</p>
 
     wrap.appendChild(el("div", { class: "card", html: `
 <h2>Final Exam</h2>
-<p>Twelve questions dealt at random from a curated pool spanning the whole course — algorithm
-problems plus runnable SQL, in roughly the real interview's 2:1 ratio. You may have met some in
+<p>Twelve questions dealt at random from a curated pool spanning the whole course — always
+<strong>8 algorithm problems + 4 runnable SQL</strong>, the real interview's 2:1 ratio, drawn
+from every module family (recap drills through system-adjacent coding). You may have met some in
 the practice sets; solving them again <em>cold</em>, without the module's context around them, is
 the point. <strong>Work each problem to completion before revealing the answer.</strong> Coverage
 updates live as you pass tests.</p>

@@ -5,8 +5,8 @@
      window.MODULES = { Mxx: {id, title, subtitle, practiceSet?, body: [...]} }
      window.MODULE_ORDER = ["M1", "M2", ...]
 
-   The `practiceSet` field is optional here — recap and skill chapters
-   don't need practice sets, only algorithmic modules do.
+   Every module carries a `practiceSet` — including the recap and craft
+   chapters (PS1/PS2 drill stage-1 pillars and the 6-step template).
 ============================================================ */
 
 window.MODULES = {
@@ -18,7 +18,7 @@ window.MODULES = {
     id: "M1",
     title: "Module 1 — Recap of Stage-1 Algorithms",
     subtitle: "Everything from the algorithms tutorial, compressed",
-    // No practice set — this is a warm-up review.
+    practiceSet: "PS1",
     body: [
       {
         kind: "html",
@@ -152,8 +152,12 @@ curated pool spanning the whole course — save it for a dress rehearsal.</p>
 
 <div class="callout good">
   <div class="callout-title">Ready</div>
-  Move on to Module 2 — the craft of live coding. Then dive into the algorithmic modules starting
-  at M3. There's no urgency; you're not being timed. Depth beats speed here.
+  Before moving on, run through <strong>Practice Set 1</strong> below — six stage-1 classics with
+  fresh values, one per pillar (hashing, stacks, strings, binary search, windows, SQL). Any of them
+  blowing its time budget tells you which pillar to re-skim in the old tutorial. Then Module 2
+  teaches the craft of live coding, <strong>Module 2b</strong> patches the two stage-1 toolboxes
+  this recap compressed away (linked lists, math &amp; bits), and the deep dives start at M3.
+  There's no urgency; you're not being timed. Depth beats speed here.
 </div>
 `
       },
@@ -167,7 +171,7 @@ curated pool spanning the whole course — save it for a dress rehearsal.</p>
     id: "M2",
     title: "Module 2 — Live-Coding Craft",
     subtitle: "How to think, talk, and code at the same time",
-    // No practice set — this is a soft-skill module. MCQs are inline.
+    practiceSet: "PS2",
     body: [
       {
         kind: "html",
@@ -467,9 +471,259 @@ comfortable language is worth 10× a fancy one when a stranger is watching.</p>
 <p>The first time doing this feels absurd. That's fine. By the third attempt it will feel natural,
 and by interview day it will be automatic.</p>
 
+<h2>Day-of-interview checklist</h2>
+<p>Odoo's own scheduling email spells out what they expect — treat it as a checklist and clear
+every item the day <em>before</em>, not 10 minutes before:</p>
+<ul>
+  <li>🎧 <strong>Headset &amp; microphone tested</strong> — they even link a mic-test site;
+    do a real Google Meet test call, not just the OS sound panel.</li>
+  <li>📷 <strong>Webcam working</strong> — you'll be on camera the whole session.</li>
+  <li>💻 <strong>Your preferred IDE open and configured</strong> — you code in your own
+    environment while screen-sharing. Font size up (interviewers read your screen), linter quiet,
+    a scratch file ready.</li>
+  <li>🤖 <strong>All AI assistants OFF</strong> — Copilot, ChatGPT, anything that completes code.
+    They say it explicitly: "we want to interview you, not a robot". Disable the plugins the
+    night before so autocomplete doesn't betray you mid-interview.</li>
+  <li>🤫 <strong>Quiet room, phone silenced, calendar blocked</strong> for the full 3 hours.</li>
+  <li>📅 <strong>Google Meet link received?</strong> If the calendar invite hasn't arrived well
+    before the slot, email the recruiter early — they ask you to flag it quickly.</li>
+</ul>
+<p>And remember the line from their email: <em>"you won't be alone during the interview, the
+interviewer will be there to help"</em> — hints are part of the format. Module 2's rule applies:
+take the hint gracefully, think out loud, adjust.</p>
+
+<h2>Drill the template on Practice Set 2</h2>
+<p><strong>Practice Set 2</strong> below has three deliberately easy problems (FizzBuzz variant,
+run-length encoding, missing number). Easy is the point: the code won't challenge you, so 100% of
+your attention goes to the <em>craft</em> — narrating, stating complexity, testing out loud.
+Run each one through all 6 steps of the template, with a stopwatch, speaking the whole time.</p>
+
 <div class="callout tip">
   <div class="callout-title">You're set for the algorithmic modules</div>
   From here, every question card has a sandbox. Do the problems out loud. Every time.
+</div>
+`
+      },
+    ],
+  },
+
+  // =============================================================
+  // MODULE 2b — Stage-1 Gaps: Linked Lists, Math & Bits
+  // (Material the M1 recap compressed away; prose adapted from the
+  //  stage-1 tutorial's Modules 6–7, which covered it in full.)
+  // =============================================================
+  M2B: {
+    id: "M2B",
+    title: "Module 2b — Linked Lists, Math & Bit Tricks",
+    subtitle: "The two stage-1 toolboxes the recap skipped — pointer surgery and number craft",
+    practiceSet: "PS2B",
+    body: [
+      {
+        kind: "html",
+        html: `
+<div class="hero">
+  <h1>Module 2b — Linked Lists, Math &amp; Bit Tricks</h1>
+  <p>Module 1 compressed the stage-1 tutorial, but two of its toolboxes didn't survive the
+  compression: <strong>linked-list pointer surgery</strong> and <strong>math/bit manipulation</strong>.
+  Neither has a deep-dive module of its own here — yet both are classic <em>live-interview</em>
+  material: "reverse a linked list" and "detect a cycle" are among the most-asked warm-ups in
+  general engineering interviews, and XOR/prime/GCD one-liners are favorite "how would you do this
+  without extra memory?" follow-ups. This module restores them at interview depth.</p>
+</div>
+
+<h2>Singly linked lists</h2>
+<p>A linked list is sequential without random access, but with O(1) insertion at known positions.
+In this tutorial's sandbox, lists arrive as plain arrays and are built for you via
+<code>_build_list</code>; your function receives the head <code>ListNode</code> (fields:
+<code>val</code>, <code>next</code>) and returns a node — the runner converts it back to an array
+for comparison.</p>
+
+<p>The single most important pattern is <strong>"three-pointer surgery"</strong> — this is
+reverse-a-list, and you should be able to write it from memory:</p>
+<pre><code>prev = <span class="tok-kw">None</span>; curr = head
+<span class="tok-kw">while</span> curr:
+    nxt = curr.next        <span class="tok-cmt"># 1. remember next</span>
+    curr.next = prev       <span class="tok-cmt"># 2. rewire</span>
+    prev = curr; curr = nxt <span class="tok-cmt"># 3. advance</span>
+<span class="tok-cmt"># prev is the new head</span></code></pre>
+<p>Why three pointers? The moment you rewire <code>curr.next</code> you've cut the only rope
+leading to the rest of the list — so you must grab <code>nxt</code> <em>first</em>. Say exactly
+that sentence in the interview while writing line 1; it proves you understand the failure mode,
+not just the incantation.</p>
+
+<h3>Dummy head pattern</h3>
+<p>Whenever you're <em>building</em> a list, prepend a sentinel "dummy" node. It removes the special
+case for "is this the first append?" because <code>tail</code> always points somewhere valid:</p>
+<pre><code>dummy = ListNode(); tail = dummy
+<span class="tok-kw">while</span> condition:
+    tail.next = new_node
+    tail = tail.next
+<span class="tok-kw">return</span> dummy.next</code></pre>
+<p>This is the whole trick behind merge-two-sorted-lists: walk both lists, always append the
+smaller head to <code>tail</code>, and let the dummy absorb the "empty result" edge case.</p>
+
+<h3>Fast &amp; slow pointers</h3>
+<p>One pointer moves 1 step, the other 2. When <code>fast</code> hits the end,
+<code>slow</code> is at the middle — one pass, O(1) space, no length precomputation:</p>
+<pre><code>slow = fast = head
+<span class="tok-kw">while</span> fast <span class="tok-kw">and</span> fast.next:
+    slow = slow.next
+    fast = fast.next.next
+<span class="tok-cmt"># slow = middle (second middle if even length)</span></code></pre>
+
+<h3>Floyd's cycle detection</h3>
+<p>Same two pointers, different question: if the list has a cycle, slow and fast <em>must</em>
+eventually coincide inside it — once both are in the cycle, the gap between them shrinks by
+exactly 1 each step, so it reaches 0; if there's no cycle, <code>fast</code> falls off the end.
+That's the whole proof, and interviewers love hearing it stated that plainly.</p>
+<p>The follow-up to expect: <em>"where does the cycle start?"</em> Once they meet, reset
+<code>slow</code> to <code>head</code> and advance both by 1 — they collide exactly at the cycle
+entry. Know that this works (and that the proof is a two-line algebra argument about the meeting
+distance) even if you don't re-derive it live.</p>
+
+<div class="callout warn">
+  <div class="callout-title">Linked lists in Python interviews</div>
+  Python has no built-in linked list, and interviewers know it — they'll hand you the
+  <code>ListNode</code> class or expect you to define one in 3 lines. Don't reach for
+  <code>list</code> and index math; the exercise is explicitly about pointer manipulation.
+</div>
+
+<h2>Digit manipulation</h2>
+<pre><code>n = 12345
+last  = n % 10        <span class="tok-cmt"># 5</span>
+rest  = n // 10       <span class="tok-cmt"># 1234</span>
+ndig  = len(str(n))   <span class="tok-cmt"># 5 (or count by loop with //10)</span></code></pre>
+<div class="callout warn">
+  <div class="callout-title">Signed integers: Python's % is not C's %</div>
+  Python's <code>%</code> always returns a result with the divisor's sign (<code>-7 % 10 == 3</code>).
+  C/Java's <code>%</code> keeps the dividend's sign (<code>-7 % 10 == -7</code>). When a problem
+  was clearly written for the latter (e.g., reverse-integer with negative inputs), use
+  <code>math.fmod(x, 10)</code> — or strip the sign first and restore it at the end.
+</div>
+
+<h2>Primes &amp; the Sieve of Eratosthenes</h2>
+<p>Single-number test in O(√n):</p>
+<pre><code><span class="tok-kw">def</span> <span class="tok-fn">is_prime</span>(n):
+    <span class="tok-kw">if</span> n &lt; 2: <span class="tok-kw">return</span> <span class="tok-kw">False</span>
+    <span class="tok-kw">if</span> n &lt; 4: <span class="tok-kw">return</span> <span class="tok-kw">True</span>
+    <span class="tok-kw">if</span> n % 2 == 0: <span class="tok-kw">return</span> <span class="tok-kw">False</span>
+    <span class="tok-kw">for</span> i <span class="tok-kw">in</span> range(3, int(n**0.5) + 1, 2):
+        <span class="tok-kw">if</span> n % i == 0: <span class="tok-kw">return</span> <span class="tok-kw">False</span>
+    <span class="tok-kw">return</span> <span class="tok-kw">True</span></code></pre>
+<p>All primes below n in O(n log log n) — the Sieve:</p>
+<pre><code>is_prime = [<span class="tok-kw">True</span>] * n
+is_prime[0] = is_prime[1] = <span class="tok-kw">False</span>
+<span class="tok-kw">for</span> i <span class="tok-kw">in</span> range(2, int(n**0.5) + 1):
+    <span class="tok-kw">if</span> is_prime[i]:
+        <span class="tok-kw">for</span> j <span class="tok-kw">in</span> range(i*i, n, i):
+            is_prime[j] = <span class="tok-kw">False</span></code></pre>
+<p><em>Why start the inner loop at i*i?</em> Smaller multiples of i (2i, 3i, …, (i−1)·i) were
+already marked by smaller primes (2, 3, …, i−1). Saying this unprompted is a strong signal —
+it shows you know <em>why</em> the sieve is fast, not just its shape.</p>
+
+<h2>GCD &amp; the Euclidean algorithm</h2>
+<pre><code><span class="tok-kw">def</span> <span class="tok-fn">gcd</span>(a, b):
+    <span class="tok-kw">while</span> b: a, b = b, a % b
+    <span class="tok-kw">return</span> a
+<span class="tok-cmt"># lcm(a, b) = abs(a*b) // gcd(a, b)</span></code></pre>
+<p>The principle: <code>gcd(a, b) = gcd(b, a mod b)</code>. The remainder strictly decreases until
+0, so termination is guaranteed — and fast, O(log min(a, b)).</p>
+
+<h2>Modular arithmetic &amp; fast power</h2>
+<p>You'll see <code>mod = 10**9 + 7</code> in many problems: it prevents overflow in fixed-width
+languages and pins a unique answer. The identity that makes it work:
+<code>(a · b) % m = ((a % m) · (b % m)) % m</code> — you may reduce at every step.</p>
+<p>For big exponents, <strong>square-and-multiply</strong> computes base<sup>exp</sup> mod m in
+O(log exp) — peel the exponent's bits from the right:</p>
+<pre><code><span class="tok-kw">def</span> <span class="tok-fn">power_mod</span>(base, exp, m):
+    result = 1
+    base %= m
+    <span class="tok-kw">while</span> exp:
+        <span class="tok-kw">if</span> exp &amp; 1:          <span class="tok-cmt"># this bit is set → multiply it in</span>
+            result = result * base % m
+        base = base * base % m   <span class="tok-cmt"># square for the next bit</span>
+        exp &gt;&gt;= 1
+    <span class="tok-kw">return</span> result</code></pre>
+<p>(Python's built-in <code>pow(base, exp, m)</code> does exactly this — mention it, then write
+the loop anyway; the loop is what's being tested.)</p>
+
+<h2>Bit manipulation tricks</h2>
+<table class="tbl">
+  <tr><th>Trick</th><th>Code</th></tr>
+  <tr><td>Is n a power of 2?</td><td><code>n &gt; 0 and (n &amp; (n-1)) == 0</code></td></tr>
+  <tr><td>Lowest set bit value</td><td><code>n &amp; -n</code></td></tr>
+  <tr><td>Clear lowest set bit</td><td><code>n &amp;= n - 1</code></td></tr>
+  <tr><td>Count set bits (Hamming weight)</td><td>Repeatedly clear lowest bit until 0</td></tr>
+  <tr><td>XOR identities</td><td><code>a ^ a = 0</code>, <code>a ^ 0 = a</code>, order-independent</td></tr>
+</table>
+<p>Why <code>n &amp; (n-1)</code> clears the lowest set bit: subtracting 1 flips the lowest set bit
+to 0 and everything below it to 1s; AND-ing wipes the whole tail. So the loop
+<code>while n: n &amp;= n-1; count += 1</code> runs once <em>per set bit</em>, not once per bit.</p>
+<p>The XOR identities are the entire trick behind "every element appears twice except one":
+XOR everything together; pairs cancel; the loner survives — O(n) time, O(1) space, and the
+interviewer's follow-up ("no extra memory?") is already answered.</p>
+`
+      },
+      {
+        kind: "mcq",
+        q: "In the sieve of Eratosthenes, why can the inner loop start at i*i instead of 2*i?",
+        options: [
+          { label: "Because smaller multiples of i were already marked by smaller primes", correct: true },
+          { label: "Because multiples below i² are always prime" },
+          { label: "It's just an arbitrary constant-factor optimization that skips nothing" },
+          { label: "Because i² is the largest factor of i" },
+        ],
+        explain:
+          "Every composite k·i with k < i has a prime factor ≤ k < i, so it was crossed out when " +
+          "that smaller prime's loop ran. i² is the first multiple whose smallest prime factor is i itself.",
+      },
+      {
+        kind: "mcq",
+        q: "What does the expression n & (n - 1) evaluate to?",
+        options: [
+          { label: "n with its lowest set bit cleared", correct: true },
+          { label: "n with its highest set bit cleared" },
+          { label: "The lowest set bit of n, isolated" },
+          { label: "n divided by 2, rounded down" },
+        ],
+        explain:
+          "n-1 flips the lowest set bit to 0 and all bits below it to 1; the AND keeps everything " +
+          "above untouched and zeroes the rest. (The isolated lowest bit is n & -n.) That's also why " +
+          "n & (n-1) == 0 tests for powers of two.",
+      },
+      {
+        kind: "mcq",
+        q: "Floyd's cycle detection: why must slow and fast meet if the list has a cycle?",
+        options: [
+          { label: "Once both are inside the cycle, their gap shrinks by exactly 1 per step, so it reaches 0", correct: true },
+          { label: "Because fast visits every node twice" },
+          { label: "They only meet if the cycle length is even" },
+          { label: "Because both started at the same node" },
+        ],
+        explain:
+          "Relative to slow, fast gains one position per step. Inside a cycle of length C the gap is " +
+          "some value g ≤ C, and it decreases 1 per step mod C — it hits 0 in at most C steps. Parity " +
+          "doesn't matter; that's the beauty of the +1 relative speed.",
+      },
+      {
+        kind: "html",
+        html: `
+<h2>Where this shows up in the interview</h2>
+<ul>
+  <li><strong>Warm-up problem</strong>: reverse a list / middle node / has-cycle are common
+    openers before the "real" question — botching one costs credibility cheaply.</li>
+  <li><strong>Space follow-ups</strong>: "can you do it without the hash set?" — the intended
+    answers are usually Floyd (cycles), XOR (duplicates), or in-place pointer surgery.</li>
+  <li><strong>The LRU-cache bridge</strong>: Module 15's LRU design welds a hash map onto a
+    doubly linked list — the pointer discipline you drill here is exactly what makes that
+    O(1) eviction believable on a whiteboard.</li>
+</ul>
+
+<div class="callout good">
+  <div class="callout-title">Practice Set 2b</div>
+  Eight questions below: four linked-list (reverse, middle, cycle, merge) and four number-craft
+  (Hamming weight, XOR loner, prime sieve, fast modular power). All runnable, all fair game for
+  the Final Exam. If you can do all eight from memory, this gap is closed.
 </div>
 `
       },
@@ -2612,4 +2866,4 @@ Every decision traces back to a read/write-ratio sentence — that's the pattern
 
 };
 
-window.MODULE_ORDER = ["M1", "M2", "M3", "M4", "M5", "M6", "M7", "M8", "M9", "M10", "M11", "M12", "M13", "M14", "M15"];
+window.MODULE_ORDER = ["M1", "M2", "M2B", "M3", "M4", "M5", "M6", "M7", "M8", "M9", "M10", "M11", "M12", "M13", "M14", "M15"];

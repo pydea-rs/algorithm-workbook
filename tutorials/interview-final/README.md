@@ -5,13 +5,16 @@ recruitment stage): two algorithm problems plus one SQL / database-design task, 
 in the language of your choice. Built on the same framework as `../algorithms/`, with new
 content and a heavier question bank.
 
-- **15 modules**: stage-1 recap (M1), live-coding craft (M2), algorithm deep dives (M3–M11),
+- **16 modules**: stage-1 recap (M1), live-coding craft incl. day-of-interview checklist (M2),
+  stage-1 gap patch — linked lists, math & bits (M2b), algorithm deep dives (M3–M11),
   SQL deep dive (M12), database design & indexes (M13), OOP & design patterns (M14),
-  application-level system design (M15) — with 36 inline concept-check MCQs
-- **13 Practice Sets** (PS3–PS15), one per deep-dive module
-- **65 questions** (F01–F65): 47 Python/JS coding, 7 runnable SQL, 11 discussion/design
-- **Final Exam** dealing 12 random questions from a curated 27-question pool
-  (runnable-only, ~2 algorithm : 1 SQL — the real interview's ratio; topic tags hidden)
+  application-level system design (M15) — with 39 inline concept-check MCQs
+- **16 Practice Sets** (PS1–PS15, incl. PS2b) — every module has one, including the recap
+  (PS1 drills each stage-1 pillar) and the craft chapter (PS2: easy problems to run the
+  6-step template on)
+- **82 questions** (F01–F82): 63 Python/JS coding, 8 runnable SQL, 11 discussion/design
+- **Final Exam** dealing 12 questions from a curated 43-question pool — stratified to always
+  give **8 algorithm + 4 SQL** (the real interview's 2:1 ratio, exactly; topic tags hidden)
 - **Live runners**: Python (Pyodide) + JavaScript in a **Web Worker** with
   terminate-on-timeout, SQL against a real in-browser SQLite (sql.js)
 - **Timers**: an optional per-question timer that rates you against each question's time
@@ -36,8 +39,8 @@ from CDNs and some browsers restrict `file://` network access.
 
 | Type | Card | Counts as solved |
 |---|---|---|
-| `python` (47) | full workbench, Python/JS language toggle, hidden tests | all tests pass (either language), or manual **Mark solved** |
-| `sql` with fixture (7) | SQL workbench against seeded SQLite, expected-table diff | all fixtures pass, or manual mark |
+| `python` (63) | full workbench, Python/JS language toggle, hidden tests | all tests pass (either language), or manual **Mark solved** |
+| `sql` with fixture (8) | SQL workbench against seeded SQLite, expected-table diff | all fixtures pass, or manual mark |
 | `design` (11) | statement + **Reveal approach** (no sandbox — think first, then compare) | manual **Mark solved** only |
 
 Design questions (schema design, OOD, system design) are deliberately sandbox-free: the skill
@@ -48,8 +51,9 @@ excluded from the Final Exam pool, since the exam scoreboard tracks passing test
 
 | Modules | Theme |
 |---|---|
-| M1 | Compressed recap of the stage-1 algorithms tutorial |
-| M2 | Live-coding craft: the 6-step template, narration, hints, pacing a 3-hour session |
+| M1 | Compressed recap of the stage-1 algorithms tutorial (+ PS1 drills, one per pillar) |
+| M2 | Live-coding craft: the 6-step template, narration, hints, pacing, day-of checklist |
+| M2b | Stage-1 gap patch: linked-list pointer surgery, primes/GCD/modular math, bit tricks |
 | M3–M8 | Arrays & windows, hashing, backtracking, binary search, trees, graphs — advanced tier |
 | M9–M11 | Dynamic programming, greedy & intervals, heaps (with a from-memory JS MinHeap) |
 | M12–M13 | SQL deep dive (joins, windows, NULL traps) and DB design & indexes (incl. clustered vs non-clustered — reported verbatim from this interview) |
@@ -62,9 +66,9 @@ tutorials/interview-final/
 ├── index.html        # Page shell: sidebar, topbar, modals
 ├── styles.css        # Theming via CSS variables + animations
 ├── app.js            # Controller: nav, routing, exam, timers, progress
-├── content.js        # 15 modules (HTML body blocks + MCQs)
-├── questions.js      # 65 questions incl. SQL fixtures + design writeups + exam pool
-├── questions-js.js   # JavaScript sidecar solutions for the 47 coding questions
+├── content.js        # 16 modules (HTML body blocks + MCQs)
+├── questions.js      # 82 questions incl. SQL fixtures + design writeups + exam pool
+├── questions-js.js   # JavaScript sidecar solutions for the 63 coding questions
 ├── runner.js         # Main thread: worker orchestration + SQL runner (sql.js)
 ├── runner-worker.js  # Web Worker: Pyodide + JS execution, terminate-on-timeout
 └── README.md         # This file

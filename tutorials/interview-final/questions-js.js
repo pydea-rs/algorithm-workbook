@@ -1384,6 +1384,346 @@ function deserialize(data) {
 }`,
   };
 
+  // ============ F66 — Two Sum, Unsorted ============
+  J.F66 = {
+    functionName: "twoSum",
+    signature: "function twoSum(nums: number[], target: number): number[]",
+    starter:
+`function twoSum(nums, target) {
+}
+`,
+    solution:
+`function twoSum(nums, target) {
+  const seen = new Map();            // value -> index
+  for (let i = 0; i < nums.length; i++) {
+    const j = seen.get(target - nums[i]);
+    if (j !== undefined) return [j, i];
+    seen.set(nums[i], i);            // check-before-insert: duplicates work
+  }
+  return [];
+}`,
+  };
+
+  // ============ F67 — Valid Brackets ============
+  J.F67 = {
+    functionName: "isBalanced",
+    signature: "function isBalanced(s: string): boolean",
+    starter:
+`function isBalanced(s) {
+}
+`,
+    solution:
+`function isBalanced(s) {
+  const pairs = { ")": "(", "]": "[", "}": "{" };
+  const stack = [];
+  for (const ch of s) {
+    if (ch in pairs) {
+      if (!stack.length || stack.pop() !== pairs[ch]) return false;
+    } else {
+      stack.push(ch);
+    }
+  }
+  return stack.length === 0;
+}`,
+  };
+
+  // ============ F68 — First Unique Character ============
+  J.F68 = {
+    functionName: "firstUnique",
+    signature: "function firstUnique(s: string): number",
+    starter:
+`function firstUnique(s) {
+}
+`,
+    solution:
+`function firstUnique(s) {
+  const counts = new Map();
+  for (const ch of s) counts.set(ch, (counts.get(ch) || 0) + 1);
+  for (let i = 0; i < s.length; i++) {
+    if (counts.get(s[i]) === 1) return i;
+  }
+  return -1;
+}`,
+  };
+
+  // ============ F69 — Search Insert Position ============
+  J.F69 = {
+    functionName: "searchInsert",
+    signature: "function searchInsert(nums: number[], target: number): number",
+    starter:
+`function searchInsert(nums, target) {
+}
+`,
+    solution:
+`function searchInsert(nums, target) {
+  let lo = 0, hi = nums.length - 1;
+  while (lo <= hi) {
+    const mid = (lo + hi) >> 1;
+    if (nums[mid] === target) return mid;
+    if (nums[mid] < target) lo = mid + 1;
+    else hi = mid - 1;
+  }
+  return lo;   // invariant: everything left of lo is < target
+}`,
+  };
+
+  // ============ F70 — Best Window of Size K ============
+  J.F70 = {
+    functionName: "maxWindowSum",
+    signature: "function maxWindowSum(nums: number[], k: number): number",
+    starter:
+`function maxWindowSum(nums, k) {
+}
+`,
+    solution:
+`function maxWindowSum(nums, k) {
+  let window = 0;
+  for (let i = 0; i < k; i++) window += nums[i];
+  let best = window;               // NOT 0 — all-negative arrays exist
+  for (let i = k; i < nums.length; i++) {
+    window += nums[i] - nums[i - k];
+    if (window > best) best = window;
+  }
+  return best;
+}`,
+  };
+
+  // ============ F72 — FizzBuzz ============
+  J.F72 = {
+    functionName: "fizzBuzz",
+    signature: "function fizzBuzz(n: number): string[]",
+    starter:
+`function fizzBuzz(n) {
+}
+`,
+    solution:
+`function fizzBuzz(n) {
+  const out = [];
+  for (let i = 1; i <= n; i++) {
+    let s = "";
+    if (i % 3 === 0) s += "Fizz";
+    if (i % 5 === 0) s += "Buzz";
+    out.push(s || String(i));
+  }
+  return out;
+}`,
+  };
+
+  // ============ F73 — Run-Length Encoding ============
+  J.F73 = {
+    functionName: "rle",
+    signature: "function rle(s: string): string",
+    starter:
+`function rle(s) {
+}
+`,
+    solution:
+`function rle(s) {
+  if (!s) return "";
+  const out = [];
+  let runChar = s[0], runLen = 1;
+  for (let i = 1; i < s.length; i++) {
+    if (s[i] === runChar) {
+      runLen++;
+    } else {
+      out.push(runChar + runLen);
+      runChar = s[i]; runLen = 1;
+    }
+  }
+  out.push(runChar + runLen);   // flush the final run!
+  return out.join("");
+}`,
+  };
+
+  // ============ F74 — Missing Number ============
+  J.F74 = {
+    functionName: "missingNumber",
+    signature: "function missingNumber(nums: number[]): number",
+    starter:
+`function missingNumber(nums) {
+}
+`,
+    solution:
+`function missingNumber(nums) {
+  const n = nums.length;
+  let sum = 0;
+  for (const x of nums) sum += x;
+  return (n * (n + 1)) / 2 - sum;
+}`,
+  };
+
+  // ============ F75 — Reverse a Linked List ============
+  J.F75 = {
+    functionName: "reverseList",
+    signature: "function reverseList(head: ListNode | null): ListNode | null",
+    starter:
+`function reverseList(head) {
+  // head is a ListNode (or null); fields: val, next
+}
+`,
+    solution:
+`function reverseList(head) {
+  let prev = null, curr = head;
+  while (curr) {
+    const nxt = curr.next;   // save the rope before cutting it
+    curr.next = prev;
+    prev = curr; curr = nxt;
+  }
+  return prev;
+}`,
+    testsPrepare: "args = [_build_list(args[0])];",
+    testsTransform: "result = _linked_to_list(result);",
+  };
+
+  // ============ F76 — Middle of the Linked List ============
+  J.F76 = {
+    functionName: "middleNode",
+    signature: "function middleNode(head: ListNode): ListNode",
+    starter:
+`function middleNode(head) {
+}
+`,
+    solution:
+`function middleNode(head) {
+  let slow = head, fast = head;
+  while (fast && fast.next) {
+    slow = slow.next;
+    fast = fast.next.next;
+  }
+  return slow;
+}`,
+    testsPrepare: "args = [_build_list(args[0])];",
+    testsTransform: "result = _linked_to_list(result);",
+  };
+
+  // ============ F77 — Linked List Cycle ============
+  J.F77 = {
+    functionName: "hasCycle",
+    signature: "function hasCycle(head: ListNode | null): boolean",
+    starter:
+`function hasCycle(head) {
+}
+`,
+    solution:
+`function hasCycle(head) {
+  let slow = head, fast = head;
+  while (fast && fast.next) {
+    slow = slow.next;
+    fast = fast.next.next;
+    if (slow === fast) return true;   // node identity, not value equality
+  }
+  return false;
+}`,
+    testsPrepare: "args = [_build_list_with_cycle(args[0], args[1])];",
+  };
+
+  // ============ F78 — Merge Two Sorted Lists ============
+  J.F78 = {
+    functionName: "mergeLists",
+    signature: "function mergeLists(a: ListNode | null, b: ListNode | null): ListNode | null",
+    starter:
+`function mergeLists(a, b) {
+}
+`,
+    solution:
+`function mergeLists(a, b) {
+  const dummy = new ListNode();
+  let tail = dummy;
+  while (a && b) {
+    if (a.val <= b.val) { tail.next = a; a = a.next; }
+    else                { tail.next = b; b = b.next; }
+    tail = tail.next;
+  }
+  tail.next = a || b;      // the leftover list is already sorted
+  return dummy.next;
+}`,
+    testsPrepare: "args = [_build_list(args[0]), _build_list(args[1])];",
+    testsTransform: "result = _linked_to_list(result);",
+  };
+
+  // ============ F79 — Hamming Weight ============
+  J.F79 = {
+    functionName: "hammingWeight",
+    signature: "function hammingWeight(n: number): number",
+    starter:
+`function hammingWeight(n) {
+}
+`,
+    solution:
+`function hammingWeight(n) {
+  let count = 0;
+  while (n) {
+    n &= n - 1;    // clear the lowest set bit
+    count++;
+  }
+  return count;
+}`,
+  };
+
+  // ============ F80 — Single Number ============
+  J.F80 = {
+    functionName: "singleNumber",
+    signature: "function singleNumber(nums: number[]): number",
+    starter:
+`function singleNumber(nums) {
+}
+`,
+    solution:
+`function singleNumber(nums) {
+  let acc = 0;
+  for (const x of nums) acc ^= x;
+  return acc;
+}`,
+  };
+
+  // ============ F81 — Count Primes ============
+  J.F81 = {
+    functionName: "countPrimes",
+    signature: "function countPrimes(n: number): number",
+    starter:
+`function countPrimes(n) {
+}
+`,
+    solution:
+`function countPrimes(n) {
+  if (n < 3) return 0;
+  const isPrime = new Array(n).fill(true);
+  isPrime[0] = isPrime[1] = false;
+  for (let i = 2; i * i < n; i++) {
+    if (isPrime[i]) {
+      for (let j = i * i; j < n; j += i) isPrime[j] = false;
+    }
+  }
+  let count = 0;
+  for (const p of isPrime) if (p) count++;
+  return count;
+}`,
+  };
+
+  // ============ F82 — Fast Modular Power ============
+  J.F82 = {
+    functionName: "powerMod",
+    signature: "function powerMod(base: number, exp: number, mod: number): number",
+    starter:
+`function powerMod(base, exp, mod) {
+}
+`,
+    solution:
+`function powerMod(base, exp, mod) {
+  // BigInt keeps base*base exact past 2^53 (e.g. squaring near 10^9+7)
+  let result = 1n;
+  let b = BigInt(base) % BigInt(mod);
+  let e = BigInt(exp);
+  const m = BigInt(mod);
+  while (e) {
+    if (e & 1n) result = result * b % m;
+    b = b * b % m;
+    e >>= 1n;
+  }
+  return Number(result);
+}`,
+  };
+
   // =================================================================
   // Apply all impls to window.QUESTIONS
   // =================================================================

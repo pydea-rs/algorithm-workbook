@@ -102,13 +102,15 @@ workbook shell.
 Prep for the 3-hour live technical interview (Odoo's final recruitment stage). Reuses the
 algorithms framework — Python/JS/SQL sandboxes, practice sets, final exam — with new content:
 
-- **15 modules**: a stage-1 recap, a live-coding-craft chapter, algorithm deep dives at
+- **16 modules**: a stage-1 recap, a live-coding-craft chapter (with a day-of-interview
+  checklist), a stage-1 gap patch (linked lists, math & bits — M2b), algorithm deep dives at
   medium/hard difficulty (M3–M11), SQL and database-design deep dives (M12–M13), OOP &
   design patterns (M14), and application-level system design (M15).
-- **65 questions** across 13 practice sets: 47 Python/JS coding, 7 runnable SQL, and 11
-  reveal-solution design questions (schema design, OOD, system design).
-- A **Final Exam** dealing 12 random questions from a curated runnable-only pool, in
-  roughly the real interview's 2-algorithms-to-1-SQL ratio.
+- **82 questions** across 16 practice sets (every module has one, including the recap):
+  63 Python/JS coding, 8 runnable SQL, and 11 reveal-solution design questions
+  (schema design, OOD, system design).
+- A **Final Exam** dealing 12 questions from a curated 43-question runnable-only pool,
+  stratified to always give 8 algorithm + 4 SQL — the real interview's 2:1 ratio.
 - Per-question **timers** rated against each question's time budget, plus a global exam
   timer with recorded sessions.
 

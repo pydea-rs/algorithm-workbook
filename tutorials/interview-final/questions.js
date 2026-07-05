@@ -4154,12 +4154,892 @@ WHY EACH PATTERN EARNS ITS PLACE (the actual question)
       "scheduling, so expect sharp follow-ups here.</p>",
   },
 
+  // ============================================================
+  // PS1 — M1 RECAP: stage-1 classics with fresh values
+  // ============================================================
+
+  F66: {
+    id: "F66",
+    title: "Two Sum, Unsorted",
+    difficulty: "Easy",
+    time: "5-8 min",
+    tags: ["Array", "Hash Map", "Recap"],
+    type: "python",
+    statement:
+      "Write <code>two_sum(nums, target)</code> — return the <em>indices</em> of the two numbers " +
+      "that add up to <code>target</code>, as a list in increasing order. Exactly one valid pair " +
+      "exists; you may not use the same element twice. The stage-1 opener: one pass, a hash map " +
+      "from value to index, check <code>target - x</code> before inserting x.",
+    examples:
+      "Input:  nums=[3,9,12,20], target=32   -> [2, 3]   (12 + 20)\n" +
+      "Input:  nums=[7,2,5],     target=9    -> [0, 1]   (7 + 2)\n" +
+      "Input:  nums=[-4,1,8],    target=4    -> [0, 2]   (-4 + 8)\n" +
+      "Input:  nums=[5,5,3],     target=10   -> [0, 1]   (duplicates are two different indices)",
+    hint: "seen = {value: index}. For each x at i, if target-x is in seen you're done; otherwise store x. Checking before inserting is what makes the duplicate case work.",
+    functionName: "two_sum",
+    signature: "two_sum(nums: list[int], target: int) -> list[int]",
+    starter:
+      "def two_sum(nums, target):\n" +
+      "    pass\n",
+    solution:
+`def two_sum(nums, target):
+    seen = {}                      # value -> index
+    for i, x in enumerate(nums):
+        j = seen.get(target - x)
+        if j is not None:
+            return [j, i]          # j was stored earlier, so j < i
+        seen[x] = i                # not found yet: remember this value
+    return []`,
+    explanation:
+      "O(n) time, O(n) space, one pass. The check-before-insert order matters twice: it makes " +
+      "[5,5] with target 10 work (the second 5 finds the first), and it prevents matching an " +
+      "element with itself. Follow-up to expect: 'what if the array is sorted?' — then two " +
+      "pointers from both ends give O(1) space, which is stage-1 Module 5 material.",
+    tests: [
+      { args: [[3, 9, 12, 20], 32], expected: [2, 3] },
+      { args: [[7, 2, 5], 9], expected: [0, 1] },
+      { args: [[-4, 1, 8], 4], expected: [0, 2] },
+      { args: [[5, 5, 3], 10], expected: [0, 1] },
+      { args: [[1, 2], 3], expected: [0, 1] },
+      { args: [[10, 26, 30, 31, 47, 60], 40], expected: [0, 2] },
+    ],
+  },
+
+  F67: {
+    id: "F67",
+    title: "Valid Brackets",
+    difficulty: "Easy",
+    time: "5-8 min",
+    tags: ["Stack", "Parsing", "Recap"],
+    type: "python",
+    statement:
+      "Write <code>is_balanced(s)</code> — given a string of only <code>()[]{}</code>, return " +
+      "whether every opener is closed by the matching closer in the right order. The stage-1 " +
+      "stack classic: push openers, pop-and-match on closers, and don't forget the two sneaky " +
+      "failure modes (closer with an empty stack, and leftovers at the end).",
+    examples:
+      "Input:  \"([]{})\"  -> True\n" +
+      "Input:  \"([)]\"    -> False  (interleaved)\n" +
+      "Input:  \"(((\"     -> False  (unclosed leftovers)\n" +
+      "Input:  \")(\"      -> False  (closer first)\n" +
+      "Input:  \"\"        -> True",
+    hint: "pairs = {')':'(', ']':'[', '}':'{'}. On a closer, the stack must be non-empty AND its top must match. At the end, the stack must be empty.",
+    functionName: "is_balanced",
+    signature: "is_balanced(s: str) -> bool",
+    starter:
+      "def is_balanced(s):\n" +
+      "    pass\n",
+    solution:
+`def is_balanced(s):
+    pairs = {')': '(', ']': '[', '}': '{'}
+    stack = []
+    for ch in s:
+        if ch in pairs:
+            if not stack or stack.pop() != pairs[ch]:
+                return False
+        else:
+            stack.append(ch)
+    return not stack`,
+    explanation:
+      "O(n) time, O(n) space. The three ways to fail — mismatched top, empty stack on a closer, " +
+      "non-empty stack at the end — are exactly the three edge cases to narrate out loud. " +
+      "Follow-ups: 'minimum removals to make it valid' (count the failures instead of bailing) " +
+      "and 'longest valid substring' (stack of indices).",
+    tests: [
+      { args: ["([]{})"], expected: true },
+      { args: ["([)]"], expected: false },
+      { args: ["((("], expected: false },
+      { args: [")("], expected: false },
+      { args: [""], expected: true },
+      { args: ["{[()]}"], expected: true },
+      { args: ["[]{}()"], expected: true },
+      { args: ["(]"], expected: false },
+    ],
+  },
+
+  F68: {
+    id: "F68",
+    title: "First Unique Character",
+    difficulty: "Easy",
+    time: "5-8 min",
+    tags: ["String", "Hash Map", "Counting", "Recap"],
+    type: "python",
+    statement:
+      "Write <code>first_unique(s)</code> — return the index of the first character that appears " +
+      "exactly once in <code>s</code>, or <code>-1</code> if there is none. Case-sensitive. " +
+      "Two passes: count everything first, then scan for the first count-1 character — resist " +
+      "the O(n²) urge to call <code>s.count(ch)</code> inside the loop.",
+    examples:
+      "Input:  \"odoocode\"   -> 4    ('c' — every o, d, e repeats)\n" +
+      "Input:  \"interview\"  -> 1    ('n')\n" +
+      "Input:  \"aabbcc\"     -> -1\n" +
+      "Input:  \"z\"          -> 0",
+    hint: "collections.Counter(s) in pass 1; then enumerate(s) and return the first i with count 1.",
+    functionName: "first_unique",
+    signature: "first_unique(s: str) -> int",
+    starter:
+      "def first_unique(s):\n" +
+      "    pass\n",
+    solution:
+`def first_unique(s):
+    from collections import Counter
+    counts = Counter(s)
+    for i, ch in enumerate(s):
+        if counts[ch] == 1:
+            return i
+    return -1`,
+    explanation:
+      "O(n) time, O(k) space where k is the alphabet size. The interview point is recognizing " +
+      "that s.count(ch) in a loop is O(n²) and saying so before the interviewer asks. " +
+      "Order matters in pass 2 — you scan the *string*, not the counter, because dict order " +
+      "reflects insertion, not position of the unique character.",
+    tests: [
+      { args: ["odoocode"], expected: 4 },
+      { args: ["interview"], expected: 1 },
+      { args: ["aabbcc"], expected: -1 },
+      { args: ["z"], expected: 0 },
+      { args: [""], expected: -1 },
+      { args: ["abcabcx"], expected: 6 },
+      { args: ["aA"], expected: 0 },
+    ],
+  },
+
+  F69: {
+    id: "F69",
+    title: "Search Insert Position",
+    difficulty: "Easy",
+    time: "5-10 min",
+    tags: ["Binary Search", "Recap"],
+    type: "python",
+    statement:
+      "Write <code>search_insert(nums, target)</code> — <code>nums</code> is sorted ascending " +
+      "with distinct values; return the index of <code>target</code> if present, otherwise the " +
+      "index where it would be inserted to keep the order. O(log n) required. This is the " +
+      "lower-bound binary search — the template with <code>lo &lt; hi</code> and a half-open " +
+      "interval, or the classic inclusive template plus 'return lo'.",
+    examples:
+      "Input:  nums=[1,3,5,6], target=5  -> 2\n" +
+      "Input:  nums=[1,3,5,6], target=2  -> 1\n" +
+      "Input:  nums=[1,3,5,6], target=7  -> 4\n" +
+      "Input:  nums=[],        target=3  -> 0",
+    hint: "Inclusive template: lo, hi = 0, len(nums)-1; when the loop ends without finding, lo is exactly the insertion point. (Or: bisect_left does precisely this — name it, then write the loop.)",
+    functionName: "search_insert",
+    signature: "search_insert(nums: list[int], target: int) -> int",
+    starter:
+      "def search_insert(nums, target):\n" +
+      "    pass\n",
+    solution:
+`def search_insert(nums, target):
+    lo, hi = 0, len(nums) - 1
+    while lo <= hi:
+        mid = (lo + hi) // 2
+        if nums[mid] == target:
+            return mid
+        if nums[mid] < target:
+            lo = mid + 1
+        else:
+            hi = mid - 1
+    return lo   # loop invariant: everything < lo is smaller than target`,
+    explanation:
+      "The 'return lo' line is the whole question: when the loop exits, lo has crossed hi, and " +
+      "the invariant (everything left of lo < target, everything right of hi > target) makes lo " +
+      "the insertion point. If you can explain that invariant you've proven you understand the " +
+      "template rather than memorized it — which is what the live interviewer is probing.",
+    tests: [
+      { args: [[1, 3, 5, 6], 5], expected: 2 },
+      { args: [[1, 3, 5, 6], 2], expected: 1 },
+      { args: [[1, 3, 5, 6], 7], expected: 4 },
+      { args: [[1, 3, 5, 6], 0], expected: 0 },
+      { args: [[], 3], expected: 0 },
+      { args: [[1], 0], expected: 0 },
+      { args: [[1], 2], expected: 1 },
+    ],
+  },
+
+  F70: {
+    id: "F70",
+    title: "Best Window of Size K",
+    difficulty: "Easy",
+    time: "5-10 min",
+    tags: ["Sliding Window", "Recap"],
+    type: "python",
+    statement:
+      "Write <code>max_window_sum(nums, k)</code> — the maximum sum of any contiguous run of " +
+      "exactly <code>k</code> elements (1 ≤ k ≤ len(nums)). The fixed-size window recap: compute " +
+      "the first window once, then slide — add the entering element, subtract the leaving one. " +
+      "Recomputing each window from scratch is the O(n·k) trap.",
+    examples:
+      "Input:  nums=[2,1,5,1,3,2], k=3   -> 9    (5+1+3)\n" +
+      "Input:  nums=[1,-2,3,4,-1], k=2   -> 7    (3+4)\n" +
+      "Input:  nums=[-3,-1,-2],    k=2   -> -3   (all-negative: initialize best to the FIRST window, not 0)",
+    hint: "window = sum(nums[:k]); best = window; then for i in range(k, len(nums)): window += nums[i] - nums[i-k]. Initializing best = 0 is the all-negatives bug.",
+    functionName: "max_window_sum",
+    signature: "max_window_sum(nums: list[int], k: int) -> int",
+    starter:
+      "def max_window_sum(nums, k):\n" +
+      "    pass\n",
+    solution:
+`def max_window_sum(nums, k):
+    window = sum(nums[:k])
+    best = window
+    for i in range(k, len(nums)):
+        window += nums[i] - nums[i - k]
+        if window > best:
+            best = window
+    return best`,
+    explanation:
+      "O(n) time, O(1) space. The narrated insight: consecutive windows overlap in k-1 elements, " +
+      "so the delta is one in, one out. The classic bug is best = 0 — dead wrong when every " +
+      "element is negative; initialize from the first real window. This warm-up is the base of " +
+      "Module 3's variable-size windows, where 'exactly k' becomes an invariant you maintain.",
+    tests: [
+      { args: [[2, 1, 5, 1, 3, 2], 3], expected: 9 },
+      { args: [[1, -2, 3, 4, -1], 2], expected: 7 },
+      { args: [[-3, -1, -2], 2], expected: -3 },
+      { args: [[5], 1], expected: 5 },
+      { args: [[4, 4, 4, 4], 4], expected: 16 },
+      { args: [[9, -1, -3, 8], 1], expected: 9 },
+    ],
+  },
+
+  F71: {
+    id: "F71",
+    title: "SQL Recap — Department Headcount & Average",
+    difficulty: "Easy",
+    time: "8-12 min",
+    tags: ["SQL", "GROUP BY", "HAVING", "Recap"],
+    type: "sql",
+    statement:
+      "Table <code>employees(id, name, dept, salary)</code>. For every department with " +
+      "<strong>at least 2 employees</strong>, return the department name, its headcount and its " +
+      "average salary — columns <code>dept</code>, <code>headcount</code>, <code>avg_salary</code>, " +
+      "ordered by average salary descending. The stage-1 SQL staples in one query: GROUP BY, " +
+      "COUNT, AVG, HAVING (not WHERE!) for the group filter, ORDER BY on an aggregate.",
+    examples:
+      "employees: Ada/Eng/95k, Ben/Eng/85k, Fay/Eng/90k, Cleo/Sales/60k, Dan/Sales/70k, Eve/HR/55k\n" +
+      "-> Engineering | 3 | 90000\n" +
+      "   Sales       | 2 | 65000\n" +
+      "(HR is filtered out: only 1 employee)",
+    hint: "GROUP BY dept, then HAVING COUNT(*) >= 2 — the filter runs on groups, so WHERE can't do it. Alias the aggregates to match the required column names.",
+    solution:
+`-- HAVING filters groups after aggregation; WHERE filters rows before it.
+SELECT dept,
+       COUNT(*)    AS headcount,
+       AVG(salary) AS avg_salary
+FROM employees
+GROUP BY dept
+HAVING COUNT(*) >= 2
+ORDER BY avg_salary DESC;`,
+    sqlSchema:
+`CREATE TABLE employees (id INTEGER PRIMARY KEY, name TEXT, dept TEXT, salary REAL);
+INSERT INTO employees VALUES
+ (1,'Ada','Engineering',95000),
+ (2,'Ben','Engineering',85000),
+ (3,'Cleo','Sales',60000),
+ (4,'Dan','Sales',70000),
+ (5,'Eve','HR',55000),
+ (6,'Fay','Engineering',90000);`,
+    sqlStarter:
+      "-- Table: employees(id, name, dept, salary)\n" +
+      "-- Columns to return: dept, headcount, avg_salary\n" +
+      "SELECT\n",
+    sqlSolution:
+`SELECT dept,
+       COUNT(*)    AS headcount,
+       AVG(salary) AS avg_salary
+FROM employees
+GROUP BY dept
+HAVING COUNT(*) >= 2
+ORDER BY avg_salary DESC;`,
+    explanation:
+      "The WHERE-vs-HAVING distinction is the recap point: WHERE runs before grouping (it can't " +
+      "see COUNT), HAVING runs after. The second fixture adds the NULL-salary wrinkle — AVG " +
+      "ignores NULLs but COUNT(*) doesn't, so a 2-person department with one NULL salary still " +
+      "qualifies and averages over the one real value. Mentioning that unprompted is stage-2 polish.",
+    tests: [
+      {
+        name: "Main fixture: HR filtered out, ordered by avg desc",
+        orderMatters: true,
+        expected: {
+          columns: ["dept", "headcount", "avg_salary"],
+          rows: [["Engineering", 3, 90000], ["Sales", 2, 65000]],
+        },
+      },
+      {
+        name: "NULL salary: AVG ignores it, COUNT(*) does not",
+        orderMatters: true,
+        schema:
+`CREATE TABLE employees (id INTEGER PRIMARY KEY, name TEXT, dept TEXT, salary REAL);
+INSERT INTO employees VALUES
+ (1,'Gil','Ops',NULL),
+ (2,'Hana','Ops',80000),
+ (3,'Ivan','Legal',75000);`,
+        expected: {
+          columns: ["dept", "headcount", "avg_salary"],
+          rows: [["Ops", 2, 80000]],
+        },
+      },
+    ],
+  },
+
+  // ============================================================
+  // PS2 — M2 CRAFT DRILLS: easy on purpose — drill the template
+  // ============================================================
+
+  F72: {
+    id: "F72",
+    title: "Template Drill — FizzBuzz",
+    difficulty: "Easy",
+    time: "5 min",
+    tags: ["Craft Drill", "Loops"],
+    type: "python",
+    statement:
+      "Write <code>fizz_buzz(n)</code> — return the list of strings for 1..n where multiples of " +
+      "3 become <code>\"Fizz\"</code>, multiples of 5 become <code>\"Buzz\"</code>, multiples of " +
+      "both become <code>\"FizzBuzz\"</code>, and everything else is the number as a string. " +
+      "<em>This is a craft drill:</em> the code is trivial, so spend your effort on Module 2's " +
+      "template — restate, ask about n=0, narrate the divisibility-order decision, test out loud.",
+    examples:
+      "Input:  15 -> [\"1\",\"2\",\"Fizz\",\"4\",\"Buzz\",\"Fizz\",\"7\",\"8\",\"Fizz\",\"Buzz\",\"11\",\"Fizz\",\"13\",\"14\",\"FizzBuzz\"]\n" +
+      "Input:  0  -> []",
+    hint: "Check the 15-case first (or build the string additively: s = 'Fizz' if i%3==0 else '' ... ). The bug everyone narrates their way out of: checking %3 before %15.",
+    functionName: "fizz_buzz",
+    signature: "fizz_buzz(n: int) -> list[str]",
+    starter:
+      "def fizz_buzz(n):\n" +
+      "    pass\n",
+    solution:
+`def fizz_buzz(n):
+    out = []
+    for i in range(1, n + 1):
+        s = ""
+        if i % 3 == 0: s += "Fizz"
+        if i % 5 == 0: s += "Buzz"
+        out.append(s or str(i))
+    return out`,
+    explanation:
+      "The additive-string version scales to 'and 7 -> Bazz' follow-ups without a combinatorial " +
+      "if-chain — say that out loud, it's the only interesting thing in the problem. The real " +
+      "deliverable here is a clean run of the 6-step template on trivial material.",
+    tests: [
+      { args: [15], expected: ["1", "2", "Fizz", "4", "Buzz", "Fizz", "7", "8", "Fizz", "Buzz", "11", "Fizz", "13", "14", "FizzBuzz"] },
+      { args: [1], expected: ["1"] },
+      { args: [3], expected: ["1", "2", "Fizz"] },
+      { args: [5], expected: ["1", "2", "Fizz", "4", "Buzz"] },
+      { args: [0], expected: [] },
+    ],
+  },
+
+  F73: {
+    id: "F73",
+    title: "Template Drill — Run-Length Encoding",
+    difficulty: "Easy",
+    time: "8-10 min",
+    tags: ["Craft Drill", "String"],
+    type: "python",
+    statement:
+      "Write <code>rle(s)</code> — compress consecutive runs of the same character into " +
+      "<code>char + count</code>: <code>\"aaabbc\" → \"a3b2c1\"</code>. Case-sensitive; " +
+      "single characters keep their count of 1; the empty string encodes to the empty string. " +
+      "A Coderbyte classic and a perfect narration drill: the whole difficulty is the " +
+      "off-by-one at the final run.",
+    examples:
+      "Input:  \"aaabbc\"       -> \"a3b2c1\"\n" +
+      "Input:  \"AAAABBBCCDAA\" -> \"A4B3C2D1A2\"   (runs restart — 'A' appears twice)\n" +
+      "Input:  \"abcd\"         -> \"a1b1c1d1\"\n" +
+      "Input:  \"\"             -> \"\"",
+    hint: "Walk the string comparing s[i] to s[i-1]; when the character changes, flush char+count. The classic bug: forgetting to flush the LAST run after the loop — narrate that before writing it.",
+    functionName: "rle",
+    signature: "rle(s: str) -> str",
+    starter:
+      "def rle(s):\n" +
+      "    pass\n",
+    solution:
+`def rle(s):
+    if not s:
+        return ""
+    out = []
+    run_char, run_len = s[0], 1
+    for ch in s[1:]:
+        if ch == run_char:
+            run_len += 1
+        else:
+            out.append(run_char + str(run_len))
+            run_char, run_len = ch, 1
+    out.append(run_char + str(run_len))   # flush the final run!
+    return "".join(out)`,
+    explanation:
+      "O(n) time. Two things to say out loud: (1) the final flush after the loop — the single " +
+      "most common bug in this problem; (2) building into a list and joining once, instead of " +
+      "string += in a loop (quadratic in CPython's worst case). Follow-up: the decoder — " +
+      "watch for multi-digit counts.",
+    tests: [
+      { args: ["aaabbc"], expected: "a3b2c1" },
+      { args: ["AAAABBBCCDAA"], expected: "A4B3C2D1A2" },
+      { args: ["abcd"], expected: "a1b1c1d1" },
+      { args: [""], expected: "" },
+      { args: ["zzzzzzzzzzzz"], expected: "z12" },
+      { args: ["aaAA"], expected: "a2A2" },
+    ],
+  },
+
+  F74: {
+    id: "F74",
+    title: "Template Drill — Missing Number",
+    difficulty: "Easy",
+    time: "5-8 min",
+    tags: ["Craft Drill", "Math", "XOR"],
+    type: "python",
+    statement:
+      "Write <code>missing_number(nums)</code> — <code>nums</code> contains n distinct numbers " +
+      "from the range 0..n (so exactly one of the n+1 values is missing); return the missing one. " +
+      "Solve it in O(n) time and O(1) space. There are two one-liner families — arithmetic " +
+      "(expected sum minus actual sum) and XOR — and the interviewer will enjoy hearing you " +
+      "name both. This drill is also your bridge into Module 2b's bit tricks.",
+    examples:
+      "Input:  [3,0,1]              -> 2\n" +
+      "Input:  [0,1]                -> 2\n" +
+      "Input:  [1]                  -> 0\n" +
+      "Input:  [9,6,4,2,3,5,7,0,1]  -> 8",
+    hint: "Gauss: n*(n+1)//2 - sum(nums). Or XOR 0..n and all elements — pairs cancel, the missing index survives. Both are O(n)/O(1); the XOR version can't overflow in fixed-width languages.",
+    functionName: "missing_number",
+    signature: "missing_number(nums: list[int]) -> int",
+    starter:
+      "def missing_number(nums):\n" +
+      "    pass\n",
+    solution:
+`def missing_number(nums):
+    n = len(nums)
+    return n * (n + 1) // 2 - sum(nums)`,
+    explanation:
+      "Expected sum of 0..n is n(n+1)/2; subtract what's actually there and the gap is the " +
+      "answer. The XOR alternative (acc ^= i ^ x for each index and value, then acc ^ n) does " +
+      "the same cancellation trick without big intermediate sums — in Python that's moot " +
+      "(arbitrary-precision ints), in Java/C it's the overflow-safe version. Name the trade-off.",
+    tests: [
+      { args: [[3, 0, 1]], expected: 2 },
+      { args: [[0, 1]], expected: 2 },
+      { args: [[1]], expected: 0 },
+      { args: [[0]], expected: 1 },
+      { args: [[9, 6, 4, 2, 3, 5, 7, 0, 1]], expected: 8 },
+    ],
+  },
+
+  // ============================================================
+  // PS2B — MODULE 2b: linked lists, math & bits (the stage-1 gaps)
+  // ============================================================
+
+  F75: {
+    id: "F75",
+    title: "Reverse a Linked List",
+    difficulty: "Easy",
+    time: "8-10 min",
+    tags: ["Linked List", "Pointers"],
+    type: "python",
+    statement:
+      "Write <code>reverse_list(head)</code> — reverse a singly linked list in place and return " +
+      "the new head. O(n) time, O(1) space; no copying values into an array. The three-pointer " +
+      "surgery from Module 2b, and probably the most-asked warm-up in live interviews anywhere. " +
+      "Lists arrive as arrays and are built for you via <code>_build_list</code>; your function " +
+      "receives the head <code>ListNode</code> (fields: val, next) and returns a node.",
+    examples:
+      "Input:  [1,2,3,4,5] -> [5,4,3,2,1]\n" +
+      "Input:  [1,2]       -> [2,1]\n" +
+      "Input:  []          -> []",
+    hint: "prev=None, curr=head. Each step: save curr.next FIRST, then rewire curr.next=prev, then advance both. When curr is None, prev is the new head.",
+    functionName: "reverse_list",
+    signature: "reverse_list(head: ListNode | None) -> ListNode | None",
+    starter:
+      "def reverse_list(head):\n" +
+      "    # head is a ListNode (or None); fields: val, next\n" +
+      "    pass\n",
+    solution:
+`def reverse_list(head):
+    prev, curr = None, head
+    while curr:
+        nxt = curr.next     # save the rope before cutting it
+        curr.next = prev
+        prev, curr = curr, nxt
+    return prev`,
+    explanation:
+      "Narrate the failure mode: assigning curr.next = prev without saving nxt first orphans the " +
+      "rest of the list. Follow-up to expect: the recursive version (elegant, but O(n) stack — " +
+      "say why iterative wins for a million nodes), and 'reverse only positions m..n' " +
+      "(dummy-head + careful splicing).",
+    tests: [
+      { args: [[1, 2, 3, 4, 5]], expected: [5, 4, 3, 2, 1],
+        prepare: "args = [_build_list(args[0])]",
+        transform: "result = _linked_to_list(result)" },
+      { args: [[1, 2]], expected: [2, 1],
+        prepare: "args = [_build_list(args[0])]",
+        transform: "result = _linked_to_list(result)" },
+      { args: [[]], expected: [],
+        prepare: "args = [_build_list(args[0])]",
+        transform: "result = _linked_to_list(result)" },
+      { args: [[7]], expected: [7],
+        prepare: "args = [_build_list(args[0])]",
+        transform: "result = _linked_to_list(result)" },
+    ],
+  },
+
+  F76: {
+    id: "F76",
+    title: "Middle of the Linked List",
+    difficulty: "Easy",
+    time: "5-8 min",
+    tags: ["Linked List", "Fast & Slow Pointers"],
+    type: "python",
+    statement:
+      "Write <code>middle_node(head)</code> — return the middle node of the list (for even " +
+      "lengths, the <em>second</em> of the two middles). One pass, O(1) space: fast & slow " +
+      "pointers. The runner converts your returned node onward to an array, so returning the " +
+      "correct node shows as the list from the middle to the end.",
+    examples:
+      "Input:  [1,2,3,4,5]   -> node 3   (shown as [3,4,5])\n" +
+      "Input:  [1,2,3,4,5,6] -> node 4   (shown as [4,5,6])\n" +
+      "Input:  [1]           -> node 1",
+    hint: "slow=fast=head; while fast and fast.next: slow=slow.next; fast=fast.next.next. The loop condition is exactly what decides which middle you get for even lengths.",
+    functionName: "middle_node",
+    signature: "middle_node(head: ListNode) -> ListNode",
+    starter:
+      "def middle_node(head):\n" +
+      "    pass\n",
+    solution:
+`def middle_node(head):
+    slow = fast = head
+    while fast and fast.next:
+        slow = slow.next
+        fast = fast.next.next
+    return slow`,
+    explanation:
+      "When fast has taken 2k steps, slow has taken k — so when fast exhausts the list, slow is " +
+      "halfway. For even lengths this condition lands slow on the second middle; using " +
+      "'fast.next and fast.next.next' gives the first middle instead — know which is which, " +
+      "interviewers ask. Same skeleton powers cycle detection (F77) and palindrome-list.",
+    tests: [
+      { args: [[1, 2, 3, 4, 5]], expected: [3, 4, 5],
+        prepare: "args = [_build_list(args[0])]",
+        transform: "result = _linked_to_list(result)" },
+      { args: [[1, 2, 3, 4, 5, 6]], expected: [4, 5, 6],
+        prepare: "args = [_build_list(args[0])]",
+        transform: "result = _linked_to_list(result)" },
+      { args: [[1]], expected: [1],
+        prepare: "args = [_build_list(args[0])]",
+        transform: "result = _linked_to_list(result)" },
+      { args: [[1, 2]], expected: [2],
+        prepare: "args = [_build_list(args[0])]",
+        transform: "result = _linked_to_list(result)" },
+    ],
+  },
+
+  F77: {
+    id: "F77",
+    title: "Linked List Cycle",
+    difficulty: "Easy",
+    time: "8-10 min",
+    tags: ["Linked List", "Floyd", "Fast & Slow Pointers"],
+    type: "python",
+    statement:
+      "Write <code>has_cycle(head)</code> — return whether the list contains a cycle, in O(n) " +
+      "time and <strong>O(1) space</strong> (a visited-set is the O(n)-space warm-up answer; " +
+      "Floyd's tortoise-and-hare is the intended one). Test fixtures build the cycle for you: " +
+      "the second argument in each test is the index the tail links back to (-1 = no cycle).",
+    examples:
+      "Input:  list=[3,2,0,-4], tail->index 1  -> True\n" +
+      "Input:  list=[1,2],      tail->index 0  -> True\n" +
+      "Input:  list=[1,2,3],    no cycle       -> False\n" +
+      "Input:  [],              no cycle       -> False",
+    hint: "slow moves 1, fast moves 2; if they ever meet, cycle. If fast (or fast.next) hits None, no cycle. State the why: inside the cycle the gap shrinks by 1 per step, so it must reach 0.",
+    functionName: "has_cycle",
+    signature: "has_cycle(head: ListNode | None) -> bool",
+    starter:
+      "def has_cycle(head):\n" +
+      "    pass\n",
+    solution:
+`def has_cycle(head):
+    slow = fast = head
+    while fast and fast.next:
+        slow = slow.next
+        fast = fast.next.next
+        if slow is fast:
+            return True
+    return False`,
+    explanation:
+      "Compare nodes with 'is', not '==' on values — duplicated values are not a cycle. The " +
+      "guaranteed follow-up: 'where does the cycle START?' — after the meeting, reset slow to " +
+      "head and step both by 1; they collide at the entry (Module 2b sketches why). Second " +
+      "follow-up: 'cycle length?' — freeze one pointer, count until the other returns.",
+    tests: [
+      { args: [[3, 2, 0, -4], 1], expected: true,
+        prepare: "args = [_build_list_with_cycle(args[0], args[1])]" },
+      { args: [[1, 2], 0], expected: true,
+        prepare: "args = [_build_list_with_cycle(args[0], args[1])]" },
+      { args: [[1, 2, 3], -1], expected: false,
+        prepare: "args = [_build_list_with_cycle(args[0], args[1])]" },
+      { args: [[], -1], expected: false,
+        prepare: "args = [_build_list_with_cycle(args[0], args[1])]" },
+      { args: [[1], -1], expected: false,
+        prepare: "args = [_build_list_with_cycle(args[0], args[1])]" },
+      { args: [[1], 0], expected: true,
+        prepare: "args = [_build_list_with_cycle(args[0], args[1])]" },
+    ],
+  },
+
+  F78: {
+    id: "F78",
+    title: "Merge Two Sorted Lists",
+    difficulty: "Easy",
+    time: "10-12 min",
+    tags: ["Linked List", "Dummy Head", "Two Pointers"],
+    type: "python",
+    statement:
+      "Write <code>merge_lists(a, b)</code> — splice two ascending sorted linked lists into one " +
+      "sorted list (reusing the existing nodes, no new allocations except a sentinel) and return " +
+      "its head. This is the dummy-head pattern's home turf — and the building block the " +
+      "interviewer extends into 'merge K lists' (heap, Module 11).",
+    examples:
+      "Input:  a=[1,2,4], b=[1,3,4] -> [1,1,2,3,4,4]\n" +
+      "Input:  a=[],      b=[0]     -> [0]\n" +
+      "Input:  a=[5],     b=[1,2]   -> [1,2,5]",
+    hint: "dummy = ListNode(); tail = dummy. While both lists are non-empty, attach the smaller head and advance that list. Then attach whichever list remains (it's already sorted). Return dummy.next.",
+    functionName: "merge_lists",
+    signature: "merge_lists(a: ListNode | None, b: ListNode | None) -> ListNode | None",
+    starter:
+      "def merge_lists(a, b):\n" +
+      "    pass\n",
+    solution:
+`def merge_lists(a, b):
+    dummy = tail = ListNode()
+    while a and b:
+        if a.val <= b.val:
+            tail.next, a = a, a.next
+        else:
+            tail.next, b = b, b.next
+        tail = tail.next
+    tail.next = a or b       # the leftover list is already sorted
+    return dummy.next`,
+    explanation:
+      "The dummy node erases the 'which list provides the first node?' special case; the final " +
+      "'tail.next = a or b' erases the drain-the-leftovers loop. Both erasures are worth " +
+      "narrating. Using <= (not <) keeps the merge stable. Complexity O(m+n) time, O(1) extra " +
+      "space — and 'merge K lists' upgrades this exact loop with a min-heap of list heads.",
+    tests: [
+      { args: [[1, 2, 4], [1, 3, 4]], expected: [1, 1, 2, 3, 4, 4],
+        prepare: "args = [_build_list(args[0]), _build_list(args[1])]",
+        transform: "result = _linked_to_list(result)" },
+      { args: [[], []], expected: [],
+        prepare: "args = [_build_list(args[0]), _build_list(args[1])]",
+        transform: "result = _linked_to_list(result)" },
+      { args: [[], [0]], expected: [0],
+        prepare: "args = [_build_list(args[0]), _build_list(args[1])]",
+        transform: "result = _linked_to_list(result)" },
+      { args: [[5], [1, 2]], expected: [1, 2, 5],
+        prepare: "args = [_build_list(args[0]), _build_list(args[1])]",
+        transform: "result = _linked_to_list(result)" },
+      { args: [[2, 2], [2]], expected: [2, 2, 2],
+        prepare: "args = [_build_list(args[0]), _build_list(args[1])]",
+        transform: "result = _linked_to_list(result)" },
+    ],
+  },
+
+  F79: {
+    id: "F79",
+    title: "Hamming Weight (Count Set Bits)",
+    difficulty: "Easy",
+    time: "5-8 min",
+    tags: ["Bit Manipulation"],
+    type: "python",
+    statement:
+      "Write <code>hamming_weight(n)</code> — the number of 1-bits in the binary representation " +
+      "of a non-negative integer. The naive loop checks all ~32 bits; the trick from Module 2b's " +
+      "table — <code>n &amp;= n-1</code> clears the lowest set bit — loops only once per set bit. " +
+      "Write the trick version and be ready to explain <em>why</em> it clears exactly that bit.",
+    examples:
+      "Input:  11 (1011)      -> 3\n" +
+      "Input:  128 (10000000) -> 1\n" +
+      "Input:  255            -> 8\n" +
+      "Input:  0              -> 0",
+    hint: "while n: n &= n - 1; count += 1. Subtracting 1 turns the lowest set bit into 0 and the zeros below it into 1s; AND wipes that whole tail.",
+    functionName: "hamming_weight",
+    signature: "hamming_weight(n: int) -> int",
+    starter:
+      "def hamming_weight(n):\n" +
+      "    pass\n",
+    solution:
+`def hamming_weight(n):
+    count = 0
+    while n:
+        n &= n - 1    # clear the lowest set bit
+        count += 1
+    return count`,
+    explanation:
+      "Runs once per set bit (Kernighan's trick) instead of once per bit position. In real " +
+      "Python you'd say bin(n).count('1') — mention it, then write the loop, because the loop " +
+      "is what's being tested. Follow-up: 'is n a power of two?' is the same identity used " +
+      "once: n > 0 and n & (n-1) == 0.",
+    tests: [
+      { args: [11], expected: 3 },
+      { args: [128], expected: 1 },
+      { args: [255], expected: 8 },
+      { args: [0], expected: 0 },
+      { args: [1], expected: 1 },
+      { args: [2147483647], expected: 31 },
+    ],
+  },
+
+  F80: {
+    id: "F80",
+    title: "Single Number",
+    difficulty: "Easy",
+    time: "5-8 min",
+    tags: ["Bit Manipulation", "XOR"],
+    type: "python",
+    statement:
+      "Write <code>single_number(nums)</code> — every element appears exactly twice except one, " +
+      "which appears once; find it in O(n) time and <strong>O(1) space</strong>. A hash counter " +
+      "is the O(n)-space answer the interviewer will accept and then immediately challenge — " +
+      "the intended answer is the XOR cancellation from Module 2b.",
+    examples:
+      "Input:  [2,2,1]       -> 1\n" +
+      "Input:  [4,1,2,1,2]   -> 4\n" +
+      "Input:  [-1,-1,9]     -> 9",
+    hint: "acc = 0; for x in nums: acc ^= x. Pairs cancel (a^a=0), order doesn't matter (XOR is commutative), the loner survives (a^0=a).",
+    functionName: "single_number",
+    signature: "single_number(nums: list[int]) -> int",
+    starter:
+      "def single_number(nums):\n" +
+      "    pass\n",
+    solution:
+`def single_number(nums):
+    acc = 0
+    for x in nums:
+        acc ^= x
+    return acc`,
+    explanation:
+      "Three identities make it work: a^a=0, a^0=a, and commutativity (so the pairs cancel no " +
+      "matter how they're interleaved). State all three — that's the whole interview answer. " +
+      "Classic follow-up: 'two loners instead of one' — XOR everything to get x^y, isolate any " +
+      "set bit of it (that bit differs between x and y), and partition the array by that bit.",
+    tests: [
+      { args: [[2, 2, 1]], expected: 1 },
+      { args: [[4, 1, 2, 1, 2]], expected: 4 },
+      { args: [[7]], expected: 7 },
+      { args: [[-1, -1, 9]], expected: 9 },
+      { args: [[0, 1, 0]], expected: 1 },
+    ],
+  },
+
+  F81: {
+    id: "F81",
+    title: "Count Primes (Sieve of Eratosthenes)",
+    difficulty: "Medium",
+    time: "10-12 min",
+    tags: ["Math", "Primes", "Sieve"],
+    type: "python",
+    statement:
+      "Write <code>count_primes(n)</code> — how many prime numbers are strictly less than " +
+      "<code>n</code>? Trial-dividing every number is O(n√n); the expected answer is the sieve " +
+      "from Module 2b: O(n log log n), with the inner loop starting at <code>i*i</code> — and " +
+      "you should be able to say why.",
+    examples:
+      "Input:  10   -> 4    (2, 3, 5, 7)\n" +
+      "Input:  2    -> 0    (strictly less than n!)\n" +
+      "Input:  3    -> 1\n" +
+      "Input:  100  -> 25",
+    hint: "Boolean array of size n, all True; mark 0 and 1 False; for each i up to √n still marked prime, cross out i*i, i*i+i, ... The answer is sum(is_prime).",
+    functionName: "count_primes",
+    signature: "count_primes(n: int) -> int",
+    starter:
+      "def count_primes(n):\n" +
+      "    pass\n",
+    solution:
+`def count_primes(n):
+    if n < 3:
+        return 0
+    is_prime = [True] * n
+    is_prime[0] = is_prime[1] = False
+    for i in range(2, int(n ** 0.5) + 1):
+        if is_prime[i]:
+            for j in range(i * i, n, i):
+                is_prime[j] = False
+    return sum(is_prime)`,
+    explanation:
+      "The two narration points: the inner loop starts at i*i because every smaller multiple " +
+      "k·i (k < i) was already crossed out by k's own smallest prime factor; and the outer loop " +
+      "stops at √n because any composite below n has a factor ≤ √n. The 'strictly less than n' " +
+      "boundary is where the off-by-ones live — test n=2 and n=3 out loud.",
+    tests: [
+      { args: [10], expected: 4 },
+      { args: [0], expected: 0 },
+      { args: [1], expected: 0 },
+      { args: [2], expected: 0 },
+      { args: [3], expected: 1 },
+      { args: [100], expected: 25 },
+      { args: [500], expected: 95 },
+    ],
+  },
+
+  F82: {
+    id: "F82",
+    title: "Fast Modular Power",
+    difficulty: "Medium",
+    time: "10-15 min",
+    tags: ["Math", "Modular Arithmetic", "Bit Manipulation"],
+    type: "python",
+    statement:
+      "Write <code>power_mod(base, exp, mod)</code> — compute base<sup>exp</sup> mod " +
+      "<code>mod</code> for exp ≥ 0, mod ≥ 2, in <strong>O(log exp)</strong> multiplications. " +
+      "Multiplying in a loop exp times is the O(exp) trap; square-and-multiply peels the " +
+      "exponent's bits (Module 2b). Python's built-in <code>pow(b, e, m)</code> does this — " +
+      "name it, then implement the loop, because the loop is the question.",
+    examples:
+      "Input:  base=2,  exp=10,  mod=1000        -> 24    (1024 % 1000)\n" +
+      "Input:  base=3,  exp=0,   mod=7           -> 1\n" +
+      "Input:  base=2,  exp=100, mod=10**9+7     -> 976371285   (instant, not 2^100 work)",
+    hint: "result=1; base%=mod; while exp: if exp&1: result=result*base%mod; base=base*base%mod; exp>>=1. Reduce mod at every step — that's the identity (a·b)%m = ((a%m)·(b%m))%m at work.",
+    functionName: "power_mod",
+    signature: "power_mod(base: int, exp: int, mod: int) -> int",
+    starter:
+      "def power_mod(base, exp, mod):\n" +
+      "    pass\n",
+    solution:
+`def power_mod(base, exp, mod):
+    result = 1
+    base %= mod
+    while exp:
+        if exp & 1:                    # this bit of the exponent is set
+            result = result * base % mod
+        base = base * base % mod       # square for the next bit
+        exp >>= 1
+    return result`,
+    explanation:
+      "Each iteration handles one bit of exp: base holds base^(2^k) mod m, and you multiply it " +
+      "into the result exactly when that bit is set — so ~log2(exp) squarings total. Reducing " +
+      "mod m after every multiply keeps intermediates small (crucial in fixed-width languages, " +
+      "good hygiene in Python). This is also the engine inside RSA and hash-rolling — a fact " +
+      "worth one sentence in the interview.",
+    tests: [
+      { args: [2, 10, 1000], expected: 24 },
+      { args: [3, 0, 7], expected: 1 },
+      { args: [10, 9, 6], expected: 4 },
+      { args: [2, 100, 1000000007], expected: 976371285 },
+      { args: [7, 222, 11], expected: 5 },
+      { args: [5, 1, 3], expected: 2 },
+    ],
+  },
+
 };
 
 // ----------------------------------------------------------------
 // QUESTION GROUPS  (which question IDs each Practice Set draws)
 // ----------------------------------------------------------------
 window.PRACTICE_SETS = {
+  PS1: { module: "M1", title: "Practice Set 1 — Stage-1 Recap Drills",
+         qids: ["F66", "F67", "F68", "F69", "F70", "F71"] },
+  PS2: { module: "M2", title: "Practice Set 2 — Live-Coding Template Drills",
+         qids: ["F72", "F73", "F74"] },
+  PS2B: { module: "M2B", title: "Practice Set 2b — Linked Lists, Math & Bits",
+          qids: ["F75", "F76", "F77", "F78", "F79", "F80", "F81", "F82"] },
   PS3: { module: "M3", title: "Practice Set 3 — Arrays & Windows, Advanced",
          qids: ["F01", "F02", "F03", "F04", "F05", "F06"] },
   PS4: { module: "M4", title: "Practice Set 4 — Hash Maps, Sets & Counting",
@@ -4205,4 +5085,10 @@ window.FINAL_EXAM_POOL = [
   "F46", "F48", "F49", "F51", "F52",
   // Data structures in code (M14)
   "F56", "F57",
+  // Stage-1 recap drills (M1) — every topic family shows up in the exam
+  "F66", "F67", "F68", "F69", "F70", "F71",
+  // Craft drills (M2) — F72 (FizzBuzz) deliberately left out: too trivial for an exam deal
+  "F73", "F74",
+  // Linked lists, math & bits (M2b)
+  "F75", "F76", "F77", "F78", "F79", "F80", "F81", "F82",
 ];
