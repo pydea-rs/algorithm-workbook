@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-05T13:32:30Z",
+  "generated": "2026-07-05T15:44:13Z",
   "folders": [
     {
       "name": "bracketCount",
@@ -274,6 +274,30 @@
           "ext": "md",
           "kind": "markdown",
           "size": 59
+        }
+      ]
+    },
+    {
+      "name": "rev_sum",
+      "kind": "mixed",
+      "files": [
+        {
+          "name": "q.md",
+          "ext": "md",
+          "kind": "markdown",
+          "size": 45
+        },
+        {
+          "name": "rev_sum.cpp",
+          "ext": "cpp",
+          "kind": "code",
+          "size": 1212
+        },
+        {
+          "name": "rev_sum.go",
+          "ext": "go",
+          "kind": "code",
+          "size": 649
         }
       ]
     },

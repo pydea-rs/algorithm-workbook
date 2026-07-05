@@ -119,10 +119,11 @@ question-type breakdown, module map, and editing format.
 
 A single-file simulation of the timed aptitude & logical-reasoning screening test:
 
-- **25 questions in 25 minutes**, dealt at random from a bank of ~130 questions across
-  9 categories — numerical reasoning, work rate, patterns & sequences, logical deduction,
-  trick/attention questions, geometry, data interpretation, general reasoning, and
-  SVG-rendered **shape & spatial reasoning** puzzles.
+- **25 questions in 25 minutes**, dealt at random from a bank of ~140 questions across
+  10 categories — numerical reasoning, work rate, patterns & sequences, logical deduction,
+  verbal reasoning, trick/attention questions, geometry, data interpretation, general
+  reasoning, and SVG-rendered **shape & spatial reasoning** puzzles (matching the
+  arithmetic + verbal + non-verbal mix candidates report from the real test).
 - Coderbyte-style flow: answer in any order, **skip** and return, **flag** for review,
   auto-submit when the clock runs out, keyboard shortcuts throughout.
 - Results page with per-category score breakdown, then a **review mode** that walks back

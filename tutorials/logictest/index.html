@@ -962,7 +962,7 @@
             <p class="subtitle">Simulates the 25-minute Coderbyte aptitude & logical reasoning test before the final Odoo interview.</p>
             <ul class="rules-list">
                 <li><span class="icon">⏱️</span> <strong>25 minutes</strong> total time</li>
-                <li><span class="icon">📋</span> <strong>25 questions</strong> randomly selected from a bank of 125+ real-style questions</li>
+                <li><span class="icon">📋</span> <strong>25 questions</strong> randomly selected from a bank of 140+ real-style questions</li>
                 <li><span class="icon">🔷</span> Includes <strong>shape & spatial reasoning</strong> questions</li>
                 <li><span class="icon">⏭️</span> You can <strong>skip</strong> questions and return to them later</li>
                 <li><span class="icon">🚩</span> <strong>Flag</strong> questions for review</li>
@@ -1145,11 +1145,17 @@
             hexCount1: `<svg width="200" height="180" viewBox="0 0 200 180"><polygon points="100,20 170,55 170,125 100,160 30,125 30,55" fill="none" stroke="#714B67" stroke-width="2"/><line x1="100" y1="20" x2="100" y2="160" stroke="#714B67" stroke-width="1.5"/><line x1="30" y1="55" x2="170" y2="125" stroke="#714B67" stroke-width="1.5"/><line x1="170" y1="55" x2="30" y2="125" stroke="#714B67" stroke-width="1.5"/></svg>`,
 
             // Shape completion
-            completion1: `<svg width="180" height="120" viewBox="0 0 180 120"><rect x="20" y="20" width="60" height="60" fill="none" stroke="#714B67" stroke-width="2"/><rect x="80" y="20" width="60" height="60" fill="none" stroke="#714B67" stroke-width="2"/><rect x="20" y="80" width="60" height="60" fill="none" stroke="#714B67" stroke-width="2"/><rect x="80" y="80" width="60" height="60" fill="#f0f0f0" stroke="#999" stroke-width="1" stroke-dasharray="4,4"/><text x="95" y="115" font-size="14" fill="#999">?</text></svg>`
+            completion1: `<svg width="180" height="120" viewBox="0 0 180 120"><rect x="20" y="20" width="60" height="60" fill="none" stroke="#714B67" stroke-width="2"/><rect x="80" y="20" width="60" height="60" fill="none" stroke="#714B67" stroke-width="2"/><rect x="20" y="80" width="60" height="60" fill="none" stroke="#714B67" stroke-width="2"/><rect x="80" y="80" width="60" height="60" fill="#f0f0f0" stroke="#999" stroke-width="1" stroke-dasharray="4,4"/><text x="95" y="115" font-size="14" fill="#999">?</text></svg>`,
+
+            // Raven-style matrix: every row shows 1, 2, 3 dots left-to-right
+            matrixDots1: `<svg width="190" height="190" viewBox="0 0 190 190"><rect x="20" y="20" width="150" height="150" fill="none" stroke="#714B67" stroke-width="2"/><line x1="70" y1="20" x2="70" y2="170" stroke="#714B67" stroke-width="1.5"/><line x1="120" y1="20" x2="120" y2="170" stroke="#714B67" stroke-width="1.5"/><line x1="20" y1="70" x2="170" y2="70" stroke="#714B67" stroke-width="1.5"/><line x1="20" y1="120" x2="170" y2="120" stroke="#714B67" stroke-width="1.5"/><circle cx="45" cy="45" r="5" fill="#714B67"/><circle cx="86" cy="45" r="5" fill="#714B67"/><circle cx="104" cy="45" r="5" fill="#714B67"/><circle cx="131" cy="45" r="5" fill="#714B67"/><circle cx="145" cy="45" r="5" fill="#714B67"/><circle cx="159" cy="45" r="5" fill="#714B67"/><circle cx="45" cy="95" r="5" fill="#714B67"/><circle cx="86" cy="95" r="5" fill="#714B67"/><circle cx="104" cy="95" r="5" fill="#714B67"/><circle cx="131" cy="95" r="5" fill="#714B67"/><circle cx="145" cy="95" r="5" fill="#714B67"/><circle cx="159" cy="95" r="5" fill="#714B67"/><circle cx="45" cy="145" r="5" fill="#714B67"/><circle cx="86" cy="145" r="5" fill="#714B67"/><circle cx="104" cy="145" r="5" fill="#714B67"/><text x="138" y="152" font-size="18" fill="#999">?</text></svg>`,
+
+            // Arrow rotating 90° clockwise across the row: up, right, down, ?
+            arrowRotate1: `<svg width="280" height="90" viewBox="0 0 280 90"><rect x="20" y="20" width="50" height="50" fill="none" stroke="#e0e0e0" stroke-width="1"/><rect x="80" y="20" width="50" height="50" fill="none" stroke="#e0e0e0" stroke-width="1"/><rect x="140" y="20" width="50" height="50" fill="none" stroke="#e0e0e0" stroke-width="1"/><rect x="200" y="20" width="50" height="50" fill="none" stroke="#e0e0e0" stroke-width="1"/><polygon points="45,28 33,60 57,60" fill="#714B67"/><polygon points="122,45 90,33 90,57" fill="#714B67"/><polygon points="165,62 153,30 177,30" fill="#714B67"/><text x="218" y="53" font-size="22" fill="#999">?</text></svg>`
         };
 
         // ============================
-        // QUESTION BANK (129 questions)
+        // QUESTION BANK (141 questions)
         // ============================
         const allQuestions = [
             // NUMERICAL REASONING (25)
@@ -1159,7 +1165,7 @@
             { q: "A store sells a shirt for $40 after a 10% discount. What was the original price?", options: ["$42", "$44", "$44.44", "$45"], ans: 2, cat: "Numerical" },
             { q: "If an item costs $50 and the sales tax is 8%, what is the total cost?", options: ["$52", "$53", "$54", "$55"], ans: 2, cat: "Numerical" },
             { q: "A company's revenue increased from $500,000 to $750,000 in one year. What is the percentage increase?", options: ["40%", "45%", "50%", "55%"], ans: 2, cat: "Numerical" },
-            { q: "A company's profit increased from $2 million to $2.5 million. What's the percentage increase to two decimal places?", options: ["20.00%", "22.50%", "25.00%", "30.00%"], ans: 2, cat: "Numerical" },
+            { q: "Two buses leave the terminal together. One departs every 12 minutes, the other every 18 minutes. After how many minutes will they next depart together?", options: ["30", "36", "48", "72"], ans: 1, cat: "Numerical" },
             { q: "A product's price is increased by 10% and then decreased by 10%. What's the overall percentage change?", options: ["0%", "-1%", "+1%", "-2%"], ans: 1, cat: "Numerical" },
             { q: "If 15% of customers churn each quarter, what percentage of customers remain after a full year?", options: ["52.2%", "55.0%", "48.0%", "60.0%"], ans: 0, cat: "Numerical" },
             { q: "If a bank offers an interest rate of 5% per year, how much interest will be earned on a $1,000 deposit after 3 years (simple interest)?", options: ["$140", "$150", "$157.63", "$160"], ans: 1, cat: "Numerical" },
@@ -1174,8 +1180,8 @@
             { q: "If the total cost of 5 notebooks is $15, what is the cost of one notebook?", options: ["$2", "$2.50", "$3", "$3.50"], ans: 2, cat: "Numerical" },
             { q: "A company spends $250,000 on salaries, $100,000 on rent, and $50,000 on utilities. What percentage is spent on rent?", options: ["20%", "22%", "25%", "30%"], ans: 2, cat: "Numerical" },
             { q: "If 3 apples and 4 oranges cost $2.50, and 2 apples and 3 oranges cost $1.80, what is the cost of 1 apple?", options: ["$0.30", "$0.40", "$0.50", "$0.60"], ans: 0, cat: "Numerical" },
-            { q: "A shirt is priced at $80. After a 25% discount, an additional 10% discount is applied. What is the final price?", options: ["$52", "$54", "$56", "$58"], ans: 1, cat: "Numerical" },
-            { q: "If a number is increased by 20% and then decreased by 20%, what is the net change?", options: ["0%", "-4%", "+4%", "-2%"], ans: 1, cat: "Numerical" },
+            { q: "A car travels from A to B at 60 km/h and returns over the same road at 40 km/h. What is its average speed for the whole round trip?", options: ["45 km/h", "48 km/h", "50 km/h", "52 km/h"], ans: 1, cat: "Numerical" },
+            { q: "In a class of 30 students, 18 like math, 15 like science, and 8 like both. How many students like neither subject?", options: ["3", "5", "7", "10"], ans: 1, cat: "Numerical" },
             { q: "The average of 5 numbers is 24. If one number is removed and the average becomes 20, what was the removed number?", options: ["30", "35", "40", "45"], ans: 2, cat: "Numerical" },
             { q: "A mixture contains alcohol and water in the ratio 4:1. If there are 25 liters of mixture, how much water is there?", options: ["4 liters", "5 liters", "6 liters", "8 liters"], ans: 1, cat: "Numerical" },
 
@@ -1299,7 +1305,23 @@
             { q: "Two fair coins are tossed together. What is the probability of getting exactly one head?", options: ["1/4", "1/3", "1/2", "3/4"], ans: 2, cat: "Numerical" },
             { q: "A fair six-sided die is rolled once. What is the probability of rolling a number greater than 4?", options: ["1/6", "1/3", "1/2", "2/3"], ans: 1, cat: "Numerical" },
             { q: "Five friends sit in a row. E sits at the far left. A is to the right of C but to the left of B. D is to the right of B. Who sits in the middle?", options: ["A", "B", "C", "D"], ans: 0, cat: "Logic" },
-            { q: "In a race, Maya finished ahead of Noah but behind Lila. Omar finished ahead of Maya but behind Lila. Who finished second?", options: ["Lila", "Omar", "Maya", "Noah"], ans: 1, cat: "Logic" }
+            { q: "In a race, Maya finished ahead of Noah but behind Lila. Omar finished ahead of Maya but behind Lila. Who finished second?", options: ["Lila", "Omar", "Maya", "Noah"], ans: 1, cat: "Logic" },
+
+            // VERBAL REASONING (10) — candidates report a verbal-aptitude section in the real test
+            { q: "Choose the word most nearly OPPOSITE in meaning to 'ABUNDANT':", options: ["Scarce", "Plentiful", "Generous", "Rich"], ans: 0, cat: "Verbal" },
+            { q: "Choose the word closest in meaning to 'CANDID':", options: ["Frank", "Secretive", "Rude", "Cautious"], ans: 0, cat: "Verbal" },
+            { q: "Puppy is to Dog as Kitten is to:", options: ["Lion", "Cat", "Mouse", "Rabbit"], ans: 1, cat: "Verbal" },
+            { q: "Doctor is to Hospital as Teacher is to:", options: ["Books", "School", "Students", "Exams"], ans: 1, cat: "Verbal" },
+            { q: "Author is to Book as Composer is to:", options: ["Symphony", "Piano", "Orchestra", "Singer"], ans: 0, cat: "Verbal" },
+            { q: "Which word is the odd one out: Apple, Banana, Carrot, Mango?", options: ["Apple", "Banana", "Carrot", "Mango"], ans: 2, cat: "Verbal" },
+            { q: "Which word is the odd one out: Run, Walk, Sleep, Jog?", options: ["Run", "Walk", "Sleep", "Jog"], ans: 2, cat: "Verbal" },
+            { q: "All managers attended the meeting. Sarah attended the meeting. Is Sarah a manager?", options: ["Yes, definitely", "No, definitely not", "Cannot be determined from the statements", "Only if she was invited"], ans: 2, cat: "Verbal" },
+            { q: "Rearrange the letters of 'RHCIA' to form an English word. The word is a:", options: ["Piece of furniture", "Animal", "Fruit", "Color"], ans: 0, cat: "Verbal" },
+            { q: "If the word 'PENCIL' is written backwards, what is the third letter of the result?", options: ["C", "N", "I", "E"], ans: 0, cat: "Verbal" },
+
+            // NON-VERBAL MATRIX / SERIES (2)
+            { q: "In this 3×3 matrix, every row shows 1, 2, then 3 dots. How many dots belong in the missing cell?", options: ["1 dot", "2 dots", "3 dots", "4 dots"], ans: 2, cat: "Shapes", shape: "matrixDots1" },
+            { q: "The arrow rotates 90° clockwise at each step: up, right, down, ... Which way does the next arrow point?", options: ["Left", "Up", "Right", "Down"], ans: 0, cat: "Shapes", shape: "arrowRotate1" }
         ];
 
         // ============================
