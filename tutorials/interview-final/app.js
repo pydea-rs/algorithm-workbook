@@ -472,7 +472,8 @@
   <li>SQL questions with fixtures run against a real in-browser SQLite (sql.js).</li>
   <li>Design questions have no sandbox — think your answer through fully, then
   <strong>Reveal approach</strong>.</li>
-  <li>The <strong>Show answer</strong> button is locked behind a "did you really try?" warning.</li>
+  <li>The <strong>Show answer</strong> modal opens with a "make sure you've tried it first"
+  warning — honor it; the reference solutions teach far more after a real attempt.</li>
 </ul>
 <h2>Time yourself</h2>
 <ul>
