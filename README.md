@@ -19,8 +19,9 @@ the content has expanded well past that scope. Today it is three things at once:
 
 1. A **workbook shell** at the repo root — an index page that auto-discovers every folder,
    embeds interactive tutorials, previews markdown/code files, and renders PDFs.
-2. Two **interactive tutorials** under `tutorials/` — an algorithms masterclass with a live
-   Python + JS + SQL runner, and a separate Odoo framework tutorial.
+2. Three **interactive tutorials** under `tutorials/` — an algorithms masterclass with a live
+   Python + JS + SQL runner, a separate Odoo framework tutorial, and a final-stage interview
+   prep course built on the same runner framework.
 3. A **library of scratch solutions and long-form notes** — per-question code folders,
    deep-dive markdown, and reference PDFs.
 
@@ -40,7 +41,8 @@ sql.js, marked, highlight.js) are pulled from CDNs on demand.
 │
 ├── tutorials/
 │   ├── algorithms/          # Interactive masterclass — 57 questions, Python + JS + SQL
-│   └── odoo-framework/      # Standalone Odoo framework tutorial
+│   ├── odoo-framework/      # Standalone Odoo framework tutorial
+│   └── interview-final/     # Final-stage (live interview) prep — same framework, harder content
 │
 ├── interesting/             # Deep-dive notes written during study sessions
 │   ├── sql-joins.md
@@ -93,6 +95,14 @@ list, keyboard shortcuts, and question-editing format.
 
 A separate standalone tutorial on the Odoo framework itself. Rendered via iframe from the
 workbook shell.
+
+### Interview Final Stage — `tutorials/interview-final/`
+
+Prep for the 3-hour live technical interview (Odoo's final recruitment stage). Reuses the
+algorithms framework — Python/JS/SQL sandboxes, practice sets, final exam — with new content:
+a stage-1 recap, a live-coding-craft chapter, deeper algorithm modules at medium/hard
+difficulty, SQL and database-design deep dives, OOP, and reveal-solution system-design
+questions.
 
 ## Long-form notes — `interesting/`
 

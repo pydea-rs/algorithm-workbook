@@ -886,6 +886,949 @@ def top_k_frequent(nums: list, k: int) -> list:
     ],
   },
 
+  // ============================================================
+  // M6 — BINARY SEARCH MASTERY
+  // ============================================================
+
+  F16: {
+    id: "F16",
+    title: "Search in Rotated Sorted Array",
+    difficulty: "Medium",
+    time: "15-20 min",
+    tags: ["Binary Search", "Rotated Array"],
+    type: "python",
+    statement:
+      "Write <code>search_rotated(nums, target)</code> returning the index of " +
+      "<code>target</code> in a sorted array that was rotated at an unknown pivot " +
+      "(distinct values), or <code>-1</code>. Required: O(log n). " +
+      "The key sentence: <em>one half is always sorted — find it, check if the target " +
+      "is inside it, recurse the right way.</em>",
+    examples:
+      "Input:  nums=[4,5,6,7,0,1,2], target=0 -> 4\n" +
+      "Input:  nums=[4,5,6,7,0,1,2], target=3 -> -1\n" +
+      "Input:  nums=[1], target=0             -> -1\n" +
+      "Input:  nums=[5,1,3], target=5         -> 0",
+    hint: "Compare nums[mid] with nums[lo] to identify the sorted half; range-check the target against that half's endpoints.",
+    functionName: "search_rotated",
+    signature: "search_rotated(nums: list[int], target: int) -> int",
+    starter:
+      "def search_rotated(nums, target):\n" +
+      "    # your code here\n" +
+      "    pass\n",
+    solution:
+`def search_rotated(nums: list, target: int) -> int:
+    lo, hi = 0, len(nums) - 1
+    while lo <= hi:
+        mid = (lo + hi) // 2
+        if nums[mid] == target:
+            return mid
+        if nums[lo] <= nums[mid]:              # left half sorted
+            if nums[lo] <= target < nums[mid]:
+                hi = mid - 1
+            else:
+                lo = mid + 1
+        else:                                  # right half sorted
+            if nums[mid] < target <= nums[hi]:
+                lo = mid + 1
+            else:
+                hi = mid - 1
+    return -1`,
+    explanation:
+      "The <= in `nums[lo] <= nums[mid]` matters: with two elements, lo == mid and the left " +
+      "'half' is the single element — it must count as sorted or the logic inverts. " +
+      "Follow-up to expect: duplicates allowed (worst case degrades to O(n); when " +
+      "nums[lo] == nums[mid] you can only do lo += 1).",
+    tests: [
+      { args: [[4, 5, 6, 7, 0, 1, 2], 0], expected: 4 },
+      { args: [[4, 5, 6, 7, 0, 1, 2], 3], expected: -1 },
+      { args: [[1], 0], expected: -1 },
+      { args: [[1], 1], expected: 0 },
+      { args: [[5, 1, 3], 5], expected: 0 },
+      { args: [[3, 1], 1], expected: 1 },
+      { args: [[1, 2, 3, 4, 5], 4], expected: 3 },
+      { args: [[6, 7, 8, 1, 2, 3, 4, 5], 8], expected: 2 },
+    ],
+  },
+
+  F17: {
+    id: "F17",
+    title: "First and Last Position of Target",
+    difficulty: "Medium",
+    time: "15-20 min",
+    tags: ["Binary Search", "Boundary Search"],
+    type: "python",
+    statement:
+      "Write <code>search_range(nums, target)</code> returning <code>[first, last]</code> " +
+      "indices of <code>target</code> in a sorted array with duplicates, or " +
+      "<code>[-1, -1]</code>. Required: O(log n) — so no linear scan outward from a hit. " +
+      "This is the bisect_left / bisect_right question in disguise.",
+    examples:
+      "Input:  nums=[5,7,7,8,8,10], target=8 -> [3,4]\n" +
+      "Input:  nums=[5,7,7,8,8,10], target=6 -> [-1,-1]\n" +
+      "Input:  nums=[], target=0             -> [-1,-1]\n" +
+      "Input:  nums=[2,2,2,2], target=2      -> [0,3]",
+    hint: "Two boundary searches: leftmost index with value >= target, and leftmost with value > target; the range is [left, right-1].",
+    functionName: "search_range",
+    signature: "search_range(nums: list[int], target: int) -> list[int]",
+    starter:
+      "def search_range(nums, target):\n" +
+      "    # your code here\n" +
+      "    pass\n",
+    solution:
+`def search_range(nums: list, target: int) -> list:
+    def lower_bound(x):            # first index with nums[i] >= x
+        lo, hi = 0, len(nums)
+        while lo < hi:
+            mid = (lo + hi) // 2
+            if nums[mid] < x:
+                lo = mid + 1
+            else:
+                hi = mid
+        return lo
+
+    left = lower_bound(target)
+    if left == len(nums) or nums[left] != target:
+        return [-1, -1]
+    right = lower_bound(target + 1) - 1
+    return [left, right]`,
+    explanation:
+      "One boundary helper reused twice: bisect_left(target) and bisect_left(target+1)-1. " +
+      "In real code, `from bisect import bisect_left, bisect_right` does it in two lines — " +
+      "write the manual version in the interview, then mention the stdlib.",
+    tests: [
+      { args: [[5, 7, 7, 8, 8, 10], 8], expected: [3, 4] },
+      { args: [[5, 7, 7, 8, 8, 10], 6], expected: [-1, -1] },
+      { args: [[], 0], expected: [-1, -1] },
+      { args: [[1], 1], expected: [0, 0] },
+      { args: [[2, 2, 2, 2], 2], expected: [0, 3] },
+      { args: [[1, 3], 2], expected: [-1, -1] },
+      { args: [[1, 2, 2, 3], 3], expected: [3, 3] },
+      { args: [[1, 1, 2], 1], expected: [0, 1] },
+    ],
+  },
+
+  F18: {
+    id: "F18",
+    title: "Koko Eating Bananas",
+    difficulty: "Medium",
+    time: "18-25 min",
+    tags: ["Binary Search on Answer", "Monotone Predicate"],
+    type: "python",
+    statement:
+      "Koko has <code>piles</code> of bananas and <code>h</code> hours; each hour she eats up to " +
+      "<code>k</code> bananas from one pile. Write <code>min_eating_speed(piles, h)</code> " +
+      "returning the minimum integer speed <code>k</code> that finishes in time. " +
+      "The archetype of <strong>binary search on the answer</strong>: define can(k), prove it " +
+      "monotone, boundary-search the answer space.",
+    examples:
+      "Input:  piles=[3,6,7,11], h=8       -> 4\n" +
+      "Input:  piles=[30,11,23,4,20], h=5  -> 30\n" +
+      "Input:  piles=[30,11,23,4,20], h=6  -> 23",
+    hint: "can(k) = sum(ceil(p / k)) <= h. If speed k works, k+1 works too -> boundary search on [1, max(piles)].",
+    functionName: "min_eating_speed",
+    signature: "min_eating_speed(piles: list[int], h: int) -> int",
+    starter:
+      "def min_eating_speed(piles, h):\n" +
+      "    # your code here\n" +
+      "    pass\n",
+    solution:
+`def min_eating_speed(piles: list, h: int) -> int:
+    def can(k):
+        return sum((p + k - 1) // k for p in piles) <= h
+
+    lo, hi = 1, max(piles)
+    while lo < hi:
+        mid = (lo + hi) // 2
+        if can(mid):
+            hi = mid          # mid works; try smaller
+        else:
+            lo = mid + 1
+    return lo`,
+    explanation:
+      "O(n log(max(piles))). `(p + k - 1) // k` is integer ceil-division — worth writing " +
+      "without hesitation. The narration that scores: '1) check function, 2) it's monotone " +
+      "because eating faster never hurts, 3) so boundary-search the answer space.'",
+    tests: [
+      { args: [[3, 6, 7, 11], 8], expected: 4 },
+      { args: [[30, 11, 23, 4, 20], 5], expected: 30 },
+      { args: [[30, 11, 23, 4, 20], 6], expected: 23 },
+      { args: [[1], 1], expected: 1 },
+      { args: [[312884470], 312884469], expected: 2 },
+      { args: [[1000000000], 2], expected: 500000000 },
+      { args: [[1, 1, 1, 1], 4], expected: 1 },
+    ],
+  },
+
+  F19: {
+    id: "F19",
+    title: "Find Peak Element",
+    difficulty: "Medium",
+    time: "12-18 min",
+    tags: ["Binary Search", "Unsorted"],
+    type: "python",
+    statement:
+      "Write <code>find_peak_element(nums)</code> returning the index of a peak — an element " +
+      "strictly greater than its neighbors (edges count as -infinity beyond them; adjacent " +
+      "values are never equal). Required O(log n) — on an <em>unsorted</em> array, which is the " +
+      "point: binary search needs a half-discarding rule, not sortedness. " +
+      "(Any peak is acceptable; these tests use single-peak arrays.)",
+    examples:
+      "Input:  [1,2,3,1]    -> 2\n" +
+      "Input:  [1,2,3,4,5]  -> 4   (rising to the edge)\n" +
+      "Input:  [5,4,3,2,1]  -> 0\n" +
+      "Input:  [1]          -> 0",
+    hint: "If nums[mid] < nums[mid+1], the slope rises rightward, so a peak exists to the right; else one exists at mid or left.",
+    functionName: "find_peak_element",
+    signature: "find_peak_element(nums: list[int]) -> int",
+    starter:
+      "def find_peak_element(nums):\n" +
+      "    # your code here\n" +
+      "    pass\n",
+    solution:
+`def find_peak_element(nums: list) -> int:
+    lo, hi = 0, len(nums) - 1
+    while lo < hi:
+        mid = (lo + hi) // 2
+        if nums[mid] < nums[mid + 1]:
+            lo = mid + 1      # rising -> a peak lies right of mid
+        else:
+            hi = mid          # falling -> mid could be the peak
+    return lo`,
+    explanation:
+      "The invariant to say: 'walking uphill must eventually hit a peak, because the array " +
+      "ends'. mid+1 is always in range since lo < hi guarantees mid < hi. Note the " +
+      "boundary-search shape (lo < hi, hi = mid) — this is a boundary between " +
+      "'rising' and 'falling' zones.",
+    tests: [
+      { args: [[1, 2, 3, 1]], expected: 2 },
+      { args: [[1, 2, 3, 4, 5]], expected: 4 },
+      { args: [[5, 4, 3, 2, 1]], expected: 0 },
+      { args: [[1]], expected: 0 },
+      { args: [[1, 3, 2]], expected: 1 },
+      { args: [[2, 1]], expected: 0 },
+      { args: [[1, 2]], expected: 1 },
+    ],
+  },
+
+  F20: {
+    id: "F20",
+    title: "Median of Two Sorted Arrays",
+    difficulty: "Hard",
+    time: "35-40 min",
+    tags: ["Binary Search", "Partition", "Boss Fight"],
+    type: "python",
+    statement:
+      "Write <code>find_median_sorted_arrays(a, b)</code> returning the median of two sorted " +
+      "arrays in <strong>O(log(min(m,n)))</strong>. The famous hard one. Approach: binary-search " +
+      "the <em>cut position</em> in the shorter array; derive the matching cut in the longer " +
+      "one so the combined left side holds half the elements; verify the cross conditions " +
+      "<code>maxLeftA &lt;= minRightB</code> and <code>maxLeftB &lt;= minRightA</code>.",
+    examples:
+      "Input:  a=[1,3], b=[2]      -> 2.0\n" +
+      "Input:  a=[1,2], b=[3,4]    -> 2.5\n" +
+      "Input:  a=[], b=[1]         -> 1.0\n" +
+      "Input:  a=[0,0], b=[0,0]    -> 0.0",
+    hint: "Ensure a is the shorter array. Sentinels +-inf for empty sides. If maxLeftA > minRightB the cut in a is too far right.",
+    functionName: "find_median_sorted_arrays",
+    signature: "find_median_sorted_arrays(a: list[int], b: list[int]) -> float",
+    starter:
+      "def find_median_sorted_arrays(a, b):\n" +
+      "    # your code here\n" +
+      "    pass\n",
+    solution:
+`def find_median_sorted_arrays(a: list, b: list) -> float:
+    if len(a) > len(b):
+        a, b = b, a                       # binary search the shorter array
+    m, n = len(a), len(b)
+    total_left = (m + n + 1) // 2         # size of the combined left part
+
+    lo, hi = 0, m                         # cut position in a: 0..m
+    while lo <= hi:
+        i = (lo + hi) // 2                # a contributes i elements to the left
+        j = total_left - i                # b contributes the rest
+        max_left_a  = a[i - 1] if i > 0 else float("-inf")
+        min_right_a = a[i]     if i < m else float("inf")
+        max_left_b  = b[j - 1] if j > 0 else float("-inf")
+        min_right_b = b[j]     if j < n else float("inf")
+
+        if max_left_a <= min_right_b and max_left_b <= min_right_a:
+            if (m + n) % 2 == 1:
+                return float(max(max_left_a, max_left_b))
+            return (max(max_left_a, max_left_b) +
+                    min(min_right_a, min_right_b)) / 2.0
+        if max_left_a > min_right_b:
+            hi = i - 1                    # a's cut too far right
+        else:
+            lo = i + 1                    # a's cut too far left
+    raise ValueError("inputs not sorted")`,
+    explanation:
+      "The insight to narrate: a median is just a PARTITION of the combined data into equal " +
+      "halves where everything left <= everything right. Two of the four cross comparisons " +
+      "come free (arrays are sorted); only the two diagonal ones need checking. Sentinels " +
+      "make empty sides painless. Even a clean spoken sketch of this earns real points.",
+    tests: [
+      { args: [[1, 3], [2]], expected: 2.0 },
+      { args: [[1, 2], [3, 4]], expected: 2.5 },
+      { args: [[], [1]], expected: 1.0 },
+      { args: [[2], []], expected: 2.0 },
+      { args: [[0, 0], [0, 0]], expected: 0.0 },
+      { args: [[1, 3], [2, 7]], expected: 2.5 },
+      { args: [[1, 2, 3, 4, 5], [6, 7, 8]], expected: 4.5 },
+      { args: [[5], [1, 2, 3]], expected: 2.5 },
+    ],
+  },
+
+  // ============================================================
+  // M7 — TREES DEEP DIVE
+  // ============================================================
+
+  F21: {
+    id: "F21",
+    title: "Validate Binary Search Tree",
+    difficulty: "Medium",
+    time: "15-20 min",
+    tags: ["Tree", "BST", "Top-Down Recursion"],
+    type: "python",
+    statement:
+      "Write <code>is_valid_bst(root)</code> — is the binary tree a valid BST? " +
+      "(Left subtree strictly less, right subtree strictly greater, recursively; " +
+      "duplicates invalid.) The trap is checking only parent-child pairs — the constraint " +
+      "is global, so pass an allowed <code>(lo, hi)</code> range down. " +
+      "Trees are given as level-order arrays and built for you via <code>_build_tree</code>; " +
+      "your function receives the root <code>TreeNode</code> (fields: val, left, right).",
+    examples:
+      "Input:  [2,1,3]                -> True\n" +
+      "Input:  [5,1,4,null,null,3,6]  -> False  (3 and 4 in the right subtree of 5... 3 < 5)\n" +
+      "Input:  [5,4,6,null,null,3,7]  -> False  (the classic: 3 under 5's right side)\n" +
+      "Input:  [1,1]                  -> False  (duplicates)",
+    hint: "check(node, lo, hi): value must sit strictly inside (lo, hi); recurse left with hi=node.val, right with lo=node.val.",
+    functionName: "is_valid_bst",
+    signature: "is_valid_bst(root: TreeNode | None) -> bool",
+    starter:
+      "def is_valid_bst(root):\n" +
+      "    # root is a TreeNode (or None); fields: val, left, right\n" +
+      "    pass\n",
+    solution:
+`def is_valid_bst(root) -> bool:
+    def check(node, lo, hi):
+        if node is None:
+            return True
+        if not (lo < node.val < hi):
+            return False
+        return (check(node.left,  lo, node.val) and
+                check(node.right, node.val, hi))
+    return check(root, float("-inf"), float("inf"))`,
+    explanation:
+      "O(n) time, O(h) stack. Alternative to name: in-order traversal of a BST is strictly " +
+      "increasing — track the previous value and compare. Both are accepted; the range " +
+      "version generalizes better (e.g. to 'count nodes in range').",
+    tests: [
+      { args: [[2, 1, 3]], expected: true,
+        prepare: "args = [_build_tree(args[0])]" },
+      { args: [[5, 1, 4, null, null, 3, 6]], expected: false,
+        prepare: "args = [_build_tree(args[0])]" },
+      { args: [[5, 4, 6, null, null, 3, 7]], expected: false,
+        prepare: "args = [_build_tree(args[0])]" },
+      { args: [[1, 1]], expected: false,
+        prepare: "args = [_build_tree(args[0])]" },
+      { args: [[]], expected: true,
+        prepare: "args = [_build_tree(args[0])]" },
+      { args: [[1]], expected: true,
+        prepare: "args = [_build_tree(args[0])]" },
+      { args: [[3, 1, 5, 0, 2, 4, 6]], expected: true,
+        prepare: "args = [_build_tree(args[0])]" },
+      { args: [[10, 5, 15, null, null, 6, 20]], expected: false,
+        prepare: "args = [_build_tree(args[0])]" },
+    ],
+  },
+
+  F22: {
+    id: "F22",
+    title: "Lowest Common Ancestor of a Binary Tree",
+    difficulty: "Medium",
+    time: "18-25 min",
+    tags: ["Tree", "Recursion", "LCA"],
+    type: "python",
+    statement:
+      "Write <code>lowest_common_ancestor(root, p, q)</code> returning the deepest node that " +
+      "has both <code>p</code> and <code>q</code> in its subtree (a node counts as its own " +
+      "ancestor). <code>p</code> and <code>q</code> are actual TreeNode references, both " +
+      "guaranteed present. Return the TreeNode; the tests compare its value. " +
+      "The one-liner insight: <em>the LCA is where p and q first split into different sides.</em>",
+    examples:
+      "Tree:   [3,5,1,6,2,0,8,null,null,7,4]\n" +
+      "p=5, q=1 -> 3\n" +
+      "p=5, q=4 -> 5   (a node is its own ancestor)\n" +
+      "p=6, q=4 -> 5",
+    hint: "Base: None/p/q returns itself. Recurse both sides: both non-None -> current node is the answer; else propagate the non-None side.",
+    functionName: "lowest_common_ancestor",
+    signature: "lowest_common_ancestor(root, p, q) -> TreeNode",
+    starter:
+      "def lowest_common_ancestor(root, p, q):\n" +
+      "    # p and q are TreeNode references inside root's tree\n" +
+      "    pass\n",
+    solution:
+`def lowest_common_ancestor(root, p, q):
+    if root is None or root is p or root is q:
+        return root
+    left  = lowest_common_ancestor(root.left,  p, q)
+    right = lowest_common_ancestor(root.right, p, q)
+    if left and right:
+        return root           # p and q split here
+    return left or right      # both on one side (or neither found)`,
+    explanation:
+      "Each call answers: 'what did this subtree find?' — p, q, their LCA, or nothing. " +
+      "If both children report a find, they split at the current node. O(n) time, O(h) stack. " +
+      "BST follow-up: walk from the root, first value between p and q is the LCA — O(h), " +
+      "no recursion needed.",
+    tests: [
+      { args: [[3, 5, 1, 6, 2, 0, 8, null, null, 7, 4], 5, 1], expected: 3,
+        prepare: "t = _build_tree(args[0]); args = [t, _find_node(t, args[1]), _find_node(t, args[2])]",
+        transform: "result = result.val" },
+      { args: [[3, 5, 1, 6, 2, 0, 8, null, null, 7, 4], 5, 4], expected: 5,
+        prepare: "t = _build_tree(args[0]); args = [t, _find_node(t, args[1]), _find_node(t, args[2])]",
+        transform: "result = result.val" },
+      { args: [[3, 5, 1, 6, 2, 0, 8, null, null, 7, 4], 6, 4], expected: 5,
+        prepare: "t = _build_tree(args[0]); args = [t, _find_node(t, args[1]), _find_node(t, args[2])]",
+        transform: "result = result.val" },
+      { args: [[3, 5, 1, 6, 2, 0, 8, null, null, 7, 4], 0, 8], expected: 1,
+        prepare: "t = _build_tree(args[0]); args = [t, _find_node(t, args[1]), _find_node(t, args[2])]",
+        transform: "result = result.val" },
+      { args: [[1, 2], 1, 2], expected: 1,
+        prepare: "t = _build_tree(args[0]); args = [t, _find_node(t, args[1]), _find_node(t, args[2])]",
+        transform: "result = result.val" },
+      { args: [[3, 5, 1, 6, 2, 0, 8, null, null, 7, 4], 7, 4], expected: 2,
+        prepare: "t = _build_tree(args[0]); args = [t, _find_node(t, args[1]), _find_node(t, args[2])]",
+        transform: "result = result.val" },
+    ],
+  },
+
+  F23: {
+    id: "F23",
+    title: "Binary Tree Right Side View",
+    difficulty: "Medium",
+    time: "12-18 min",
+    tags: ["Tree", "BFS", "Level Order"],
+    type: "python",
+    statement:
+      "Write <code>right_side_view(root)</code> returning the values visible from the right — " +
+      "i.e. the <em>last node of each level</em>, top to bottom. One costume of the level-order " +
+      "template: freeze the level size with <code>len(queue)</code>, keep the last element of " +
+      "each level.",
+    examples:
+      "Input:  [1,2,3,null,5,null,4] -> [1,3,4]\n" +
+      "Input:  [1,null,3]            -> [1,3]\n" +
+      "Input:  [1,2,3,4]             -> [1,3,4]  (4 peeks out from the left side)\n" +
+      "Input:  []                    -> []",
+    hint: "BFS; for each level of size n, the node at i == n-1 is visible.",
+    functionName: "right_side_view",
+    signature: "right_side_view(root: TreeNode | None) -> list[int]",
+    starter:
+      "def right_side_view(root):\n" +
+      "    # your code here\n" +
+      "    pass\n",
+    solution:
+`from collections import deque
+
+def right_side_view(root) -> list:
+    if root is None:
+        return []
+    out = []
+    q = deque([root])
+    while q:
+        n = len(q)                     # freeze the level
+        for i in range(n):
+            node = q.popleft()
+            if i == n - 1:
+                out.append(node.val)   # last of the level
+            if node.left:
+                q.append(node.left)
+            if node.right:
+                q.append(node.right)
+    return out`,
+    explanation:
+      "The [1,2,3,4] case is why 'always take the right child' fails: level 2 only has node 4, " +
+      "which hangs off the LEFT subtree. Right-side view = per-level last, not right-spine. " +
+      "DFS alternative: visit right-first, record the first node seen at each new depth.",
+    tests: [
+      { args: [[1, 2, 3, null, 5, null, 4]], expected: [1, 3, 4],
+        prepare: "args = [_build_tree(args[0])]" },
+      { args: [[1, null, 3]], expected: [1, 3],
+        prepare: "args = [_build_tree(args[0])]" },
+      { args: [[1, 2, 3, 4]], expected: [1, 3, 4],
+        prepare: "args = [_build_tree(args[0])]" },
+      { args: [[]], expected: [],
+        prepare: "args = [_build_tree(args[0])]" },
+      { args: [[1]], expected: [1],
+        prepare: "args = [_build_tree(args[0])]" },
+      { args: [[1, 2, 3, 4, 5, 6, 7]], expected: [1, 3, 7],
+        prepare: "args = [_build_tree(args[0])]" },
+    ],
+  },
+
+  F24: {
+    id: "F24",
+    title: "Serialize and Deserialize Binary Tree",
+    difficulty: "Hard",
+    time: "25-35 min",
+    tags: ["Tree", "Design", "Preorder"],
+    type: "python",
+    statement:
+      "Implement <strong>two</strong> functions: <code>serialize(root)</code> turning a tree " +
+      "into a string, and <code>deserialize(data)</code> turning that string back into the " +
+      "identical tree. Any format you like — the tests round-trip your own pair " +
+      "(<code>deserialize(serialize(tree))</code>) and compare the resulting structure. " +
+      "The clean interview answer: preorder with a null sentinel. " +
+      "<code>TreeNode</code> is available in the sandbox.",
+    examples:
+      "Input tree:  [1,2,3,null,null,4,5]\n" +
+      "Round trip must reproduce the same structure.\n" +
+      'One valid format: "1,2,#,#,3,4,#,#,5,#,#"',
+    hint: "serialize: preorder DFS appending '#' for None. deserialize: iterator over tokens; consume one token, recurse left then right.",
+    functionName: "serialize",
+    signature: "serialize(root) -> str   /   deserialize(data) -> TreeNode",
+    starter:
+      "def serialize(root):\n" +
+      "    # tree -> string\n" +
+      "    pass\n" +
+      "\n" +
+      "def deserialize(data):\n" +
+      "    # string -> tree (use TreeNode(val))\n" +
+      "    pass\n",
+    solution:
+`def serialize(root) -> str:
+    parts = []
+    def dfs(node):
+        if node is None:
+            parts.append("#")
+            return
+        parts.append(str(node.val))
+        dfs(node.left)
+        dfs(node.right)
+    dfs(root)
+    return ",".join(parts)
+
+def deserialize(data):
+    vals = iter(data.split(","))
+    def build():
+        v = next(vals)
+        if v == "#":
+            return None
+        node = TreeNode(int(v))
+        node.left = build()
+        node.right = build()
+        return node
+    return build()`,
+    explanation:
+      "Preorder + sentinels uniquely determines the tree, and deserialization is one forward " +
+      "pass with an iterator — no index bookkeeping. Discussion points that score: delimiter " +
+      "collisions with real data (escape or length-prefix), level-order as an alternative, " +
+      "and the BST special case where preorder alone suffices (ranges reconstruct shape).",
+    tests: [
+      { args: [[1, 2, 3, null, null, 4, 5]], expected: [1, 2, 3, null, null, 4, 5],
+        skipCall: true,
+        prepare: "t = _build_tree(args[0]); result = _tree_to_level(deserialize(serialize(t)))" },
+      { args: [[]], expected: [],
+        skipCall: true,
+        prepare: "t = _build_tree(args[0]); result = _tree_to_level(deserialize(serialize(t)))" },
+      { args: [[1]], expected: [1],
+        skipCall: true,
+        prepare: "t = _build_tree(args[0]); result = _tree_to_level(deserialize(serialize(t)))" },
+      { args: [[1, 2]], expected: [1, 2],
+        skipCall: true,
+        prepare: "t = _build_tree(args[0]); result = _tree_to_level(deserialize(serialize(t)))" },
+      { args: [[1, null, 2, null, 3]], expected: [1, null, 2, null, 3],
+        skipCall: true,
+        prepare: "t = _build_tree(args[0]); result = _tree_to_level(deserialize(serialize(t)))" },
+      { args: [[5, 3, 8, 1, 4, 7, 9]], expected: [5, 3, 8, 1, 4, 7, 9],
+        skipCall: true,
+        prepare: "t = _build_tree(args[0]); result = _tree_to_level(deserialize(serialize(t)))" },
+      { args: [[-1, 0, -2]], expected: [-1, 0, -2],
+        skipCall: true,
+        prepare: "t = _build_tree(args[0]); result = _tree_to_level(deserialize(serialize(t)))" },
+    ],
+  },
+
+  F25: {
+    id: "F25",
+    title: "Diameter of Binary Tree",
+    difficulty: "Medium",
+    time: "15-20 min",
+    tags: ["Tree", "Bottom-Up Recursion"],
+    type: "python",
+    statement:
+      "Write <code>diameter_of_binary_tree(root)</code> returning the number of <em>edges</em> " +
+      "on the longest path between any two nodes (the path need not pass through the root). " +
+      "The pattern being tested: the recursion <strong>returns height</strong> while the " +
+      "<strong>answer is tracked separately</strong> — forcing the answer through the return " +
+      "value doesn't work because a bent path can't be extended by the parent.",
+    examples:
+      "Input:  [1,2,3,4,5] -> 3   (path 4-2-1-3: three edges)\n" +
+      "Input:  [1]         -> 0\n" +
+      "Input:  [1,2]       -> 1\n" +
+      "Input:  []          -> 0",
+    hint: "height(node) returns 1 + max(child heights); at every node, candidate answer = left_height + right_height.",
+    functionName: "diameter_of_binary_tree",
+    signature: "diameter_of_binary_tree(root: TreeNode | None) -> int",
+    starter:
+      "def diameter_of_binary_tree(root):\n" +
+      "    # your code here\n" +
+      "    pass\n",
+    solution:
+`def diameter_of_binary_tree(root) -> int:
+    best = 0
+    def height(node):
+        nonlocal best
+        if node is None:
+            return 0
+        lh = height(node.left)
+        rh = height(node.right)
+        best = max(best, lh + rh)     # bent path through this node
+        return 1 + max(lh, rh)        # straight chain for the parent
+    height(root)
+    return best`,
+    explanation:
+      "O(n), single pass. The 'return one thing, track another' pattern also solves Binary " +
+      "Tree Maximum Path Sum (return best downward sum, track best bent sum) and Longest " +
+      "Univalue Path — name the family when you finish.",
+    tests: [
+      { args: [[1, 2, 3, 4, 5]], expected: 3,
+        prepare: "args = [_build_tree(args[0])]" },
+      { args: [[1]], expected: 0,
+        prepare: "args = [_build_tree(args[0])]" },
+      { args: [[1, 2]], expected: 1,
+        prepare: "args = [_build_tree(args[0])]" },
+      { args: [[]], expected: 0,
+        prepare: "args = [_build_tree(args[0])]" },
+      { args: [[1, 2, null, 3, null, 4]], expected: 3,
+        prepare: "args = [_build_tree(args[0])]" },
+      { args: [[1, 2, 3, 4, 5, null, null, 6, null, null, 7]], expected: 4,
+        prepare: "args = [_build_tree(args[0])]" },
+    ],
+  },
+
+  // ============================================================
+  // M8 — GRAPHS DEEP DIVE
+  // ============================================================
+
+  F26: {
+    id: "F26",
+    title: "Course Schedule",
+    difficulty: "Medium",
+    time: "18-25 min",
+    tags: ["Graph", "Topological Sort", "Cycle Detection"],
+    type: "python",
+    statement:
+      "Write <code>can_finish(num_courses, prerequisites)</code> — given pairs " +
+      "<code>[course, prerequisite]</code>, can all courses be completed? " +
+      "This is topological sort in disguise: a valid order exists iff the dependency graph " +
+      "is acyclic, and Kahn's peeling count doubles as the cycle detector.",
+    examples:
+      "Input:  2, [[1,0]]        -> True   (take 0 then 1)\n" +
+      "Input:  2, [[1,0],[0,1]]  -> False  (mutual dependency)\n" +
+      "Input:  1, []             -> True",
+    hint: "Kahn's: indegree array + queue of zero-indegree nodes; count processed nodes; done == n means no cycle.",
+    functionName: "can_finish",
+    signature: "can_finish(num_courses: int, prerequisites: list[list[int]]) -> bool",
+    starter:
+      "def can_finish(num_courses, prerequisites):\n" +
+      "    # your code here\n" +
+      "    pass\n",
+    solution:
+`from collections import deque
+
+def can_finish(num_courses: int, prerequisites: list) -> bool:
+    graph = [[] for _ in range(num_courses)]
+    indegree = [0] * num_courses
+    for course, pre in prerequisites:
+        graph[pre].append(course)
+        indegree[course] += 1
+
+    q = deque(i for i in range(num_courses) if indegree[i] == 0)
+    done = 0
+    while q:
+        node = q.popleft()
+        done += 1
+        for nxt in graph[node]:
+            indegree[nxt] -= 1
+            if indegree[nxt] == 0:
+                q.append(nxt)
+    return done == num_courses`,
+    explanation:
+      "O(V+E). Nodes trapped in a cycle never reach indegree 0, so done < n exactly when a " +
+      "cycle exists. Follow-up to expect: 'return the actual order' (Course Schedule II — " +
+      "collect popped nodes) and 'the other way' (DFS with white/gray/black coloring; " +
+      "a gray->gray edge is a back edge = cycle).",
+    tests: [
+      { args: [2, [[1, 0]]], expected: true },
+      { args: [2, [[1, 0], [0, 1]]], expected: false },
+      { args: [1, []], expected: true },
+      { args: [5, [[1, 4], [2, 4], [3, 1], [3, 2]]], expected: true },
+      { args: [3, [[0, 1], [1, 2], [2, 0]]], expected: false },
+      { args: [4, [[1, 0], [2, 1], [3, 2]]], expected: true },
+      { args: [4, [[1, 0], [2, 1], [3, 2], [1, 3]]], expected: false },
+    ],
+  },
+
+  F27: {
+    id: "F27",
+    title: "Number of Connected Components",
+    difficulty: "Medium",
+    time: "12-18 min",
+    tags: ["Graph", "Union-Find"],
+    type: "python",
+    statement:
+      "Write <code>count_components(n, edges)</code> — how many connected components does the " +
+      "undirected graph with nodes <code>0..n-1</code> have? " +
+      "The clean Union-Find application: start at <code>n</code> components, subtract one per " +
+      "<em>successful</em> union. (BFS/DFS over an adjacency list is equally valid — pick one " +
+      "and say why.)",
+    examples:
+      "Input:  n=5, edges=[[0,1],[1,2],[3,4]] -> 2\n" +
+      "Input:  n=5, edges=[[0,1],[1,2],[2,3],[3,4]] -> 1\n" +
+      "Input:  n=4, edges=[] -> 4",
+    hint: "find with path compression; union returns False when already connected; components = n - successful_unions.",
+    functionName: "count_components",
+    signature: "count_components(n: int, edges: list[list[int]]) -> int",
+    starter:
+      "def count_components(n, edges):\n" +
+      "    # your code here\n" +
+      "    pass\n",
+    solution:
+`def count_components(n: int, edges: list) -> int:
+    parent = list(range(n))
+
+    def find(x):
+        while parent[x] != x:
+            parent[x] = parent[parent[x]]    # path halving
+            x = parent[x]
+        return x
+
+    components = n
+    for a, b in edges:
+        ra, rb = find(a), find(b)
+        if ra != rb:
+            parent[ra] = rb
+            components -= 1
+    return components`,
+    explanation:
+      "Near O(1) amortized per operation with compression. The counting idea — start at n, " +
+      "decrement per merge — also answers 'is this a valid tree?' (exactly n-1 edges AND " +
+      "1 component) and 'when does everyone become connected?' (the union that hits 1).",
+    tests: [
+      { args: [5, [[0, 1], [1, 2], [3, 4]]], expected: 2 },
+      { args: [5, [[0, 1], [1, 2], [2, 3], [3, 4]]], expected: 1 },
+      { args: [4, []], expected: 4 },
+      { args: [1, []], expected: 1 },
+      { args: [6, [[0, 1], [2, 3], [4, 5]]], expected: 3 },
+      { args: [3, [[0, 1], [0, 1], [1, 0]]], expected: 2 },
+    ],
+  },
+
+  F28: {
+    id: "F28",
+    title: "Word Ladder",
+    difficulty: "Hard",
+    time: "25-35 min",
+    tags: ["Graph", "BFS", "Implicit Graph"],
+    type: "python",
+    statement:
+      "Write <code>ladder_length(begin_word, end_word, word_list)</code> returning the length " +
+      "(number of words, inclusive) of the shortest transformation sequence from begin to end, " +
+      "changing one letter at a time with every intermediate word in <code>word_list</code> — " +
+      "or 0 if impossible. The modeling sentence that earns the points: <em>words are nodes, " +
+      "one-letter differences are edges, shortest path in an unweighted graph means BFS.</em>",
+    examples:
+      'Input:  "hit" -> "cog", ["hot","dot","dog","lot","log","cog"] -> 5\n' +
+      '        (hit -> hot -> dot -> dog -> cog)\n' +
+      'Input:  "hit" -> "cog", ["hot","dot","dog","lot","log"] -> 0  (cog not in list)\n' +
+      'Input:  "a" -> "c", ["a","b","c"] -> 2',
+    hint: "BFS from begin_word; neighbors = for each position, try all 26 letters, keep words still in the (shrinking) word set.",
+    functionName: "ladder_length",
+    signature: "ladder_length(begin_word: str, end_word: str, word_list: list[str]) -> int",
+    starter:
+      "def ladder_length(begin_word, end_word, word_list):\n" +
+      "    # your code here\n" +
+      "    pass\n",
+    solution:
+`from collections import deque
+import string
+
+def ladder_length(begin_word: str, end_word: str, word_list: list) -> int:
+    words = set(word_list)
+    if end_word not in words:
+        return 0
+    q = deque([(begin_word, 1)])
+    words.discard(begin_word)
+    while q:
+        word, steps = q.popleft()
+        if word == end_word:
+            return steps
+        for i in range(len(word)):
+            for ch in string.ascii_lowercase:
+                nxt = word[:i] + ch + word[i + 1:]
+                if nxt in words:
+                    words.discard(nxt)      # mark visited by removing
+                    q.append((nxt, steps + 1))
+    return 0`,
+    explanation:
+      "Removing a word from the set the moment it's queued is the visited-set — removing at " +
+      "pop time re-queues nodes exponentially. Neighbor generation is O(26 * L) per word " +
+      "instead of O(N * L) all-pairs. Upgrades to name if asked: wildcard buckets " +
+      "(precompute 'h*t' -> [hot, hat, ...]) and bidirectional BFS.",
+    tests: [
+      { args: ["hit", "cog", ["hot", "dot", "dog", "lot", "log", "cog"]], expected: 5 },
+      { args: ["hit", "cog", ["hot", "dot", "dog", "lot", "log"]], expected: 0 },
+      { args: ["a", "c", ["a", "b", "c"]], expected: 2 },
+      { args: ["hot", "dog", ["hot", "dog"]], expected: 0 },
+      { args: ["hot", "dot", ["dot"]], expected: 2 },
+      { args: ["same", "same", ["same"]], expected: 1 },
+      { args: ["ab", "cd", ["ad", "cd"]], expected: 3 },
+    ],
+  },
+
+  F29: {
+    id: "F29",
+    title: "Network Delay Time (Dijkstra)",
+    difficulty: "Medium-Hard",
+    time: "25-30 min",
+    tags: ["Graph", "Dijkstra", "Heap"],
+    type: "python",
+    statement:
+      "Signals start at node <code>k</code> and travel directed weighted edges " +
+      "<code>times = [[u, v, w], ...]</code> (nodes numbered 1..n). Write " +
+      "<code>network_delay_time(times, n, k)</code> returning the time for ALL nodes to " +
+      "receive the signal, or -1 if some never do. Textbook Dijkstra — the details being " +
+      "graded: the lazy-deletion guard, and knowing why non-negative weights are required.",
+    examples:
+      "Input:  times=[[2,1,1],[2,3,1],[3,4,1]], n=4, k=2 -> 2\n" +
+      "Input:  times=[[1,2,1]], n=2, k=1 -> 1\n" +
+      "Input:  times=[[1,2,1]], n=2, k=2 -> -1  (node 1 unreachable)",
+    hint: "Min-heap of (dist, node); pop, skip if already finalized, relax neighbors. Answer = max finalized dist if all n reached.",
+    functionName: "network_delay_time",
+    signature: "network_delay_time(times: list[list[int]], n: int, k: int) -> int",
+    starter:
+      "def network_delay_time(times, n, k):\n" +
+      "    # your code here\n" +
+      "    pass\n",
+    solution:
+`import heapq
+
+def network_delay_time(times: list, n: int, k: int) -> int:
+    graph = [[] for _ in range(n + 1)]
+    for u, v, w in times:
+        graph[u].append((v, w))
+
+    dist = {}
+    heap = [(0, k)]
+    while heap:
+        d, node = heapq.heappop(heap)
+        if node in dist:
+            continue                  # stale entry (lazy deletion)
+        dist[node] = d
+        for nxt, w in graph[node]:
+            if nxt not in dist:
+                heapq.heappush(heap, (d + w, nxt))
+    return max(dist.values()) if len(dist) == n else -1`,
+    explanation:
+      "O(E log E). We push duplicates instead of decrease-key; the `if node in dist` guard " +
+      "discards stale ones — say 'lazy deletion' out loud. Non-negative weights are what let " +
+      "the pop commit permanently; with negatives you'd switch to Bellman-Ford (O(VE)).",
+    tests: [
+      { args: [[[2, 1, 1], [2, 3, 1], [3, 4, 1]], 4, 2], expected: 2 },
+      { args: [[[1, 2, 1]], 2, 1], expected: 1 },
+      { args: [[[1, 2, 1]], 2, 2], expected: -1 },
+      { args: [[[1, 2, 1], [2, 3, 2], [1, 3, 4]], 3, 1], expected: 3 },
+      { args: [[[1, 2, 1], [2, 1, 3]], 2, 2], expected: 3 },
+      { args: [[], 1, 1], expected: 0 },
+      { args: [[[1, 2, 1], [2, 3, 7], [1, 3, 4], [3, 4, 1]], 4, 1], expected: 5 },
+    ],
+  },
+
+  F30: {
+    id: "F30",
+    title: "Pacific Atlantic Water Flow",
+    difficulty: "Medium-Hard",
+    time: "25-30 min",
+    tags: ["Graph", "Grid", "Reverse BFS"],
+    type: "python",
+    statement:
+      "Water on a height grid flows to a neighbor of <strong>equal or lower</strong> height. " +
+      "The Pacific touches the top and left edges; the Atlantic the bottom and right. Write " +
+      "<code>pacific_atlantic(heights)</code> returning all cells <code>[r, c]</code> from " +
+      "which water can reach BOTH oceans. The trick: don't simulate from every cell — " +
+      "<strong>start at the oceans and climb uphill</strong>, then intersect the two " +
+      "reachable sets.",
+    examples:
+      "Input:  [[1,2,2,3,5],\n" +
+      "         [3,2,3,4,4],\n" +
+      "         [2,4,5,3,1],\n" +
+      "         [6,7,1,4,5],\n" +
+      "         [5,1,1,2,4]]\n" +
+      "Output: [[0,4],[1,3],[1,4],[2,2],[3,0],[3,1],[4,0]]  (any order)",
+    hint: "Reverse the flow: BFS/DFS from each ocean's border cells, moving to neighbors with height >= current. Answer = intersection.",
+    functionName: "pacific_atlantic",
+    signature: "pacific_atlantic(heights: list[list[int]]) -> list[list[int]]",
+    starter:
+      "def pacific_atlantic(heights):\n" +
+      "    # your code here\n" +
+      "    pass\n",
+    solution:
+`def pacific_atlantic(heights: list) -> list:
+    if not heights or not heights[0]:
+        return []
+    R, C = len(heights), len(heights[0])
+
+    def climb(starts):
+        seen = set(starts)
+        stack = list(starts)
+        while stack:
+            r, c = stack.pop()
+            for dr, dc in ((0, 1), (0, -1), (1, 0), (-1, 0)):
+                nr, nc = r + dr, c + dc
+                if (0 <= nr < R and 0 <= nc < C and (nr, nc) not in seen
+                        and heights[nr][nc] >= heights[r][c]):   # uphill or flat
+                    seen.add((nr, nc))
+                    stack.append((nr, nc))
+        return seen
+
+    pacific  = climb([(0, c) for c in range(C)] + [(r, 0) for r in range(R)])
+    atlantic = climb([(R - 1, c) for c in range(C)] + [(r, C - 1) for r in range(R)])
+    return [[r, c] for r, c in sorted(pacific & atlantic)]`,
+    explanation:
+      "Two sweeps, O(mn) each, versus O((mn)^2) for forward simulation from every cell. " +
+      "The >= (not >) preserves equal-height flow when the edge is reversed — dropping it " +
+      "fails on plateau maps. This 'start from the destination' reversal generalizes to " +
+      "any 'which nodes can reach X' question.",
+    tests: [
+      {
+        args: [[[1, 2, 2, 3, 5], [3, 2, 3, 4, 4], [2, 4, 5, 3, 1], [6, 7, 1, 4, 5], [5, 1, 1, 2, 4]]],
+        expected: ["0,4", "1,3", "1,4", "2,2", "3,0", "3,1", "4,0"],
+        transform: 'result = sorted(f"{r},{c}" for r, c in result)',
+      },
+      {
+        args: [[[1]]],
+        expected: ["0,0"],
+        transform: 'result = sorted(f"{r},{c}" for r, c in result)',
+      },
+      {
+        args: [[[1, 1], [1, 1]]],
+        expected: ["0,0", "0,1", "1,0", "1,1"],
+        transform: 'result = sorted(f"{r},{c}" for r, c in result)',
+      },
+      {
+        args: [[[10, 10, 10], [10, 1, 10], [10, 10, 10]]],
+        expected: ["0,0", "0,1", "0,2", "1,0", "1,2", "2,0", "2,1", "2,2"],
+        transform: 'result = sorted(f"{r},{c}" for r, c in result)',
+      },
+      {
+        args: [[[3, 2, 1]]],
+        expected: ["0,0", "0,1", "0,2"],
+        transform: 'result = sorted(f"{r},{c}" for r, c in result)',
+      },
+    ],
+  },
+
 };
 
 // ----------------------------------------------------------------
@@ -898,6 +1841,12 @@ window.PRACTICE_SETS = {
          qids: ["F07", "F08", "F09", "F10"] },
   PS5: { module: "M5", title: "Practice Set 5 — Recursion & Backtracking",
          qids: ["F11", "F12", "F13", "F14", "F15"] },
+  PS6: { module: "M6", title: "Practice Set 6 — Binary Search Mastery",
+         qids: ["F16", "F17", "F18", "F19", "F20"] },
+  PS7: { module: "M7", title: "Practice Set 7 — Trees Deep Dive",
+         qids: ["F21", "F22", "F23", "F24", "F25"] },
+  PS8: { module: "M8", title: "Practice Set 8 — Graphs Deep Dive",
+         qids: ["F26", "F27", "F28", "F29", "F30"] },
 };
 
 // Final exam pool — filled in as later modules land (held-back questions).

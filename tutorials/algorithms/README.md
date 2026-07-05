@@ -1,7 +1,7 @@
 # Odoo Coderbyte — Interactive Masterclass
 
 A single-page tutorial + workbench for preparing the Odoo first-step Coderbyte assessment.
-Built from the KIMI Masterclass written guide and the Extended Question Bank in `../doc/`.
+Built from the KIMI Masterclass written guide and the Extended Question Bank in `../../doc/`.
 
 - **8 tutorial modules** fused from the KIMI chapters
 - **8 Practice Sets** (4–7 mixed questions each, deterministically shuffled so order doesn't telegraph the topic)
@@ -20,7 +20,7 @@ The tutorial is **just files** — no build step, no Node, no dependencies. Thre
 Pyodide and the page assets are loaded by URL, so a tiny static server is the safest path:
 
 ```bash
-cd tutorial
+cd tutorials/algorithms
 python3 -m http.server 8765
 ```
 
@@ -68,7 +68,7 @@ Once loaded, Pyodide stays in memory for the rest of the browser session.
 ## File layout
 
 ```
-tutorial/
+tutorials/algorithms/
 ├── index.html        # Page shell: sidebar, topbar, modals
 ├── styles.css        # Theming via CSS variables + animations
 ├── app.js            # Controller: nav, routing, modals, exam, progress
@@ -109,8 +109,9 @@ clear it.
 - ✅ Handles linked-list and binary-tree problems: helper builders are injected into both
   runtimes so you can write functions that take `ListNode` / `TreeNode` objects directly.
 - ✅ Counts a question as solved (and persists it) when every test passes — in either language.
-- ❌ Does **not** run SQL. SQL questions show the schema, hint, and reference query in the modal —
-  you should run the query in a real DB or SQL playground if you want to test it.
+- ✅ Runs SQL too: questions with an authored fixture execute against a real in-browser SQLite
+  (sql.js) and diff your result set against the expected table. Fixture-less SQL questions fall
+  back to schema + hint + reference query in the modal.
 
 ### Python vs JavaScript — which to pick
 
@@ -150,9 +151,9 @@ assessment uses. JavaScript is a bonus track for cross-language learning.
 
 | Source | Used for |
 |---|---|
-| `../doc/KIMI-Odoo_Coderbyte_Masterclass_FULL.md` | Foundation of the 8 tutorial modules |
-| `../doc/Odoo_Coderbyte_Question_Bank.md` | Original 24 reported-style questions |
-| `../doc/Odoo_Coderbyte_Question_Bank_Extended.md` | Hard-tier additions + gap-filler topics |
+| `../../doc/KIMI-Odoo_Coderbyte_Masterclass_FULL.md` | Foundation of the 8 tutorial modules |
+| `../../doc/Odoo_Coderbyte_Question_Bank.md` | Original 24 reported-style questions |
+| `../../doc/Odoo_Coderbyte_Question_Bank_Extended.md` | Hard-tier additions + gap-filler topics |
 
 Module text was rewritten where the source lacked depth (binary search template, sliding-window
 "need vs have" template, DP vs greedy criteria, Union Find).
@@ -192,4 +193,4 @@ bottom of `questions.js`. The progress UI updates automatically based on
 
 ## License
 
-Personal study material. The source guides in `../doc/` retain their original authorship.
+Personal study material. The source guides in `../../doc/` retain their original authorship.

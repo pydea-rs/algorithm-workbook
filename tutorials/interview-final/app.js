@@ -8,11 +8,13 @@
 (function () {
   "use strict";
 
-  const STORAGE_KEY = "odoo_prep_progress_v1";
-  const PREFS_KEY = "odoo_prep_prefs_v1";
-  const TIMING_KEY = "odoo_prep_timing_v1";
-  const DRAFTS_KEY = "odoo_prep_drafts_v1";
-  const EXAM_HISTORY_KEY = "odoo_prep_exam_history_v1";
+  // Distinct prefix from the algorithms tutorial — both apps share the same
+  // origin, so identical keys would merge progress and cross-wipe on Reset.
+  const STORAGE_KEY = "odoo_final_progress_v1";
+  const PREFS_KEY = "odoo_final_prefs_v1";
+  const TIMING_KEY = "odoo_final_timing_v1";
+  const DRAFTS_KEY = "odoo_final_drafts_v1";
+  const EXAM_HISTORY_KEY = "odoo_final_exam_history_v1";
 
   const DEFAULT_PREFS = {
     theme: "dark",
@@ -297,11 +299,12 @@
     },
     {
       title: "Practice Sets",
-      items: Object.keys(window.PRACTICE_SETS).map((pid, i) => ({
+      items: Object.keys(window.PRACTICE_SETS).map((pid) => ({
         kind: "practice",
         id: pid,
         label: window.PRACTICE_SETS[pid].title.replace(/^Practice Set \d+ — /, ""),
-        num: i + 1,
+        // Number by the set's own id (PS3 -> 3) so it matches its module.
+        num: parseInt(pid.replace(/\D/g, ""), 10) || "·",
       })),
     },
     {
@@ -353,7 +356,8 @@
         const qs = window.PRACTICE_SETS[id].qids;
         done = qs.every((qid) => state.solved.has(qid));
       } else if (kind === "exam") {
-        done = window.FINAL_EXAM_POOL.every((qid) => state.solved.has(qid));
+        done = window.FINAL_EXAM_POOL.length > 0 &&
+               window.FINAL_EXAM_POOL.every((qid) => state.solved.has(qid));
       }
       node.classList.toggle("completed", done);
     });
@@ -438,32 +442,36 @@
   function renderWelcome() {
     return el("div", { class: "view-narrow" }, [
       el("div", { class: "hero" }, [
-        el("h1", { text: "Odoo Coderbyte Masterclass" }),
+        el("h1", { text: "Odoo Final-Stage Interview Prep" }),
         el("p", {
           text:
-            "An interactive, single-page prep for the first-step Coderbyte assessment. " +
-            "Eight tutorial modules fuse the written prep with concept checks; " +
-            "eight practice sets mix topics within each chunk; a 12-question Final Exam closes it out.",
+            "Prep for the 3-hour live technical interview: a recap of stage-1, a chapter on " +
+            "live-coding craft, then deep dives into the algorithm families, SQL, database " +
+            "design, OOP, and system design — with medium/hard questions throughout.",
         }),
       ]),
       el("div", { class: "card", html: `
 <h2>How to navigate</h2>
 <ul>
-  <li><strong>Modules 1–8</strong> in the sidebar are the tutorial. Read them in order if this
-  is your first pass.</li>
-  <li><strong>Practice Sets</strong> follow each module. Questions are mixed so you can't tell
-  which sub-topic they came from.</li>
-  <li><strong>Final Exam</strong> draws 12 random questions from a held-back pool — try it only
-  after you've worked through the practice sets. Topic tags are intentionally hidden in the
-  exam so the algorithm family doesn't telegraph itself.</li>
+  <li><strong>Module 1</strong> is a compressed recap of the stage-1 algorithms tutorial —
+  use it to find gaps worth re-reading.</li>
+  <li><strong>Module 2</strong> is the live-coding craft chapter: the 6-step template,
+  narration, hints, follow-ups. Read it before any of the problem modules.</li>
+  <li><strong>Modules 3+</strong> are the deep dives, each ending in a Practice Set of
+  medium/hard questions. Attempt every question <em>out loud</em>, as if the interviewer
+  were watching.</li>
+  <li><strong>Final Exam</strong> draws from a held-back pool once all modules land — try it
+  last, as a dress rehearsal.</li>
 </ul>
 <h2>The code workbench</h2>
 <ul>
-  <li>For Python questions, write your solution in the editor and click <strong>Run tests</strong>.
-  Python runs in your browser via Pyodide (it loads on first run, ~5 seconds).</li>
+  <li>Coding questions run in <strong>Python</strong> (Pyodide, loads on first run, ~5 seconds)
+  or <strong>JavaScript</strong> — switch per question with the language toggle.</li>
   <li>Test feedback shows <em>only</em> pass/fail and your coverage %. To see what was actually
   expected vs returned, click <strong>Reveal diff</strong> on the failing case.</li>
-  <li>SQL questions show the schema, hint, and solution in a modal — no runner.</li>
+  <li>SQL questions with fixtures run against a real in-browser SQLite (sql.js).</li>
+  <li>Design questions have no sandbox — think your answer through fully, then
+  <strong>Reveal approach</strong>.</li>
   <li>The <strong>Show answer</strong> button is locked behind a "did you really try?" warning.</li>
 </ul>
 <h2>Time yourself</h2>
@@ -630,6 +638,16 @@ all of it and start fresh.</p>
   // Final Exam
   // ----------------------------------------------------------------
   function renderExam() {
+    if (!window.FINAL_EXAM_POOL.length) {
+      return el("div", { class: "view-narrow" }, [
+        el("div", { class: "hero" }, [
+          el("h1", { text: "Final Exam — coming soon" }),
+          el("p", { text:
+            "The exam pool fills once the remaining modules land. Work through the " +
+            "practice sets in the meantime." }),
+        ]),
+      ]);
+    }
     if (state.examSeed == null) state.examSeed = Math.floor(Math.random() * 1e9);
     const seed = state.examSeed;
     const pool = window.FINAL_EXAM_POOL.slice();

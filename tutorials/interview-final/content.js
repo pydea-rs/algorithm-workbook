@@ -910,6 +910,488 @@ reason.</p>
     ],
   },
 
+  // =============================================================
+  // MODULE 6 — Binary Search Mastery
+  // =============================================================
+  M6: {
+    id: "M6",
+    title: "Module 6 — Binary Search Mastery",
+    subtitle: "Invariants, boundary variants, search-on-answer",
+    practiceSet: "PS6",
+    body: [
+      {
+        kind: "html",
+        html: `
+<div class="hero">
+  <h1>Module 6 — Binary Search Mastery</h1>
+  <p>Binary search is the most-failed "easy" topic in live interviews — not because the idea is
+  hard, but because one off-by-one under pressure produces an infinite loop with a stranger
+  watching. The cure is having <strong>one template you trust completely</strong>, plus knowing
+  the three disguises the technique wears: sorted arrays, rotated arrays, and answer spaces.</p>
+</div>
+
+<h2>1. One template, memorized cold</h2>
+<pre><code>def binary_search(nums, target):
+    lo, hi = 0, len(nums) - 1          # inclusive bounds
+    while lo <= hi:
+        mid = (lo + hi) // 2
+        if nums[mid] == target:
+            return mid
+        if nums[mid] < target:
+            lo = mid + 1               # mid is ruled out
+        else:
+            hi = mid - 1               # mid is ruled out
+    return -1</code></pre>
+<p>The invariant: <em>the answer, if it exists, is always inside <code>[lo, hi]</code></em>.
+Both updates exclude <code>mid</code> because <code>mid</code> was just examined — that's what
+guarantees progress and kills infinite loops. If you ever write <code>lo = mid</code> or
+<code>hi = mid</code> in this template, you have a bug.</p>
+<div class="callout tip">
+  <div class="callout-title">Java/C++ trivia, worth one sentence</div>
+  <code>(lo + hi) / 2</code> can overflow 32-bit ints in those languages; the fix is
+  <code>lo + (hi - lo) / 2</code>. Python integers don't overflow — say so if asked, it shows
+  cross-language awareness.
+</div>
+
+<h2>2. Leftmost / rightmost — the bisect semantics</h2>
+<p>"Find the <em>first</em> and <em>last</em> occurrence of target" is the classic boundary
+variant. Python's <code>bisect</code> module defines the two clean primitives:</p>
+<ul>
+  <li><code>bisect_left(a, x)</code> — first index where <code>x</code> could be inserted keeping
+    order = index of the <strong>first element ≥ x</strong>.</li>
+  <li><code>bisect_right(a, x)</code> — insertion point after existing entries = index of the
+    <strong>first element &gt; x</strong>.</li>
+</ul>
+<p>So the occurrences of x live in <code>[bisect_left, bisect_right)</code>, and
+<code>bisect_right - bisect_left</code> is the count. Hand-rolling <code>bisect_left</code>:</p>
+<pre><code>def bisect_left(a, x):
+    lo, hi = 0, len(a)          # note: hi = n, half-open
+    while lo < hi:
+        mid = (lo + hi) // 2
+        if a[mid] < x:
+            lo = mid + 1
+        else:
+            hi = mid            # mid might BE the answer — keep it
+    return lo</code></pre>
+<p>Two templates, two shapes: <strong>exact match</strong> uses inclusive <code>hi</code>,
+<code>lo &lt;= hi</code>, and both sides exclude mid. <strong>Boundary search</strong> uses
+half-open <code>hi</code>, <code>lo &lt; hi</code>, and only one side excludes mid. Mixing the
+two shapes is where the infinite loops come from — pick by asking "am I looking for one item, or
+for a boundary between two zones?"</p>
+
+<h2>3. Rotated sorted arrays</h2>
+<p>A rotated sorted array (<code>[4,5,6,7,0,1,2]</code>) isn't sorted — but <strong>one half
+always is</strong>. Compare <code>nums[mid]</code> with <code>nums[lo]</code> to find which:</p>
+<pre><code>if nums[lo] <= nums[mid]:        # left half sorted
+    if nums[lo] <= target < nums[mid]: hi = mid - 1
+    else:                              lo = mid + 1
+else:                            # right half sorted
+    if nums[mid] < target <= nums[hi]: lo = mid + 1
+    else:                              hi = mid - 1</code></pre>
+<p>The reasoning to narrate: "I can't binary-search an unsorted range, but I can always identify
+the sorted half in O(1), check whether the target lies inside it, and recurse into the correct
+side." That sentence is the whole solution.</p>
+
+<h2>4. Binary search on the ANSWER — the big one</h2>
+<p>The most valuable variant for hard interviews. Recognize it by this shape: <em>"find the
+minimum X such that condition(X) holds"</em>, where condition is <strong>monotone</strong> —
+once true, it stays true for all larger X.</p>
+<p>Koko's bananas: eating speed k works ⇒ any faster speed also works. So the answer space
+<code>[1, max(piles)]</code> splits into a false-zone then a true-zone, and you binary-search
+the boundary:</p>
+<pre><code>def min_eating_speed(piles, h):
+    def can(k):                    # monotone: True stays True as k grows
+        return sum((p + k - 1) // k for p in piles) <= h
+    lo, hi = 1, max(piles)
+    while lo < hi:
+        mid = (lo + hi) // 2
+        if can(mid):
+            hi = mid               # mid works — maybe something smaller does too
+        else:
+            lo = mid + 1
+    return lo</code></pre>
+<p>Say the two-step recipe out loud: "1) the check function, 2) prove it's monotone, then it's a
+standard boundary search over the answer space." Problems in this family: ship packages in D days,
+split array largest sum, minimum days to make bouquets, aggressive cows.</p>
+
+<h2>5. Peaks — search without sortedness</h2>
+<p>Find Peak Element proves binary search doesn't need a sorted array — it needs a
+<strong>decision rule that discards half</strong>. If <code>nums[mid] &lt; nums[mid+1]</code>,
+the slope rises to the right, so a peak must exist on the right (walk uphill until you can't).
+Move that way; converge in O(log n).</p>
+
+<h2>6. The boss fight: median of two sorted arrays</h2>
+<p>O(log(min(m,n))) via <em>partition search</em>: choose a cut in the shorter array (binary
+search over cut positions), derive the matching cut in the longer one so the left side holds
+half the elements, and check the cross conditions
+<code>maxLeftA &lt;= minRightB</code> and <code>maxLeftB &lt;= minRightA</code>. If the check
+fails, move the cut toward the side that violated. Sentinels <code>±inf</code> handle the edges.
+Even a spoken sketch of this earns serious points — few candidates produce it cold.</p>
+`
+      },
+      {
+        kind: "mcq",
+        q: "In the boundary-search template (<code>lo &lt; hi</code>, half-open), why is <code>hi = mid</code> — keeping mid — safe from infinite loops, when it would loop forever in the exact-match template?",
+        options: [
+          { label: "Because the half-open range makes mid always strictly less than hi, so hi shrinks every time it's assigned.", correct: true },
+          { label: "It isn't safe — you always need hi = mid - 1.", correct: false },
+          { label: "Because lo < hi exits one iteration earlier than lo <= hi.", correct: false },
+          { label: "Because bisect_left only works on arrays without duplicates.", correct: false },
+        ],
+        explain:
+          "<p>With <code>lo &lt; hi</code> and <code>mid = (lo + hi) // 2</code>, mid is always &lt; hi (floor division pulls it down), so <code>hi = mid</code> strictly shrinks the range. And <code>lo = mid + 1</code> always grows lo. Every branch makes progress → termination guaranteed. In the inclusive template, <code>hi = mid</code> could leave the range unchanged when the range has one element. This is exactly the mixing-of-shapes bug from the module text.</p>",
+      },
+      {
+        kind: "mcq",
+        q: "Which of these problems is NOT solvable by binary-search-on-answer?",
+        options: [
+          { label: "Minimum eating speed to finish bananas in h hours.", correct: false },
+          { label: "Minimum ship capacity to deliver packages within D days.", correct: false },
+          { label: "Count of subarrays whose sum equals exactly k, with negatives allowed.", correct: true },
+          { label: "Smallest divisor so the sum of ceilings stays under a threshold.", correct: false },
+        ],
+        explain:
+          "<p>Search-on-answer needs a <em>monotone predicate</em>: once the condition holds for X it must hold for all larger X. Speed, capacity, divisor — all monotone. 'Sum equals exactly k with negatives' has no monotone structure at all (that's the prefix-sum + hash-map problem from Module 3). Checking for monotonicity <em>before</em> reaching for the technique is the discipline being tested.</p>",
+      },
+    ],
+  },
+
+  // =============================================================
+  // MODULE 7 — Trees Deep Dive
+  // =============================================================
+  M7: {
+    id: "M7",
+    title: "Module 7 — Trees Deep Dive",
+    subtitle: "Top-down vs bottom-up recursion, BST logic, serialization",
+    practiceSet: "PS7",
+    body: [
+      {
+        kind: "html",
+        html: `
+<div class="hero">
+  <h1>Module 7 — Trees Deep Dive</h1>
+  <p>Nearly every tree question is one recursion pattern wearing a costume. This module gives you
+  the two patterns — <strong>top-down</strong> (pass constraints down) and <strong>bottom-up</strong>
+  (return summaries up) — and drills the five questions interviewers actually ask.</p>
+</div>
+
+<h2>1. Two directions of information flow</h2>
+<table class="tbl">
+  <tr><th></th><th>Top-down</th><th>Bottom-up</th></tr>
+  <tr><td>Information flows</td><td>root → leaves via parameters</td><td>leaves → root via return values</td></tr>
+  <tr><td>Feels like</td><td>preorder</td><td>postorder</td></tr>
+  <tr><td>Typical use</td><td>validate constraints, path sums with target</td><td>height, diameter, subtree aggregates</td></tr>
+  <tr><td>Example</td><td>Validate BST (pass allowed range down)</td><td>Diameter (return height up)</td></tr>
+</table>
+<p>When stuck on a tree problem, ask: <em>"does a node need to know something about its ancestors
+(top-down), or about its subtrees (bottom-up)?"</em> Saying that question aloud is a strong
+interview move by itself.</p>
+
+<h2>2. Validate BST — the classic top-down</h2>
+<p>The trap 80% of candidates walk into: checking only <code>left.val &lt; node.val &lt;
+right.val</code>. That's a <em>local</em> check; BST is a <em>global</em> property:</p>
+<pre><code>      5
+     / \\
+    4   6
+       / \\
+      3   7     ← 3 < 5 but sits in 5's right subtree: NOT a BST</code></pre>
+<p>The fix: every node lives inside a range that its ancestors carved out. Pass it down:</p>
+<pre><code>def is_valid_bst(root):
+    def check(node, lo, hi):
+        if node is None:
+            return True
+        if not (lo < node.val < hi):
+            return False
+        return (check(node.left,  lo, node.val) and
+                check(node.right, node.val, hi))
+    return check(root, float("-inf"), float("inf"))</code></pre>
+<p>Alternative worth naming: an in-order traversal of a BST is strictly increasing — walk it and
+verify. Same complexity, different flavor.</p>
+
+<h2>3. Diameter — the "return one thing, track another" pattern</h2>
+<p>Diameter = longest path between any two nodes (in edges). The subtlety: the recursion
+<strong>returns height</strong> but the <strong>answer is tracked on the side</strong>:</p>
+<pre><code>def diameter_of_binary_tree(root):
+    best = 0
+    def height(node):
+        nonlocal best
+        if node is None:
+            return 0
+        lh = height(node.left)
+        rh = height(node.right)
+        best = max(best, lh + rh)     # path THROUGH this node
+        return 1 + max(lh, rh)        # but return plain height
+    height(root)
+    return best</code></pre>
+<p>This "the recursion's return value and the problem's answer are different quantities" pattern
+also powers Longest Univalue Path and Binary Tree Maximum Path Sum. Recognizing it saves you
+from trying to force the answer through the return value, which doesn't work.</p>
+
+<h2>4. Lowest Common Ancestor</h2>
+<p>The elegant recursion: <em>"the LCA is the first node where p and q are on different
+sides."</em></p>
+<pre><code>def lowest_common_ancestor(root, p, q):
+    if root is None or root is p or root is q:
+        return root
+    left  = lowest_common_ancestor(root.left,  p, q)
+    right = lowest_common_ancestor(root.right, p, q)
+    if left and right:
+        return root          # p and q split here -> this is the LCA
+    return left or right     # both on one side (or none found)</code></pre>
+<p>Why it works: each call answers "does this subtree contain p or q (returning whichever it
+found, or their LCA if both)?" If the two sides both report a hit, the current node is the split
+point. Follow-up to expect: "what if it's a BST?" → walk from the root; the LCA is the first node
+whose value sits between p and q. O(h) instead of O(n).</p>
+
+<h2>5. Level-order and its costumes</h2>
+<p>BFS with a queue, processing one <em>level</em> per outer iteration (snapshot
+<code>len(queue)</code> first). Right Side View = the last node of each level. Zigzag = reverse
+alternate levels. Average of Levels = mean per level. One template, four questions:</p>
+<pre><code>from collections import deque
+def right_side_view(root):
+    if not root: return []
+    out, q = [], deque([root])
+    while q:
+        n = len(q)                    # freeze the level size
+        for i in range(n):
+            node = q.popleft()
+            if i == n - 1:
+                out.append(node.val)  # last of this level
+            if node.left:  q.append(node.left)
+            if node.right: q.append(node.right)
+    return out</code></pre>
+
+<h2>6. Serialize / deserialize — design your own format</h2>
+<p>The interviewer is testing <em>format design</em>, not traversal. The clean answer: preorder
+with a sentinel for null, because preorder + null markers uniquely determines the tree and
+deserialization is a single forward pass:</p>
+<pre><code>def serialize(root):
+    parts = []
+    def dfs(node):
+        if node is None:
+            parts.append("#"); return
+        parts.append(str(node.val))
+        dfs(node.left); dfs(node.right)
+    dfs(root)
+    return ",".join(parts)
+
+def deserialize(data):
+    vals = iter(data.split(","))
+    def build():
+        v = next(vals)
+        if v == "#": return None
+        node = TreeNode(int(v))
+        node.left = build()
+        node.right = build()
+        return node
+    return build()</code></pre>
+<p>Points to raise unprompted: values containing the delimiter (escape or length-prefix),
+level-order as an equally valid alternative, and the BST special case — for a BST, preorder
+<em>without</em> null markers suffices because the value ranges reconstruct the shape.</p>
+
+<h2>7. Recursion depth — the Python footnote</h2>
+<p>A degenerate tree (linked-list shape) with 10⁵ nodes blows Python's ~1000-frame default stack.
+For interviews, code the recursive version, then <em>mention</em>: "if the tree can be huge and
+skewed, I'd convert to an explicit stack or raise the recursion limit." Iterative in-order with a
+stack is worth having in your fingers for that follow-up.</p>
+`
+      },
+      {
+        kind: "mcq",
+        q: "Why does checking <code>left.val &lt; node.val &lt; right.val</code> at every node fail to validate a BST?",
+        options: [
+          { label: "It doesn't handle None children.", correct: false },
+          { label: "It's a local check — a node deep in the right subtree can violate an ancestor's bound while satisfying its parent's.", correct: true },
+          { label: "It fails on duplicate values only.", correct: false },
+          { label: "It has the wrong complexity — O(n²) instead of O(n).", correct: false },
+        ],
+        explain:
+          "<p>BST ordering is a <em>global</em> constraint: every node in the right subtree of X must exceed X — not just the immediate child. The counterexample from the text: 3 placed under 5→6 satisfies its parent (3 &lt; 6) but violates the grandparent (3 &lt; 5 on the wrong side). Hence range-passing top-down recursion (or the in-order strictly-increasing check).</p>",
+      },
+      {
+        kind: "mcq",
+        q: "In the diameter solution, what would go wrong if <code>height()</code> returned <code>lh + rh</code> (the path through the node) instead of <code>1 + max(lh, rh)</code>?",
+        options: [
+          { label: "Nothing — it computes the same value.", correct: false },
+          { label: "Parents would treat a child's 'bent path' as if it were a straight descending height, producing paths that fork twice — which aren't valid paths.", correct: true },
+          { label: "It would raise RecursionError on skewed trees.", correct: false },
+          { label: "It would double-count the root node.", correct: false },
+        ],
+        explain:
+          "<p>A path can bend at most once. The value handed <em>up</em> must be a straight chain (height) that the parent can extend; the bent quantity <code>lh + rh</code> is only ever a <em>candidate answer</em>, recorded on the side. Confusing the two produces 'paths' that fork at two different nodes — not paths at all. This is the exact reason the pattern separates the return value from the tracked answer.</p>",
+      },
+    ],
+  },
+
+  // =============================================================
+  // MODULE 8 — Graphs Deep Dive
+  // =============================================================
+  M8: {
+    id: "M8",
+    title: "Module 8 — Graphs Deep Dive",
+    subtitle: "Topological sort, Dijkstra, implicit graphs, reverse thinking",
+    practiceSet: "PS8",
+    body: [
+      {
+        kind: "html",
+        html: `
+<div class="hero">
+  <h1>Module 8 — Graphs Deep Dive</h1>
+  <p>Stage 1 covered BFS, DFS, grids, and Union-Find. This module adds the final-stage material:
+  <strong>topological sort</strong>, <strong>Dijkstra</strong>, <strong>implicit graphs</strong>,
+  and the <strong>reverse-thinking</strong> trick — plus the decision table for choosing among
+  them under pressure.</p>
+</div>
+
+<h2>1. First move: build the adjacency list</h2>
+<p>Interview graphs arrive as edge lists (<code>[[1,0],[2,1]]</code>), grids, or implicit rules.
+Whatever the input, your first coded lines normalize it:</p>
+<pre><code>from collections import defaultdict
+graph = defaultdict(list)
+for a, b in edges:
+    graph[a].append(b)
+    graph[b].append(a)     # drop this line for directed graphs</code></pre>
+<p>Narrate the two decisions: directed or not, and whether isolated nodes exist (they won't appear
+in the dict — iterate over <code>range(n)</code>, not over the dict, when that matters).</p>
+
+<h2>2. The algorithm decision table</h2>
+<table class="tbl">
+  <tr><th>Question smells like…</th><th>Reach for</th><th>Complexity</th></tr>
+  <tr><td>Shortest path, unweighted</td><td>BFS</td><td>O(V+E)</td></tr>
+  <tr><td>Shortest path, weighted, no negatives</td><td>Dijkstra</td><td>O(E log V)</td></tr>
+  <tr><td>Negative edges present</td><td>Bellman-Ford</td><td>O(VE)</td></tr>
+  <tr><td>Dependency order / detect cycle in DAG</td><td>Topological sort (Kahn)</td><td>O(V+E)</td></tr>
+  <tr><td>Connectivity, merging groups online</td><td>Union-Find</td><td>~O(1)/op</td></tr>
+  <tr><td>Reachability, exploring everything</td><td>DFS</td><td>O(V+E)</td></tr>
+</table>
+<p>Announce your pick <em>from this table</em>: "weighted, non-negative → Dijkstra." One sentence,
+huge signal.</p>
+
+<h2>3. Topological sort — Kahn's algorithm</h2>
+<p>Order the nodes of a directed graph so every edge points forward. Only DAGs have one; the
+algorithm doubles as the cycle detector:</p>
+<pre><code>from collections import deque
+def can_finish(n, prerequisites):
+    graph = [[] for _ in range(n)]
+    indegree = [0] * n
+    for course, pre in prerequisites:
+        graph[pre].append(course)
+        indegree[course] += 1
+    q = deque(i for i in range(n) if indegree[i] == 0)
+    done = 0
+    while q:
+        node = q.popleft()
+        done += 1
+        for nxt in graph[node]:
+            indegree[nxt] -= 1
+            if indegree[nxt] == 0:
+                q.append(nxt)
+    return done == n        # nodes stuck with indegree > 0 = cycle</code></pre>
+<p>The intuition: repeatedly peel off nodes with no remaining prerequisites. If peeling stalls
+before everyone is processed, the survivors form a cycle. The DFS-coloring alternative
+(white/gray/black; a gray→gray edge = cycle) is worth naming as "the other way".</p>
+
+<h2>4. Dijkstra — the lazy-deletion heap version</h2>
+<pre><code>import heapq
+def network_delay_time(times, n, k):
+    graph = [[] for _ in range(n + 1)]
+    for u, v, w in times:
+        graph[u].append((v, w))
+    dist = {}
+    heap = [(0, k)]
+    while heap:
+        d, node = heapq.heappop(heap)
+        if node in dist:
+            continue            # lazy deletion: stale entry, skip
+        dist[node] = d
+        for nxt, w in graph[node]:
+            if nxt not in dist:
+                heapq.heappush(heap, (d + w, nxt))
+    return max(dist.values()) if len(dist) == n else -1</code></pre>
+<p>Points the interviewer listens for: the heap may hold <em>stale duplicates</em> (we push
+without decrease-key; the <code>if node in dist: continue</code> guard discards them), greedy
+correctness requires <strong>non-negative weights</strong>, and complexity is O(E log V).
+If they ask "why does it break with negative edges?" — because popping a node assumes no cheaper
+path can appear later; a negative edge can produce one.</p>
+
+<h2>5. Implicit graphs — Word Ladder</h2>
+<p>No edges are given: words are nodes, and an edge means "differ by one letter". The skill being
+tested is <em>modeling</em> — say "this is a shortest-path problem on an implicit graph, so BFS"
+before writing anything. Generating neighbors: for each position, try all 26 letters, keep those
+in the word set. With word length L and set size N that's O(26·L) per node instead of the O(N·L)
+all-pairs comparison.</p>
+<div class="callout tip">
+  <div class="callout-title">Two upgrades to name (not necessarily code)</div>
+  Wildcard buckets (<code>h*t</code> as a precomputed adjacency key) avoid the 26-letter loop;
+  bidirectional BFS expands from both ends and meets in the middle, roughly square-rooting the
+  frontier size. Naming these when asked "can we do better?" is exactly the depth this stage wants.
+</div>
+
+<h2>6. Reverse thinking — Pacific Atlantic</h2>
+<p>"Which cells can flow to both oceans?" Simulating flow from every cell is O((mn)²). The trick:
+<strong>flip the direction</strong> — start from the ocean edges and climb uphill; a cell reaches
+an ocean iff the ocean's climb reaches it. Two BFS/DFS sweeps (one per ocean), intersect the
+visited sets, O(mn) total.</p>
+<p>This reversal shows up everywhere: "cells that can reach X" becomes "cells reachable from X in
+the reversed graph". If a straightforward simulation looks quadratic, ask: <em>can I start from
+the destination?</em></p>
+
+<h2>7. Union-Find — the 60-second recap</h2>
+<pre><code>parent = list(range(n))
+def find(x):
+    while parent[x] != x:
+        parent[x] = parent[parent[x]]   # path halving
+        x = parent[x]
+    return x
+def union(a, b):
+    ra, rb = find(a), find(b)
+    if ra == rb: return False           # already connected
+    parent[ra] = rb
+    return True</code></pre>
+<p>Count components: start with n, subtract one per successful union. Detect a cycle in an
+undirected graph: a union that returns False found one. For the full rank/compression story,
+revisit the stage-1 tutorial's Module 4 — here, this compact version is all an interview needs.</p>
+`
+      },
+      {
+        kind: "mcq",
+        q: "Kahn's algorithm finishes with <code>done == 4</code> on a 6-node course graph. What does that mean?",
+        options: [
+          { label: "4 courses have no prerequisites.", correct: false },
+          { label: "The graph has two connected components.", correct: false },
+          { label: "Two nodes never reached indegree 0 — they're locked in a cycle (or depend on one), so no valid order exists.", correct: true },
+          { label: "The queue was initialized incorrectly.", correct: false },
+        ],
+        explain:
+          "<p>Peeling only ever removes nodes whose prerequisites are all satisfied. Nodes inside a cycle wait on each other forever, so their indegree never hits 0 and they're never processed. <code>done &lt; n</code> is therefore exactly the cycle test — the count doubles as the detector, which is why Course Schedule is 'topological sort' in disguise.</p>",
+      },
+      {
+        kind: "mcq",
+        q: "Why does Dijkstra's correctness break with negative edge weights?",
+        options: [
+          { label: "The heap can't store negative numbers.", correct: false },
+          { label: "Finalizing a popped node assumes no cheaper path to it can appear later — a negative edge elsewhere can create exactly that.", correct: true },
+          { label: "It infinite-loops on negative cycles but works for isolated negative edges.", correct: false },
+          { label: "It doesn't break; it just becomes O(VE).", correct: false },
+        ],
+        explain:
+          "<p>Dijkstra's greedy step — 'the closest unfinalized node is done, permanently' — relies on every extension making paths longer. A negative edge lets a longer-looking route become shorter after finalization, invalidating the commitment. Bellman-Ford tolerates negatives (and detects negative cycles) by relaxing all edges V-1 times instead of committing greedily — that's the trade: O(VE) versus O(E log V).</p>",
+      },
+      {
+        kind: "mcq",
+        q: "In Pacific Atlantic, the reverse-BFS climbs from the ocean edges uphill (neighbor height ≥ current). Why '≥' and not '&gt;'?",
+        options: [
+          { label: "Water can flow between cells of equal height, so the reversed edge must also exist between equal heights.", correct: true },
+          { label: "It's an off-by-one convention; either works.", correct: false },
+          { label: "Because the borders are all at sea level.", correct: false },
+          { label: "To make the DFS terminate.", correct: false },
+        ],
+        explain:
+          "<p>Forward rule: water flows from a cell to a neighbor with height ≤ its own. Reversing an edge preserves the equality case: if flow goes A→B when B ≤ A, then climbing goes B→A when A ≥ B. Dropping the equality silently deletes edges and produces wrong answers on plateau maps — a favorite hidden test case.</p>",
+      },
+    ],
+  },
+
 };
 
-window.MODULE_ORDER = ["M1", "M2", "M3", "M4", "M5"];
+window.MODULE_ORDER = ["M1", "M2", "M3", "M4", "M5", "M6", "M7", "M8"];

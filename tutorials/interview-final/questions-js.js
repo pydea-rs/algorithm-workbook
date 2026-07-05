@@ -438,6 +438,463 @@
 }`,
   };
 
+  // ============ F16 — Search in Rotated Sorted Array ============
+  J.F16 = {
+    functionName: "searchRotated",
+    signature: "function searchRotated(nums: number[], target: number): number",
+    starter:
+`function searchRotated(nums, target) {
+  // your code here
+}
+`,
+    solution:
+`function searchRotated(nums, target) {
+  let lo = 0, hi = nums.length - 1;
+  while (lo <= hi) {
+    const mid = (lo + hi) >> 1;
+    if (nums[mid] === target) return mid;
+    if (nums[lo] <= nums[mid]) {              // left half sorted
+      if (nums[lo] <= target && target < nums[mid]) hi = mid - 1;
+      else lo = mid + 1;
+    } else {                                  // right half sorted
+      if (nums[mid] < target && target <= nums[hi]) lo = mid + 1;
+      else hi = mid - 1;
+    }
+  }
+  return -1;
+}`,
+  };
+
+  // ============ F17 — First and Last Position ============
+  J.F17 = {
+    functionName: "searchRange",
+    signature: "function searchRange(nums: number[], target: number): number[]",
+    starter:
+`function searchRange(nums, target) {
+  // your code here
+}
+`,
+    solution:
+`function searchRange(nums, target) {
+  function lowerBound(x) {          // first index with nums[i] >= x
+    let lo = 0, hi = nums.length;
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1;
+      if (nums[mid] < x) lo = mid + 1;
+      else hi = mid;
+    }
+    return lo;
+  }
+  const left = lowerBound(target);
+  if (left === nums.length || nums[left] !== target) return [-1, -1];
+  return [left, lowerBound(target + 1) - 1];
+}`,
+  };
+
+  // ============ F18 — Koko Eating Bananas ============
+  J.F18 = {
+    functionName: "minEatingSpeed",
+    signature: "function minEatingSpeed(piles: number[], h: number): number",
+    starter:
+`function minEatingSpeed(piles, h) {
+  // your code here
+}
+`,
+    solution:
+`function minEatingSpeed(piles, h) {
+  function can(k) {
+    let hours = 0;
+    for (const p of piles) hours += Math.ceil(p / k);
+    return hours <= h;
+  }
+  let lo = 1, hi = Math.max(...piles);
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if (can(mid)) hi = mid;        // mid works; try smaller
+    else lo = mid + 1;
+  }
+  return lo;
+}`,
+  };
+
+  // ============ F19 — Find Peak Element ============
+  J.F19 = {
+    functionName: "findPeakElement",
+    signature: "function findPeakElement(nums: number[]): number",
+    starter:
+`function findPeakElement(nums) {
+  // your code here
+}
+`,
+    solution:
+`function findPeakElement(nums) {
+  let lo = 0, hi = nums.length - 1;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if (nums[mid] < nums[mid + 1]) lo = mid + 1;   // rising -> peak right
+    else hi = mid;                                  // falling -> mid or left
+  }
+  return lo;
+}`,
+  };
+
+  // ============ F20 — Median of Two Sorted Arrays ============
+  J.F20 = {
+    functionName: "findMedianSortedArrays",
+    signature: "function findMedianSortedArrays(a: number[], b: number[]): number",
+    starter:
+`function findMedianSortedArrays(a, b) {
+  // your code here
+}
+`,
+    solution:
+`function findMedianSortedArrays(a, b) {
+  if (a.length > b.length) [a, b] = [b, a];   // search the shorter array
+  const m = a.length, n = b.length;
+  const totalLeft = Math.floor((m + n + 1) / 2);
+
+  let lo = 0, hi = m;
+  while (lo <= hi) {
+    const i = (lo + hi) >> 1;                 // a contributes i to the left
+    const j = totalLeft - i;
+    const maxLeftA  = i > 0 ? a[i - 1] : -Infinity;
+    const minRightA = i < m ? a[i]     :  Infinity;
+    const maxLeftB  = j > 0 ? b[j - 1] : -Infinity;
+    const minRightB = j < n ? b[j]     :  Infinity;
+
+    if (maxLeftA <= minRightB && maxLeftB <= minRightA) {
+      if ((m + n) % 2 === 1) return Math.max(maxLeftA, maxLeftB);
+      return (Math.max(maxLeftA, maxLeftB) + Math.min(minRightA, minRightB)) / 2;
+    }
+    if (maxLeftA > minRightB) hi = i - 1;     // a's cut too far right
+    else lo = i + 1;
+  }
+  throw new Error("inputs not sorted");
+}`,
+  };
+
+  // ============ F21 — Validate BST ============
+  J.F21 = {
+    functionName: "isValidBst",
+    signature: "function isValidBst(root: TreeNode | null): boolean",
+    starter:
+`function isValidBst(root) {
+  // root is a TreeNode (or null); fields: val, left, right
+}
+`,
+    solution:
+`function isValidBst(root) {
+  function check(node, lo, hi) {
+    if (node === null) return true;
+    if (!(lo < node.val && node.val < hi)) return false;
+    return check(node.left, lo, node.val) && check(node.right, node.val, hi);
+  }
+  return check(root, -Infinity, Infinity);
+}`,
+    testsPrepare: "args = [_build_tree(args[0])];",
+  };
+
+  // ============ F22 — Lowest Common Ancestor ============
+  J.F22 = {
+    functionName: "lowestCommonAncestor",
+    signature: "function lowestCommonAncestor(root, p, q): TreeNode",
+    starter:
+`function lowestCommonAncestor(root, p, q) {
+  // p and q are TreeNode references inside root's tree
+}
+`,
+    solution:
+`function lowestCommonAncestor(root, p, q) {
+  if (root === null || root === p || root === q) return root;
+  const left  = lowestCommonAncestor(root.left,  p, q);
+  const right = lowestCommonAncestor(root.right, p, q);
+  if (left && right) return root;    // p and q split here
+  return left || right;              // both on one side (or neither)
+}`,
+    testsPrepare:
+      "var t = _build_tree(args[0]); args = [t, _find_node(t, args[1]), _find_node(t, args[2])];",
+    testsTransform: "result = result.val;",
+  };
+
+  // ============ F23 — Right Side View ============
+  J.F23 = {
+    functionName: "rightSideView",
+    signature: "function rightSideView(root: TreeNode | null): number[]",
+    starter:
+`function rightSideView(root) {
+  // your code here
+}
+`,
+    solution:
+`function rightSideView(root) {
+  if (root === null) return [];
+  const out = [];
+  let queue = [root];
+  while (queue.length) {
+    const next = [];
+    out.push(queue[queue.length - 1].val);   // last of the level
+    for (const node of queue) {
+      if (node.left)  next.push(node.left);
+      if (node.right) next.push(node.right);
+    }
+    queue = next;
+  }
+  return out;
+}`,
+    testsPrepare: "args = [_build_tree(args[0])];",
+  };
+
+  // ============ F24 — Serialize and Deserialize ============
+  J.F24 = {
+    functionName: "serialize",
+    signature: "function serialize(root): string   /   function deserialize(data): TreeNode",
+    starter:
+`function serialize(root) {
+  // tree -> string
+}
+
+function deserialize(data) {
+  // string -> tree (use new TreeNode(val))
+}
+`,
+    solution:
+`function serialize(root) {
+  const parts = [];
+  (function dfs(node) {
+    if (node === null) { parts.push("#"); return; }
+    parts.push(String(node.val));
+    dfs(node.left);
+    dfs(node.right);
+  })(root);
+  return parts.join(",");
+}
+
+function deserialize(data) {
+  const vals = data.split(",");
+  let i = 0;
+  function build() {
+    const v = vals[i++];
+    if (v === "#") return null;
+    const node = new TreeNode(parseInt(v, 10));
+    node.left = build();
+    node.right = build();
+    return node;
+  }
+  return build();
+}`,
+    testsPrepare:
+      "var t = _build_tree(args[0]); result = _tree_to_level(deserialize(serialize(t)));",
+  };
+
+  // ============ F25 — Diameter of Binary Tree ============
+  J.F25 = {
+    functionName: "diameterOfBinaryTree",
+    signature: "function diameterOfBinaryTree(root: TreeNode | null): number",
+    starter:
+`function diameterOfBinaryTree(root) {
+  // your code here
+}
+`,
+    solution:
+`function diameterOfBinaryTree(root) {
+  let best = 0;
+  function height(node) {
+    if (node === null) return 0;
+    const lh = height(node.left);
+    const rh = height(node.right);
+    best = Math.max(best, lh + rh);   // bent path through this node
+    return 1 + Math.max(lh, rh);      // straight chain for the parent
+  }
+  height(root);
+  return best;
+}`,
+    testsPrepare: "args = [_build_tree(args[0])];",
+  };
+
+  // ============ F26 — Course Schedule ============
+  J.F26 = {
+    functionName: "canFinish",
+    signature: "function canFinish(numCourses: number, prerequisites: number[][]): boolean",
+    starter:
+`function canFinish(numCourses, prerequisites) {
+  // your code here
+}
+`,
+    solution:
+`function canFinish(numCourses, prerequisites) {
+  const graph = Array.from({ length: numCourses }, () => []);
+  const indegree = new Array(numCourses).fill(0);
+  for (const [course, pre] of prerequisites) {
+    graph[pre].push(course);
+    indegree[course]++;
+  }
+  const queue = [];
+  for (let i = 0; i < numCourses; i++) {
+    if (indegree[i] === 0) queue.push(i);
+  }
+  let done = 0;
+  while (queue.length) {
+    const node = queue.shift();
+    done++;
+    for (const nxt of graph[node]) {
+      if (--indegree[nxt] === 0) queue.push(nxt);
+    }
+  }
+  return done === numCourses;   // stuck nodes = cycle
+}`,
+  };
+
+  // ============ F27 — Number of Connected Components ============
+  J.F27 = {
+    functionName: "countComponents",
+    signature: "function countComponents(n: number, edges: number[][]): number",
+    starter:
+`function countComponents(n, edges) {
+  // your code here
+}
+`,
+    solution:
+`function countComponents(n, edges) {
+  const parent = Array.from({ length: n }, (_, i) => i);
+  function find(x) {
+    while (parent[x] !== x) {
+      parent[x] = parent[parent[x]];   // path halving
+      x = parent[x];
+    }
+    return x;
+  }
+  let components = n;
+  for (const [a, b] of edges) {
+    const ra = find(a), rb = find(b);
+    if (ra !== rb) {
+      parent[ra] = rb;
+      components--;
+    }
+  }
+  return components;
+}`,
+  };
+
+  // ============ F28 — Word Ladder ============
+  J.F28 = {
+    functionName: "ladderLength",
+    signature: "function ladderLength(beginWord: string, endWord: string, wordList: string[]): number",
+    starter:
+`function ladderLength(beginWord, endWord, wordList) {
+  // your code here
+}
+`,
+    solution:
+`function ladderLength(beginWord, endWord, wordList) {
+  const words = new Set(wordList);
+  if (!words.has(endWord)) return 0;
+  const alphabet = "abcdefghijklmnopqrstuvwxyz";
+  let queue = [[beginWord, 1]];
+  words.delete(beginWord);
+  while (queue.length) {
+    const next = [];
+    for (const [word, steps] of queue) {
+      if (word === endWord) return steps;
+      for (let i = 0; i < word.length; i++) {
+        for (const ch of alphabet) {
+          const cand = word.slice(0, i) + ch + word.slice(i + 1);
+          if (words.has(cand)) {
+            words.delete(cand);        // visited = removed
+            next.push([cand, steps + 1]);
+          }
+        }
+      }
+    }
+    queue = next;
+  }
+  return 0;
+}`,
+  };
+
+  // ============ F29 — Network Delay Time ============
+  J.F29 = {
+    functionName: "networkDelayTime",
+    signature: "function networkDelayTime(times: number[][], n: number, k: number): number",
+    starter:
+`function networkDelayTime(times, n, k) {
+  // your code here
+}
+`,
+    solution:
+`function networkDelayTime(times, n, k) {
+  // O(V^2) scan variant — JS has no built-in heap; for the heap version
+  // see the Python reference solution.
+  const graph = Array.from({ length: n + 1 }, () => []);
+  for (const [u, v, w] of times) graph[u].push([v, w]);
+
+  const dist = new Array(n + 1).fill(Infinity);
+  const done = new Array(n + 1).fill(false);
+  dist[k] = 0;
+  for (let iter = 0; iter < n; iter++) {
+    let node = -1;
+    for (let i = 1; i <= n; i++) {
+      if (!done[i] && (node === -1 || dist[i] < dist[node])) node = i;
+    }
+    if (node === -1 || dist[node] === Infinity) break;
+    done[node] = true;                        // finalize (needs w >= 0!)
+    for (const [nxt, w] of graph[node]) {
+      if (dist[node] + w < dist[nxt]) dist[nxt] = dist[node] + w;
+    }
+  }
+  let ans = 0;
+  for (let i = 1; i <= n; i++) ans = Math.max(ans, dist[i]);
+  return ans === Infinity ? -1 : ans;
+}`,
+  };
+
+  // ============ F30 — Pacific Atlantic Water Flow ============
+  J.F30 = {
+    functionName: "pacificAtlantic",
+    signature: "function pacificAtlantic(heights: number[][]): number[][]",
+    starter:
+`function pacificAtlantic(heights) {
+  // your code here
+}
+`,
+    solution:
+`function pacificAtlantic(heights) {
+  if (!heights.length || !heights[0].length) return [];
+  const R = heights.length, C = heights[0].length;
+
+  function climb(starts) {
+    const seen = new Set(starts.map(([r, c]) => r + "," + c));
+    const stack = [...starts];
+    while (stack.length) {
+      const [r, c] = stack.pop();
+      for (const [dr, dc] of [[0, 1], [0, -1], [1, 0], [-1, 0]]) {
+        const nr = r + dr, nc = c + dc;
+        const key = nr + "," + nc;
+        if (nr >= 0 && nr < R && nc >= 0 && nc < C && !seen.has(key) &&
+            heights[nr][nc] >= heights[r][c]) {     // uphill or flat
+          seen.add(key);
+          stack.push([nr, nc]);
+        }
+      }
+    }
+    return seen;
+  }
+
+  const pacStarts = [], atlStarts = [];
+  for (let c = 0; c < C; c++) { pacStarts.push([0, c]); atlStarts.push([R - 1, c]); }
+  for (let r = 0; r < R; r++) { pacStarts.push([r, 0]); atlStarts.push([r, C - 1]); }
+  const pacific = climb(pacStarts);
+  const atlantic = climb(atlStarts);
+
+  const out = [];
+  for (const key of pacific) {
+    if (atlantic.has(key)) out.push(key.split(",").map(Number));
+  }
+  return out;
+}`,
+    testsTransform:
+      'result = result.map(p => p[0] + "," + p[1]).sort();',
+  };
+
   // =================================================================
   // Apply all impls to window.QUESTIONS
   // =================================================================
