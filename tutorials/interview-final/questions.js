@@ -1735,7 +1735,9 @@ def network_delay_time(times: list, n: int, k: int) -> int:
     explanation:
       "O(E log E). We push duplicates instead of decrease-key; the `if node in dist` guard " +
       "discards stale ones — say 'lazy deletion' out loud. Non-negative weights are what let " +
-      "the pop commit permanently; with negatives you'd switch to Bellman-Ford (O(VE)).",
+      "the pop commit permanently; with negatives you'd switch to Bellman-Ford (O(VE)). " +
+      "JS note: JavaScript has no built-in heap, so the JS reference substitutes an O(V²) " +
+      "min-scan — fine at these sizes; in a live interview say you'd bring the Module 11 MinHeap.",
     tests: [
       { args: [[[2, 1, 1], [2, 3, 1], [3, 4, 1]], 4, 2], expected: 2 },
       { args: [[[1, 2, 1]], 2, 1], expected: 1 },
@@ -2517,7 +2519,9 @@ def running_median(nums: list) -> list:
       "so no edge cases on empty heaps or duplicates. After step 2 every element of small <= every " +
       "element of large by construction; after step 3 sizes differ by at most 1 with small holding " +
       "any extra. Follow-ups to expect: 'median of a sliding window' (needs lazy deletion, " +
-      "Module 8 trick) and 'what if values are bounded 0-100?' (counting array beats heaps).",
+      "Module 8 trick) and 'what if values are bounded 0-100?' (counting array beats heaps). " +
+      "JS note: the JS reference keeps a sorted array instead (O(n) insert) — narrate the " +
+      "two-heap answer anyway; Module 11 builds the real JS MinHeap from memory.",
     tests: [
       { args: [[2, 3, 4]], expected: [2, 2.5, 3] },
       { args: [[1, 2]], expected: [1, 1.5] },
@@ -2836,8 +2840,9 @@ JOIN department d ON e.department_id = d.id
 WHERE e.rk <= 3;`,
     explanation:
       "Why DENSE_RANK and not RANK or ROW_NUMBER: Joe and Randy tie at 85000 — with RANK the tie " +
-      "consumes rank 2 AND 3, wrongly evicting Will's 70000; ROW_NUMBER would arbitrarily call one " +
-      "of the tied two 'rank 3' and could drop the other. 'Top three distinct salary VALUES' is " +
+      "consumes rank 2 AND 3, wrongly evicting Will's 70000; ROW_NUMBER caps the output at three " +
+      "rows (same eviction), and if a tie ever straddled the cutoff it would arbitrarily drop one " +
+      "of the tied employees. 'Top three distinct salary VALUES' is " +
       "dense by definition. The subquery wrap exists because WHERE can't see the same level's " +
       "SELECT aliases (Module 12, processing order). Pre-window-function alternative worth naming: " +
       "correlated COUNT(DISTINCT salary) — O(n²)-ish and ugly, which is exactly why windows won.",
@@ -4007,9 +4012,11 @@ WHY EACH PATTERN EARNS ITS PLACE (the actual question)
   posts (id, author_id, body, created_at)
     + INDEX (author_id, created_at DESC)   -- pull path: an author's recents
   feed_items (user_id, post_id, created_at,
-              PRIMARY KEY (user_id, created_at DESC, id/post_id))
+              PRIMARY KEY (user_id, post_id))       -- also makes re-fanout idempotent
+    + INDEX (user_id, created_at DESC, post_id)     -- the read query's exact shape
     -- the PUSH materialization: one row = "this post is in this user's feed";
-    -- clustered/PK shape IS the read query's shape (Module 13 thinking).
+    -- the covering index IS the feed query's shape (Module 13 thinking). (DESC
+    -- can't live inside a PK constraint - only in an index definition.)
 
 2. THE DECISION, WITH ARITHMETIC
   Push-only: median post -> 200 feed_items inserts (queued, cheap; reads
@@ -4122,6 +4129,8 @@ WHY EACH PATTERN EARNS ITS PLACE (the actual question)
   A 45-min booking spans 1.5 grid slots - grid breaks. Postgres answer:
     bookings (provider_id, period TSTZRANGE NOT NULL, ...)
     EXCLUDE USING gist (provider_id WITH =, period WITH &&)
+  (needs CREATE EXTENSION btree_gist - plain GiST has no '=' opclass
+  for scalar columns like provider_id; interviewers probe this)
   - the DATABASE rejects any two bookings whose ranges overlap for the
   same provider: it's UNIQUE generalized to intervals. Under the hood
   that's Module 10's interval-overlap check enforced by an index.

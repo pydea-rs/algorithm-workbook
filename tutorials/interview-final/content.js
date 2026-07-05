@@ -33,9 +33,10 @@ window.MODULES = {
 </div>
 
 <h2>How this tutorial is organized</h2>
-<p>Fifteen modules, roughly split three ways:</p>
+<p>Sixteen modules, roughly split three ways:</p>
 <ul>
-  <li><strong>Foundation reviews</strong> (M1–M2): This recap plus a chapter on live-coding craft.</li>
+  <li><strong>Foundation reviews</strong> (M1–M2b): This recap, a chapter on live-coding craft, and
+    the stage-1 gap patch (linked lists, math &amp; bit tricks).</li>
   <li><strong>Algorithmic deep dives</strong> (M3–M11): Arrays, hash maps, recursion, binary search,
     trees, graphs, DP, greedy, heaps — mostly medium-hard problems with Python + JavaScript sandboxes.</li>
   <li><strong>Data and design</strong> (M12–M15): SQL deep dive, database indexes, OOP fundamentals,
@@ -106,7 +107,7 @@ curated pool spanning the whole course — save it for a dress rehearsal.</p>
 
 <h3>Module 6 (Stage-1) — Math, Bit Ops, Binary Search</h3>
 <ul>
-  <li>Binary search skeleton: <code>lo, hi</code>, invariant, loop until <code>lo &lt;= hi</code>,
+  <li>Binary search skeleton: <code>lo, hi</code>, invariant, loop while <code>lo &lt;= hi</code>,
     move exactly one side. Get the boundaries right or you infinite-loop.</li>
   <li>Bit ops shortcuts: <code>x &amp; (x-1)</code> clears lowest set bit; XOR self-inverse property
     for "find the single element".</li>
@@ -411,7 +412,8 @@ comfortable language is worth 10× a fancy one when a stranger is watching.</p>
 
 <div class="callout good">
   <div class="callout-title">You're ready for the algorithmic depth</div>
-  From here on, modules 3–11 drill the specific algorithm families with medium-hard problems.
+  From here on, Module 2b patches the stage-1 gaps (linked lists, math &amp; bits), then
+  modules 3–11 drill the specific algorithm families with medium-hard problems.
   Modules 12–13 cover SQL and database design. Modules 14–15 are OOP and system design. Take them
   in order or jump around based on where you feel weakest.
 </div>
@@ -714,7 +716,7 @@ interviewer's follow-up ("no extra memory?") is already answered.</p>
     openers before the "real" question — botching one costs credibility cheaply.</li>
   <li><strong>Space follow-ups</strong>: "can you do it without the hash set?" — the intended
     answers are usually Floyd (cycles), XOR (duplicates), or in-place pointer surgery.</li>
-  <li><strong>The LRU-cache bridge</strong>: Module 15's LRU design welds a hash map onto a
+  <li><strong>The LRU-cache bridge</strong>: Module 14's LRU exercise (Practice Set 14) welds a hash map onto a
     doubly linked list — the pointer discipline you drill here is exactly what makes that
     O(1) eviction believable on a whiteboard.</li>
 </ul>
@@ -1581,8 +1583,9 @@ path can appear later; a negative edge can produce one.</p>
 <p>No edges are given: words are nodes, and an edge means "differ by one letter". The skill being
 tested is <em>modeling</em> — say "this is a shortest-path problem on an implicit graph, so BFS"
 before writing anything. Generating neighbors: for each position, try all 26 letters, keep those
-in the word set. With word length L and set size N that's O(26·L) per node instead of the O(N·L)
-all-pairs comparison.</p>
+in the word set. With word length L and set size N that's 26·L candidate strings per node —
+O(26·L²) character work, since each candidate costs O(L) to build and hash — versus O(N·L) for
+comparing against all N words; a huge win whenever the dictionary dwarfs the word length.</p>
 <div class="callout tip">
   <div class="callout-title">Two upgrades to name (not necessarily code)</div>
   Wildcard buckets (<code>h*t</code> as a precomputed adjacency key) avoid the 26-letter loop;

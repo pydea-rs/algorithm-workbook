@@ -468,6 +468,9 @@
   <li><strong>Final Exam</strong> deals 12 questions — always 8 algorithm + 4 SQL, the real
   interview's ratio — from a pool spanning every module family. Try it last, as a dress
   rehearsal.</li>
+  <li>Not sure how to pace all this before the interview? Follow the
+  <a href="../roadmap/index.html" target="_top"><strong>Final Week Roadmap</strong></a> — a
+  day-by-day plan through every module, practice set, mock exam and logic-test attempt.</li>
 </ul>
 <h2>The code workbench</h2>
 <ul>
