@@ -2574,6 +2574,777 @@ def least_interval(tasks: list, n: int) -> int:
     ],
   },
 
+  F46: {
+    id: "F46",
+    title: "SQL — Second Highest Salary",
+    difficulty: "Medium",
+    time: "10-15 min",
+    tags: ["SQL", "Subquery", "NULL"],
+    type: "sql",
+    statement:
+      "Return the second highest <em>distinct</em> salary from <code>employee</code> as a column " +
+      "named <code>SecondHighest</code>. If there is no second highest (fewer than two distinct " +
+      "salaries), return <code>NULL</code> — one row, always. The classic warm-up whose whole " +
+      "difficulty is the NULL requirement.",
+    examples:
+      "employee: (1,100),(2,200),(3,300),(4,300)\n" +
+      "-> SecondHighest = 200   (distinct salaries 300,200,100)\n\n" +
+      "employee: (1,100)\n" +
+      "-> SecondHighest = NULL  (still one row!)",
+    hint: "Wrap the obvious ORDER BY DESC LIMIT 1 OFFSET 1 in a scalar subquery: SELECT (subquery) AS SecondHighest. A scalar subquery that finds nothing yields NULL — exactly the required behavior, for free.",
+    solution:
+`-- The naive version returns ZERO rows when there's no second salary:
+--   SELECT DISTINCT salary ... ORDER BY salary DESC LIMIT 1 OFFSET 1
+-- Wrapping it as a scalar subquery turns "no row" into NULL:
+SELECT (
+    SELECT DISTINCT salary
+    FROM employee
+    ORDER BY salary DESC
+    LIMIT 1 OFFSET 1
+) AS SecondHighest;`,
+    sqlSchema:
+`CREATE TABLE employee (id INTEGER PRIMARY KEY, salary INTEGER);
+INSERT INTO employee VALUES (1,100),(2,200),(3,300),(4,300);`,
+    sqlStarter:
+      "-- Table: employee(id, salary)\n" +
+      "-- Return one row, one column: SecondHighest\n" +
+      "SELECT\n",
+    sqlSolution:
+`SELECT (
+    SELECT DISTINCT salary
+    FROM employee
+    ORDER BY salary DESC
+    LIMIT 1 OFFSET 1
+) AS SecondHighest;`,
+    explanation:
+      "Two ideas: DISTINCT before ranking (300,300 must count once — test 1 has a tie at the top), " +
+      "and the scalar-subquery wrap so an empty result becomes a NULL row instead of no row. " +
+      "Follow-up: 'Nth highest' — either OFFSET N-1, or DENSE_RANK() = N in a subquery. " +
+      "Say both; the window version generalizes to per-group.",
+    tests: [
+      {
+        name: "Normal case with a tie at the top",
+        orderMatters: true,
+        expected: { columns: ["SecondHighest"], rows: [[200]] },
+      },
+      {
+        name: "Single employee -> NULL row",
+        orderMatters: true,
+        schema:
+`CREATE TABLE employee (id INTEGER PRIMARY KEY, salary INTEGER);
+INSERT INTO employee VALUES (1,100);`,
+        expected: { columns: ["SecondHighest"], rows: [[null]] },
+      },
+      {
+        name: "All salaries equal -> NULL row",
+        orderMatters: true,
+        schema:
+`CREATE TABLE employee (id INTEGER PRIMARY KEY, salary INTEGER);
+INSERT INTO employee VALUES (1,100),(2,100),(3,100);`,
+        expected: { columns: ["SecondHighest"], rows: [[null]] },
+      },
+    ],
+  },
+
+  F47: {
+    id: "F47",
+    title: "SQL — Employees Earning More Than Their Managers",
+    difficulty: "Medium",
+    time: "10-15 min",
+    tags: ["SQL", "Self-Join"],
+    type: "sql",
+    statement:
+      "Table <code>employee(id, name, salary, manager_id)</code> where <code>manager_id</code> " +
+      "references another row of the same table (NULL for the top). Return the names of employees " +
+      "who earn strictly more than their own manager, as a column named <code>employee</code>. " +
+      "The canonical self-join.",
+    examples:
+      "employee:\n" +
+      "  (1,'Joe',   70000, manager 3)\n" +
+      "  (2,'Henry', 80000, manager 4)\n" +
+      "  (3,'Sam',   60000, NULL)\n" +
+      "  (4,'Max',   90000, NULL)\n" +
+      "-> Joe   (70000 > Sam's 60000; Henry 80000 < Max's 90000)",
+    hint: "Join the table to itself under two aliases: e (employee) and m (manager), ON e.manager_id = m.id. Top-level employees drop out of the INNER JOIN naturally — no NULL handling needed.",
+    solution:
+`SELECT e.name AS employee
+FROM employee e
+JOIN employee m ON e.manager_id = m.id   -- same table, two roles
+WHERE e.salary > m.salary;`,
+    sqlSchema:
+`CREATE TABLE employee (id INTEGER PRIMARY KEY, name TEXT, salary INTEGER, manager_id INTEGER);
+INSERT INTO employee VALUES
+  (1,'Joe',70000,3),(2,'Henry',80000,4),(3,'Sam',60000,NULL),(4,'Max',90000,NULL);`,
+    sqlStarter:
+      "-- Table: employee(id, name, salary, manager_id)\n" +
+      "-- Column to return: employee (names only)\n" +
+      "SELECT\n",
+    sqlSolution:
+`SELECT e.name AS employee
+FROM employee e
+JOIN employee m ON e.manager_id = m.id
+WHERE e.salary > m.salary;`,
+    explanation:
+      "A self-join is just a join where both sides happen to be the same table — the aliases ARE " +
+      "the roles. INNER JOIN quietly excludes employees with manager_id NULL, which here is " +
+      "correct (no manager, no comparison). Narrate that: 'I want INNER here, top-level people " +
+      "should drop out.' Follow-ups: employees earning more than the AVERAGE of their department " +
+      "(join to a grouped subquery), or chains ('more than their manager's manager' — join twice).",
+    tests: [
+      {
+        name: "Base case",
+        orderMatters: false,
+        expected: { columns: ["employee"], rows: [["Joe"]] },
+      },
+      {
+        name: "Management chain",
+        orderMatters: false,
+        schema:
+`CREATE TABLE employee (id INTEGER PRIMARY KEY, name TEXT, salary INTEGER, manager_id INTEGER);
+INSERT INTO employee VALUES
+  (1,'Ada',50000,NULL),(2,'Bob',60000,1),(3,'Cy',55000,2),(4,'Dee',70000,2);`,
+        expected: { columns: ["employee"], rows: [["Bob"], ["Dee"]] },
+      },
+    ],
+  },
+
+  F48: {
+    id: "F48",
+    title: "SQL — Customers Who Never Order",
+    difficulty: "Medium",
+    time: "10-15 min",
+    tags: ["SQL", "Anti-Join", "NULL Trap"],
+    type: "sql",
+    statement:
+      "Tables <code>customers(id, name)</code> and <code>orders(id, customer_id)</code>. Return " +
+      "the names of customers who have never placed an order, as a column named " +
+      "<code>customers</code>. Know all three anti-join idioms — and note that the second test " +
+      "fixture contains an order with <code>customer_id = NULL</code>, which detonates the " +
+      "<code>NOT IN</code> version.",
+    examples:
+      "customers: (1,'Joe'),(2,'Henry'),(3,'Sam'),(4,'Max')\n" +
+      "orders:    (1, customer 3),(2, customer 1)\n" +
+      "-> Henry, Max",
+    hint: "LEFT JOIN orders, keep rows where the join found nothing (o.id IS NULL) — or NOT EXISTS. Both survive NULL customer_ids; NOT IN does not (NULL makes the whole predicate 'unknown' -> zero rows).",
+    solution:
+`-- Idiom 1: LEFT JOIN ... IS NULL (the workhorse; NULL-safe)
+SELECT c.name AS customers
+FROM customers c
+LEFT JOIN orders o ON o.customer_id = c.id
+WHERE o.id IS NULL;
+
+-- Idiom 2: NOT EXISTS (clearest intent; NULL-safe)
+-- SELECT c.name AS customers FROM customers c
+-- WHERE NOT EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.id);
+
+-- Idiom 3: NOT IN — BROKEN when the subquery can yield NULL:
+-- WHERE c.id NOT IN (SELECT customer_id FROM orders)   -- returns 0 rows on test 2!`,
+    sqlSchema:
+`CREATE TABLE customers (id INTEGER PRIMARY KEY, name TEXT);
+CREATE TABLE orders (id INTEGER PRIMARY KEY, customer_id INTEGER);
+INSERT INTO customers VALUES (1,'Joe'),(2,'Henry'),(3,'Sam'),(4,'Max');
+INSERT INTO orders VALUES (1,3),(2,1);`,
+    sqlStarter:
+      "-- Tables: customers(id, name), orders(id, customer_id)\n" +
+      "-- Column to return: customers (names of customers with no orders)\n" +
+      "SELECT\n",
+    sqlSolution:
+`SELECT c.name AS customers
+FROM customers c
+LEFT JOIN orders o ON o.customer_id = c.id
+WHERE o.id IS NULL;`,
+    explanation:
+      "The anti-join trio: LEFT JOIN ... IS NULL, NOT EXISTS, NOT IN. The first two are NULL-safe; " +
+      "NOT IN expands to a chain of <> comparisons, and one NULL in the list makes every row " +
+      "'unknown' -> the query silently returns nothing. Test 2 plants exactly that landmine (an " +
+      "anonymous guest order). If you passed both tests with NOT IN — you didn't; it's the point " +
+      "of the second fixture. Interviewers ask 'what's wrong with this query' on this exact bug.",
+    tests: [
+      {
+        name: "Base case",
+        orderMatters: false,
+        expected: { columns: ["customers"], rows: [["Henry"], ["Max"]] },
+      },
+      {
+        name: "An order with NULL customer_id (NOT IN trap)",
+        orderMatters: false,
+        schema:
+`CREATE TABLE customers (id INTEGER PRIMARY KEY, name TEXT);
+CREATE TABLE orders (id INTEGER PRIMARY KEY, customer_id INTEGER);
+INSERT INTO customers VALUES (1,'Joe'),(2,'Henry'),(3,'Sam'),(4,'Max');
+INSERT INTO orders VALUES (1,3),(2,1),(3,NULL);`,
+        expected: { columns: ["customers"], rows: [["Henry"], ["Max"]] },
+      },
+    ],
+  },
+
+  F49: {
+    id: "F49",
+    title: "SQL — Department Top Three Salaries",
+    difficulty: "Hard",
+    time: "20-25 min",
+    tags: ["SQL", "Window Functions", "Top-N per Group"],
+    type: "sql",
+    statement:
+      "Tables <code>employee(id, name, salary, department_id)</code> and " +
+      "<code>department(id, name)</code>. A 'top earner' is anyone whose salary is among the " +
+      "top three <em>distinct</em> salaries of their department. Return " +
+      "<code>department, employee, salary</code> for all top earners. The definitive " +
+      "top-N-per-group question — DENSE_RANK in a subquery, filter outside.",
+    examples:
+      "IT:    Max 90000, Joe 85000, Randy 85000, Will 70000, Janet 69000\n" +
+      "Sales: Henry 80000, Sam 60000\n" +
+      "-> IT: Max, Joe, Randy, Will  (distinct salaries 90k,85k,70k = top 3; Janet's 69k is 4th)\n" +
+      "-> Sales: Henry, Sam          (only two distinct salaries exist)",
+    hint: "DENSE_RANK() OVER (PARTITION BY department_id ORDER BY salary DESC) — dense, because 'top three distinct salaries' means ties share a rank and don't burn slots. Rank in a subquery, WHERE rk <= 3 outside (processing order: the alias isn't visible at its own level).",
+    solution:
+`SELECT d.name AS department, e.name AS employee, e.salary
+FROM (
+    SELECT *,
+           DENSE_RANK() OVER (
+               PARTITION BY department_id
+               ORDER BY salary DESC
+           ) AS rk
+    FROM employee
+) e
+JOIN department d ON e.department_id = d.id
+WHERE e.rk <= 3;`,
+    sqlSchema:
+`CREATE TABLE employee (id INTEGER PRIMARY KEY, name TEXT, salary INTEGER, department_id INTEGER);
+CREATE TABLE department (id INTEGER PRIMARY KEY, name TEXT);
+INSERT INTO department VALUES (1,'IT'),(2,'Sales');
+INSERT INTO employee VALUES
+  (1,'Joe',85000,1),(2,'Henry',80000,2),(3,'Sam',60000,2),(4,'Max',90000,1),
+  (5,'Janet',69000,1),(6,'Randy',85000,1),(7,'Will',70000,1);`,
+    sqlStarter:
+      "-- Tables: employee(id, name, salary, department_id), department(id, name)\n" +
+      "-- Columns to return: department, employee, salary\n" +
+      "SELECT\n",
+    sqlSolution:
+`SELECT d.name AS department, e.name AS employee, e.salary
+FROM (
+    SELECT *,
+           DENSE_RANK() OVER (
+               PARTITION BY department_id
+               ORDER BY salary DESC
+           ) AS rk
+    FROM employee
+) e
+JOIN department d ON e.department_id = d.id
+WHERE e.rk <= 3;`,
+    explanation:
+      "Why DENSE_RANK and not RANK or ROW_NUMBER: Joe and Randy tie at 85000 — with RANK the tie " +
+      "consumes rank 2 AND 3, wrongly evicting Will's 70000; ROW_NUMBER would arbitrarily call one " +
+      "of the tied two 'rank 3' and could drop the other. 'Top three distinct salary VALUES' is " +
+      "dense by definition. The subquery wrap exists because WHERE can't see the same level's " +
+      "SELECT aliases (Module 12, processing order). Pre-window-function alternative worth naming: " +
+      "correlated COUNT(DISTINCT salary) — O(n²)-ish and ugly, which is exactly why windows won.",
+    tests: [
+      {
+        name: "Two departments, tie inside IT",
+        orderMatters: false,
+        expected: {
+          columns: ["department", "employee", "salary"],
+          rows: [
+            ["IT", "Max", 90000],
+            ["IT", "Joe", 85000],
+            ["IT", "Randy", 85000],
+            ["IT", "Will", 70000],
+            ["Sales", "Henry", 80000],
+            ["Sales", "Sam", 60000],
+          ],
+        },
+      },
+      {
+        name: "Department with fewer than 3 salary levels",
+        orderMatters: false,
+        schema:
+`CREATE TABLE employee (id INTEGER PRIMARY KEY, name TEXT, salary INTEGER, department_id INTEGER);
+CREATE TABLE department (id INTEGER PRIMARY KEY, name TEXT);
+INSERT INTO department VALUES (1,'Ops');
+INSERT INTO employee VALUES (1,'Ann',50000,1),(2,'Ben',50000,1);`,
+        expected: {
+          columns: ["department", "employee", "salary"],
+          rows: [["Ops", "Ann", 50000], ["Ops", "Ben", 50000]],
+        },
+      },
+    ],
+  },
+
+  F50: {
+    id: "F50",
+    title: "SQL — Rank Scores",
+    difficulty: "Medium",
+    time: "10-15 min",
+    tags: ["SQL", "Window Functions", "DENSE_RANK"],
+    type: "sql",
+    statement:
+      "Table <code>scores(id, score)</code>. Return each score with its rank — highest first, " +
+      "ties share a rank, and ranks have no gaps (4.00, 4.00, 3.85 ranks as 1, 1, 2). " +
+      "Columns: <code>score, rnk</code>, ordered by score descending. " +
+      "One line of window function — the question is really 'do you know which of the three " +
+      "ranking functions this is?'.",
+    examples:
+      "scores: 3.50, 3.65, 4.00, 3.85, 4.00, 3.65\n" +
+      "->  4.00 1\n" +
+      "    4.00 1\n" +
+      "    3.85 2\n" +
+      "    3.65 3\n" +
+      "    3.65 3\n" +
+      "    3.50 4",
+    hint: "'Ties share, no gaps' is the definition of DENSE_RANK() OVER (ORDER BY score DESC). (RANK would jump 1,1,3; ROW_NUMBER would break the tie arbitrarily.) Alias it rnk — RANK is a reserved word now that window functions exist.",
+    solution:
+`SELECT score,
+       DENSE_RANK() OVER (ORDER BY score DESC) AS rnk
+FROM scores
+ORDER BY score DESC;`,
+    sqlSchema:
+`CREATE TABLE scores (id INTEGER PRIMARY KEY, score REAL);
+INSERT INTO scores VALUES (1,3.50),(2,3.65),(3,4.00),(4,3.85),(5,4.00),(6,3.65);`,
+    sqlStarter:
+      "-- Table: scores(id, score)\n" +
+      "-- Columns to return: score, rnk — ordered by score DESC\n" +
+      "SELECT\n",
+    sqlSolution:
+`SELECT score,
+       DENSE_RANK() OVER (ORDER BY score DESC) AS rnk
+FROM scores
+ORDER BY score DESC;`,
+    explanation:
+      "Map the requirement's words to the function: 'ties share a rank' kills ROW_NUMBER, " +
+      "'no gaps' kills RANK, leaving DENSE_RANK. The window's ORDER BY ranks; the query's ORDER BY " +
+      "sorts the output — they're independent clauses and you need both. Pre-window alternative " +
+      "(know it exists): correlated subquery COUNT(DISTINCT s2.score) WHERE s2.score >= s.score — " +
+      "same output, quadratic and unreadable.",
+    tests: [
+      {
+        name: "Ranks with ties, no gaps",
+        orderMatters: true,
+        expected: {
+          columns: ["score", "rnk"],
+          rows: [[4.0, 1], [4.0, 1], [3.85, 2], [3.65, 3], [3.65, 3], [3.5, 4]],
+        },
+      },
+      {
+        name: "All identical scores",
+        orderMatters: true,
+        schema:
+`CREATE TABLE scores (id INTEGER PRIMARY KEY, score REAL);
+INSERT INTO scores VALUES (1,2.5),(2,2.5),(3,2.5);`,
+        expected: { columns: ["score", "rnk"], rows: [[2.5, 1], [2.5, 1], [2.5, 1]] },
+      },
+    ],
+  },
+
+  F51: {
+    id: "F51",
+    title: "SQL — Consecutive Numbers",
+    difficulty: "Hard",
+    time: "20-25 min",
+    tags: ["SQL", "Window Functions", "LAG"],
+    type: "sql",
+    statement:
+      "Table <code>logs(id, num)</code> with consecutive ids. Return every number that appears " +
+      "at least three times in a row (by id), once, as column <code>consecutive_num</code>. " +
+      "The 'rows talking to their neighbors' question — LAG twice, or a triple self-join.",
+    examples:
+      "logs: (1,1),(2,1),(3,1),(4,2),(5,1),(6,2),(7,2)\n" +
+      "-> 1   (ids 1,2,3 hold three 1s in a row; the 2s never make three)",
+    hint: "LAG(num, 1) and LAG(num, 2) OVER (ORDER BY id) pull the two previous values onto each row; a row where num = prev1 = prev2 ends a run of three. DISTINCT the result — a run of five would otherwise report its number three times.",
+    solution:
+`SELECT DISTINCT num AS consecutive_num
+FROM (
+    SELECT num,
+           LAG(num, 1) OVER (ORDER BY id) AS prev1,
+           LAG(num, 2) OVER (ORDER BY id) AS prev2
+    FROM logs
+) t
+WHERE num = prev1 AND num = prev2;
+
+-- Self-join alternative (works without window functions, needs gap-free ids):
+-- SELECT DISTINCT a.num AS consecutive_num
+-- FROM logs a JOIN logs b ON b.id = a.id + 1
+--             JOIN logs c ON c.id = a.id + 2
+-- WHERE a.num = b.num AND b.num = c.num;`,
+    sqlSchema:
+`CREATE TABLE logs (id INTEGER PRIMARY KEY, num INTEGER);
+INSERT INTO logs VALUES (1,1),(2,1),(3,1),(4,2),(5,1),(6,2),(7,2);`,
+    sqlStarter:
+      "-- Table: logs(id, num) — ids are consecutive\n" +
+      "-- Column to return: consecutive_num (numbers appearing 3+ times in a row)\n" +
+      "SELECT\n",
+    sqlSolution:
+`SELECT DISTINCT num AS consecutive_num
+FROM (
+    SELECT num,
+           LAG(num, 1) OVER (ORDER BY id) AS prev1,
+           LAG(num, 2) OVER (ORDER BY id) AS prev2
+    FROM logs
+) t
+WHERE num = prev1 AND num = prev2;`,
+    explanation:
+      "LAG's first rows are NULL (no previous row) — and that's safe unprompted: NULL = num is " +
+      "unknown, WHERE drops it. The DISTINCT matters — test 2's run of four 5s would emit 5 twice " +
+      "without it. The self-join variant leans on ids being gap-free (id+1, id+2); LAG orders by " +
+      "id but doesn't need arithmetic on it — say that trade-off. Follow-up to expect: 'runs of " +
+      "length K' -> the gaps-and-islands trick (group by id - ROW_NUMBER() partitioned by num), " +
+      "worth knowing by name.",
+    tests: [
+      {
+        name: "Base case",
+        orderMatters: false,
+        expected: { columns: ["consecutive_num"], rows: [[1]] },
+      },
+      {
+        name: "Run of four + separate run of three",
+        orderMatters: false,
+        schema:
+`CREATE TABLE logs (id INTEGER PRIMARY KEY, num INTEGER);
+INSERT INTO logs VALUES (1,5),(2,5),(3,5),(4,5),(5,3),(6,3),(7,3),(8,4);`,
+        expected: { columns: ["consecutive_num"], rows: [[5], [3]] },
+      },
+      {
+        name: "No runs at all",
+        orderMatters: false,
+        schema:
+`CREATE TABLE logs (id INTEGER PRIMARY KEY, num INTEGER);
+INSERT INTO logs VALUES (1,1),(2,2),(3,1),(4,2),(5,1),(6,1);`,
+        expected: { columns: ["consecutive_num"], rows: [] },
+      },
+    ],
+  },
+
+  F52: {
+    id: "F52",
+    title: "SQL — Peak Concurrent Bookings",
+    difficulty: "Hard",
+    time: "25-30 min",
+    tags: ["SQL", "Sweep Line", "Running Total"],
+    type: "sql",
+    statement:
+      "Table <code>bookings(id, room, start_t, end_t)</code> (end exclusive — a booking ending " +
+      "at 30 and one starting at 30 do not overlap). Return the maximum number of bookings " +
+      "active at the same instant, as column <code>peak</code>. This is Meeting Rooms II " +
+      "(Module 10) translated literally into SQL: +1/−1 events, running total, MAX.",
+    examples:
+      "bookings: (0..30), (5..10), (15..20)\n" +
+      "-> peak = 2   (0..30 overlaps each of the others; they don't overlap each other)\n\n" +
+      "back-to-back: (1..3), (3..5), (5..7)\n" +
+      "-> peak = 1",
+    hint: "UNION ALL starts as (t, +1) and ends as (t, -1); SUM(d) OVER (ORDER BY t, d) is the running room count — ordering by d second puts -1 before +1 on ties, exactly the Module 10 tie-break. Then MAX the running column.",
+    solution:
+`WITH events AS (
+    SELECT start_t AS t, +1 AS d FROM bookings
+    UNION ALL
+    SELECT end_t   AS t, -1 AS d FROM bookings
+),
+running AS (
+    SELECT SUM(d) OVER (ORDER BY t, d) AS concurrent   -- d asc: -1 before +1 on ties
+    FROM events
+)
+SELECT MAX(concurrent) AS peak FROM running;`,
+    sqlSchema:
+`CREATE TABLE bookings (id INTEGER PRIMARY KEY, room TEXT, start_t INTEGER, end_t INTEGER);
+INSERT INTO bookings VALUES (1,'A',0,30),(2,'B',5,10),(3,'C',15,20);`,
+    sqlStarter:
+      "-- Table: bookings(id, room, start_t, end_t) — end exclusive\n" +
+      "-- Column to return: peak (max simultaneous bookings)\n" +
+      "WITH\n",
+    sqlSolution:
+`WITH events AS (
+    SELECT start_t AS t, +1 AS d FROM bookings
+    UNION ALL
+    SELECT end_t   AS t, -1 AS d FROM bookings
+),
+running AS (
+    SELECT SUM(d) OVER (ORDER BY t, d) AS concurrent
+    FROM events
+)
+SELECT MAX(concurrent) AS peak FROM running;`,
+    explanation:
+      "Recognize the algorithm under the SQL: this is the Module 10 sweep line, with the window's " +
+      "ORDER BY t, d doing the (time, delta) tuple-sort tie-break — ends free their slot before " +
+      "same-instant starts claim one, which is what test 2's back-to-back chain checks. Carrying " +
+      "an algorithmic idea across languages like this is a strong interview move: 'this is a sweep " +
+      "line; in SQL the running sum is a window function.' Also a clean showcase for CTEs — each " +
+      "WITH block is one narratable step.",
+    tests: [
+      {
+        name: "Overlapping bookings",
+        orderMatters: true,
+        expected: { columns: ["peak"], rows: [[2]] },
+      },
+      {
+        name: "Back-to-back chain shares (end exclusive)",
+        orderMatters: true,
+        schema:
+`CREATE TABLE bookings (id INTEGER PRIMARY KEY, room TEXT, start_t INTEGER, end_t INTEGER);
+INSERT INTO bookings VALUES (1,'A',1,3),(2,'B',3,5),(3,'C',5,7);`,
+        expected: { columns: ["peak"], rows: [[1]] },
+      },
+      {
+        name: "Fully stacked",
+        orderMatters: true,
+        schema:
+`CREATE TABLE bookings (id INTEGER PRIMARY KEY, room TEXT, start_t INTEGER, end_t INTEGER);
+INSERT INTO bookings VALUES (1,'A',1,5),(2,'B',2,6),(3,'C',3,7),(4,'D',4,8);`,
+        expected: { columns: ["peak"], rows: [[4]] },
+      },
+    ],
+  },
+
+  F53: {
+    id: "F53",
+    title: "Design — E-commerce Order System",
+    difficulty: "Medium",
+    time: "20-30 min",
+    tags: ["Design", "Schema", "Normalization"],
+    type: "design",
+    statement:
+      "Design the database schema for a small e-commerce platform: customers browse products, " +
+      "place orders containing multiple products with quantities, and pay for them. Walk through " +
+      "entities, relationships and cardinalities, tables with keys and constraints — then name " +
+      "the indexes you'd add for the storefront's hot queries ('my recent orders', 'order " +
+      "details page'). Prices change over time; historical orders must not.",
+    examples:
+      "Think out loud through the Module 13 recipe:\n" +
+      "  1. nouns -> entities        2. verbs -> relationships + cardinalities\n" +
+      "  3. tables + keys            4. constraints\n" +
+      "  5. indexes from the workload\n" +
+      "Target: ~5 tables. The price-snapshot requirement is the trap.",
+    hint: "customer 1:N order, order N:M product — so order_items is a junction table WITH ITS OWN DATA: quantity and, critically, unit_price copied at purchase time (snapshot vs reference — Module 13 section 2).",
+    solution:
+`ENTITIES & RELATIONSHIPS
+  customer (1) --- (N) order (1) --- (N) order_item (N) --- (1) product
+  order (1) --- (0..N) payment
+
+TABLES (Postgres-flavored)
+
+CREATE TABLE customers (
+    id          BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    email       TEXT NOT NULL UNIQUE,          -- natural key gets UNIQUE, not PK
+    name        TEXT NOT NULL,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE products (
+    id          BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    sku         TEXT NOT NULL UNIQUE,
+    name        TEXT NOT NULL,
+    price       NUMERIC(10,2) NOT NULL CHECK (price >= 0),   -- CURRENT price
+    is_active   BOOLEAN NOT NULL DEFAULT true
+);
+
+CREATE TABLE orders (
+    id          BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    customer_id BIGINT NOT NULL REFERENCES customers(id) ON DELETE RESTRICT,
+    status      TEXT NOT NULL DEFAULT 'cart'
+                CHECK (status IN ('cart','placed','paid','shipped','cancelled')),
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE order_items (              -- N:M junction WITH data
+    order_id    BIGINT NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+    product_id  BIGINT NOT NULL REFERENCES products(id) ON DELETE RESTRICT,
+    quantity    INT NOT NULL CHECK (quantity > 0),
+    unit_price  NUMERIC(10,2) NOT NULL,  -- SNAPSHOT at purchase time (the trap)
+    PRIMARY KEY (order_id, product_id)   -- composite PK = the uniqueness rule
+);
+
+CREATE TABLE payments (
+    id          BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    order_id    BIGINT NOT NULL REFERENCES orders(id) ON DELETE RESTRICT,
+    amount      NUMERIC(10,2) NOT NULL CHECK (amount > 0),
+    method      TEXT NOT NULL,
+    paid_at     TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+INDEXES (driven by the stated workload)
+  orders(customer_id, created_at DESC)  -- "my recent orders": equality first, sort second;
+                                        -- the DESC matches newest-first pagination
+  order_items(product_id)               -- reverse direction of the junction
+                                        -- (order_id lookups ride the composite PK)
+  payments(order_id)                    -- order details page
+  -- FKs are NOT auto-indexed in Postgres — creating these is a real decision, say it.
+
+DELIBERATE CHOICES TO NARRATE
+  - unit_price snapshot: orders record history; products record the present.
+    Deleting/repricing a product never corrupts past orders.
+  - ON DELETE: CASCADE only cart->items; RESTRICT for anything with financial history.
+  - Order total: computed from items (SUM); cache as a column only if reads demand it,
+    and then name what keeps it honest.
+  - status as CHECK-ed TEXT for the interview; mention ENUM / lookup table as options.`,
+    explanation:
+      "<p>Score yourself against the recipe: entities named before tables, every cardinality said out " +
+      "loud, the junction table carrying quantity + <strong>snapshotted unit_price</strong> (the trap " +
+      "planted in the statement), constraints beyond PKs, and indexes justified by the given queries " +
+      "rather than sprinkled. The two follow-ups to pre-empt: 'product deleted?' — RESTRICT plus " +
+      "is_active soft-delete keeps history intact; 'order total?' — derive it, don't store it, until " +
+      "a measured read-path needs the cache (Module 13's denormalize-deliberately rule).</p>",
+  },
+
+  F54: {
+    id: "F54",
+    title: "Design — Indexing Strategy for a Slow Query Mix",
+    difficulty: "Medium",
+    time: "15-20 min",
+    tags: ["Design", "Indexes", "Performance"],
+    type: "design",
+    statement:
+      "A table <code>orders(id, customer_id, status, created_at, total)</code> has 20 million " +
+      "rows and three slow hot queries: " +
+      "<code>Q1: WHERE customer_id = ? ORDER BY created_at DESC LIMIT 20</code> · " +
+      "<code>Q2: WHERE status = 'pending' AND created_at &lt; now() - interval '1 hour'</code> · " +
+      "<code>Q3: WHERE id = ?</code>. Inserts are heavy (thousands/min). Which indexes do you " +
+      "add, in what column order, and which do you refuse to add? Include the clustered vs " +
+      "non-clustered explanation an interviewer will ask for.",
+    examples:
+      "For each candidate index, argue:\n" +
+      "  - which query it serves and how (equality? range? sort?)\n" +
+      "  - column order and why (leftmost-prefix rule)\n" +
+      "  - its write cost on a heavy-insert table\n" +
+      "Then: which of Q1-Q3 needs NO new index at all?",
+    hint: "Q3 is free (PK). Q1 wants equality-then-sort: (customer_id, created_at). Q2 filters a tiny slice of a low-cardinality column — think partial index. Refuse single-column indexes on status or created_at alone.",
+    solution:
+`Q3: WHERE id = ?
+  -> NOTHING TO ADD. id is the PK — already indexed (and in MySQL/InnoDB it IS the
+     clustered index: the table is physically ordered by it, lookup lands on the row).
+
+Q1: WHERE customer_id = ? ORDER BY created_at DESC LIMIT 20
+  -> CREATE INDEX ON orders (customer_id, created_at DESC);
+     Equality column first, sort column second (leftmost-prefix rule): the index
+     pins one customer, then already stores their orders date-sorted — the LIMIT 20
+     walks 20 index entries, no sort step at all.
+     Wrong order (created_at, customer_id) would scan every recent order of ALL
+     customers, filtering as it goes.
+
+Q2: WHERE status = 'pending' AND created_at < now() - interval '1 hour'
+  -> status alone is a terrible index (a handful of values over 20M rows), BUT
+     'pending' is a tiny, constantly-queried slice. Postgres answer — partial index:
+       CREATE INDEX ON orders (created_at) WHERE status = 'pending';
+     Small (only pending rows), stays hot in cache, and rows leave the index when
+     they leave 'pending'. Without partial-index support: (status, created_at) —
+     equality first, range second — and say why status-only is refused.
+
+REFUSED, and the reasons:
+  - single-column index on status: low selectivity, optimizer will often ignore it
+  - single-column index on created_at: serves neither hot query better than the above
+  - covering everything "just in case": inserts are heavy — every index is a write
+    tax on every INSERT; unused indexes are pure cost (find them via pg_stat_user_indexes)
+
+CLUSTERED VS NON-CLUSTERED (the expected follow-up)
+  Clustered: the table itself, physically ordered by the key — one per table,
+  lookups land directly on the row, range scans on the key are sequential reads.
+  Non-clustered: separate structure of key -> pointer/PK; many allowed; each hit
+  pays an extra hop to fetch the row.
+  Nuance for Odoo: Postgres has no persistent clustered index — tables are heaps,
+  ALL indexes are secondary; CLUSTER sorts once but doesn't stay sorted.
+
+VERIFY: EXPLAIN (ANALYZE, BUFFERS) before and after each index — measuring beats
+guessing, and saying so is part of the answer.`,
+    explanation:
+      "<p>The grading rubric hiding in this question: (1) noticing Q3 is already served by the PK; " +
+      "(2) column order on the composite — equality first, then the range/sort column, with the " +
+      "leftmost-prefix rule as the reason; (3) recognizing status as low-selectivity and reaching " +
+      "for a <strong>partial index</strong> (the answer that reads as senior); (4) refusing indexes " +
+      "on a write-heavy table and saying what each one costs; (5) closing with EXPLAIN. The " +
+      "clustered/non-clustered table is verbatim interview material for this process — deliver it " +
+      "with the Postgres-heap nuance since Odoo runs Postgres.</p>",
+  },
+
+  F55: {
+    id: "F55",
+    title: "Design — Multi-Warehouse Inventory",
+    difficulty: "Hard",
+    time: "25-35 min",
+    tags: ["Design", "Schema", "Concurrency"],
+    type: "design",
+    statement:
+      "Design the data layer for multi-warehouse inventory (the domain Odoo lives in): products " +
+      "are stocked in several warehouses; goods arrive, move between warehouses, and are sold; " +
+      "stock must never go negative under concurrent checkouts. Cover: the schema, how 'current " +
+      "stock' is computed (derive from movements vs store a quantity — argue it), the constraint " +
+      "and locking story for oversell prevention, and indexes for 'stock of product X across " +
+      "warehouses' and 'movement history of product X'.",
+    examples:
+      "The core tension to resolve explicitly:\n" +
+      "  ledger (stock_moves)  = immutable truth, full audit, but SUM() to read\n" +
+      "  balance (stock_levels)= O(1) reads, but a copy that can drift\n" +
+      "Choose, or combine — and defend the write path under concurrency.",
+    hint: "Ledger + cached balance is the production answer: append-only stock_moves as the source of truth, stock_levels(product_id, warehouse_id, quantity) maintained in the same transaction, UNIQUE on the pair, CHECK (quantity >= 0), and an atomic conditional UPDATE as the oversell gate.",
+    solution:
+`SCHEMA
+
+CREATE TABLE products   (id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+                         sku TEXT NOT NULL UNIQUE, name TEXT NOT NULL);
+CREATE TABLE warehouses (id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+                         code TEXT NOT NULL UNIQUE, name TEXT NOT NULL);
+
+-- 1. The LEDGER: append-only source of truth (this is how Odoo models stock)
+CREATE TABLE stock_moves (
+    id           BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    product_id   BIGINT NOT NULL REFERENCES products(id),
+    from_wh      BIGINT REFERENCES warehouses(id),     -- NULL = supplier (inbound)
+    to_wh        BIGINT REFERENCES warehouses(id),     -- NULL = customer (outbound)
+    quantity     INT NOT NULL CHECK (quantity > 0),
+    moved_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+    CHECK (from_wh IS NOT NULL OR to_wh IS NOT NULL)   -- at least one side real
+);
+-- one row type models all three flows: purchase (NULL->wh), transfer (wh->wh),
+-- sale (wh->NULL). Rows are never UPDATEd; corrections are compensating moves.
+
+-- 2. The BALANCE: cached current stock, maintained in the same transaction
+CREATE TABLE stock_levels (
+    product_id   BIGINT NOT NULL REFERENCES products(id),
+    warehouse_id BIGINT NOT NULL REFERENCES warehouses(id),
+    quantity     INT NOT NULL DEFAULT 0 CHECK (quantity >= 0),  -- last line of defense
+    PRIMARY KEY (product_id, warehouse_id)
+);
+
+WHY BOTH (the argued trade-off)
+  ledger only:  perfect audit, no drift — but "current stock" is a SUM over
+                millions of rows on the hottest read path
+  balance only: fast — but oversell bugs and no history
+  both:         ledger is truth, balance is a derived cache updated in the SAME
+                transaction; a nightly job re-derives balances and alerts on drift
+
+THE OVERSELL GATE (concurrency — the heart of the question)
+  BEGIN;
+    UPDATE stock_levels
+       SET quantity = quantity - :qty
+     WHERE product_id = :p AND warehouse_id = :w AND quantity >= :qty;
+    -- 0 rows affected -> insufficient stock -> ROLLBACK, tell the user
+    INSERT INTO stock_moves (product_id, from_wh, to_wh, quantity)
+         VALUES (:p, :w, NULL, :qty);
+  COMMIT;
+  Three defense layers, weakest-first:
+    1. the conditional UPDATE is atomic — two racing checkouts serialize on the
+       row lock; the slower one sees the decremented value and matches 0 rows
+    2. CHECK (quantity >= 0) backstops any code path that forgets the WHERE
+    3. SELECT ... FOR UPDATE variant if multiple rows must be locked together
+       (lock ordering by (product_id, warehouse_id) to avoid deadlocks)
+
+INDEXES
+  stock_levels: PK (product_id, warehouse_id) already serves
+                "stock of product X across warehouses" (leftmost prefix)
+  stock_moves (product_id, moved_at DESC)  -- movement history, newest first
+  stock_moves (to_wh),  stock_moves (from_wh)  -- per-warehouse activity; FKs are
+                                               -- not auto-indexed in Postgres
+RESERVATIONS (pre-empt the follow-up)
+  Cart holds / pending orders: a reserved quantity column (or reservation rows
+  with expiry) so available = quantity - reserved; same conditional-UPDATE gate.`,
+    explanation:
+      "<p>This is the most Odoo-shaped question in the course — Odoo's own stock module is exactly " +
+      "a <code>stock.move</code> ledger with computed quantities. The answer's spine: " +
+      "<strong>ledger = truth, balance = cache, both written in one transaction</strong>, and the " +
+      "oversell gate as an atomic conditional UPDATE whose affected-row count is the yes/no — not a " +
+      "read-then-write, which races. If you said 'check the stock with a SELECT, then UPDATE if " +
+      "enough', that's the planted failure: two checkouts both read 1, both pass, stock hits −1 " +
+      "(Module 13 section 5). The NULL-endpoint trick on moves (supplier→wh, wh→customer) keeps one " +
+      "table modeling purchases, transfers and sales — mention it and the interviewer knows you've " +
+      "modeled real systems.</p>",
+  },
+
 };
 
 // ----------------------------------------------------------------
@@ -2598,6 +3369,10 @@ window.PRACTICE_SETS = {
           qids: ["F37", "F38", "F39", "F40", "F41"] },
   PS11: { module: "M11", title: "Practice Set 11 — Heaps & Priority Queues",
           qids: ["F42", "F43", "F44", "F45"] },
+  PS12: { module: "M12", title: "Practice Set 12 — SQL Deep Dive",
+          qids: ["F46", "F47", "F48", "F49", "F50", "F51"] },
+  PS13: { module: "M13", title: "Practice Set 13 — Database Design & Indexes",
+          qids: ["F52", "F53", "F54", "F55"] },
 };
 
 // Final exam pool — filled in as later modules land (held-back questions).

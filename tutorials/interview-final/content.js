@@ -1940,6 +1940,365 @@ The <code>i</code> in the tuple doubles as the tie-breaker from section 2.</p>
     ],
   },
 
+  M12: {
+    id: "M12",
+    title: "Module 12 — SQL Deep Dive",
+    subtitle: "Joins, aggregation, window functions, NULL traps",
+    practiceSet: "PS12",
+    body: [
+      {
+        kind: "html",
+        html: `
+<div class="hero">
+  <h1>Module 12 — SQL Deep Dive</h1>
+  <p>The final stage reliably includes <strong>one SQL / database task</strong> alongside the two
+  algorithm problems — and it's the easiest of the three to fully prepare for. This module covers
+  the query-writing layer; Module 13 covers schema design and indexes. The practice set runs on a
+  real SQLite engine (sql.js) right in your browser.</p>
+</div>
+
+<h2>1. The logical processing order (fixes half your bugs)</h2>
+<p>SQL is written in one order and <em>executed</em> in another. Burn this in:</p>
+<table class="tbl">
+  <tr><th>#</th><th>Phase</th><th>What it can see</th></tr>
+  <tr><td>1</td><td><code>FROM</code> + <code>JOIN … ON</code></td><td>tables only</td></tr>
+  <tr><td>2</td><td><code>WHERE</code></td><td>row-level values — <strong>no aggregates, no SELECT aliases</strong></td></tr>
+  <tr><td>3</td><td><code>GROUP BY</code></td><td>collapses rows into groups</td></tr>
+  <tr><td>4</td><td><code>HAVING</code></td><td>aggregates — filters whole groups</td></tr>
+  <tr><td>5</td><td><code>SELECT</code></td><td>computes output columns, defines aliases</td></tr>
+  <tr><td>6</td><td><code>DISTINCT</code> → <code>ORDER BY</code> → <code>LIMIT</code></td><td>aliases OK here</td></tr>
+</table>
+<p>Two everyday consequences: <code>WHERE avg_grade &gt; 80</code> fails because the alias doesn't
+exist yet (use <code>HAVING AVG(grade) &gt; 80</code>); and <code>WHERE</code> filters
+<em>before</em> grouping (cheap, shrinks groups) while <code>HAVING</code> filters <em>after</em>
+(needed for aggregate conditions). Saying "I'll filter before grouping since it doesn't need the
+aggregate" is exactly the narration interviewers want.</p>
+
+<h2>2. Joins — and the two traps that decide seniority</h2>
+<p><code>INNER JOIN</code> keeps matches; <code>LEFT JOIN</code> keeps every left row, padding
+missing right columns with NULL. That part everyone knows. These two traps are where candidates
+separate:</p>
+
+<p><strong>Trap 1 — filtering the right table: ON vs WHERE.</strong> With a LEFT JOIN, a condition
+in <code>ON</code> restricts <em>what matches</em> (left rows survive with NULLs); the same condition
+in <code>WHERE</code> runs <em>after</em> padding and throws away the NULL-padded rows — silently
+turning your LEFT JOIN into an INNER JOIN:</p>
+<pre><code>-- "every customer, with their 2024 orders if any"
+SELECT c.name, o.id
+FROM customers c
+LEFT JOIN orders o ON o.customer_id = c.id AND o.year = 2024;   -- correct
+
+... LEFT JOIN orders o ON o.customer_id = c.id
+WHERE o.year = 2024;   -- WRONG: drops customers with no 2024 orders
+                       -- (their o.year is NULL, and NULL = 2024 is not true)</code></pre>
+
+<p><strong>Trap 2 — the anti-join.</strong> "Customers who never ordered" has three idioms;
+know all three and the reason one of them is booby-trapped:</p>
+<pre><code>-- 1. LEFT JOIN … IS NULL          (the workhorse)
+SELECT c.name FROM customers c
+LEFT JOIN orders o ON o.customer_id = c.id
+WHERE o.id IS NULL;
+
+-- 2. NOT EXISTS                    (clearest intent, optimizer-friendly)
+SELECT c.name FROM customers c
+WHERE NOT EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.id);
+
+-- 3. NOT IN                        (DANGER — see the NULL section)
+SELECT c.name FROM customers c
+WHERE c.id NOT IN (SELECT customer_id FROM orders);</code></pre>
+
+<h2>3. Aggregation patterns</h2>
+<p>The golden rule: every SELECT column is either <strong>in the GROUP BY</strong> or
+<strong>inside an aggregate</strong>. Then the two power moves:</p>
+<p><strong>Conditional aggregation</strong> — counting subsets in one pass with CASE inside the
+aggregate. This one pattern solves "cancellation rate", "pivot by status", "% of X":</p>
+<pre><code>SELECT day,
+       AVG(CASE WHEN status LIKE 'cancelled%' THEN 1.0 ELSE 0.0 END) AS cancel_rate,
+       SUM(CASE WHEN status = 'completed' THEN amount ELSE 0 END)    AS revenue
+FROM trips GROUP BY day;</code></pre>
+<p><strong>COUNT variants</strong>: <code>COUNT(*)</code> counts rows; <code>COUNT(col)</code>
+skips NULLs (that's how you count "trips with a grade"); <code>COUNT(DISTINCT col)</code>
+deduplicates. And watch <strong>integer division</strong>: in SQLite and Postgres,
+<code>1/2 = 0</code> — multiply by <code>1.0</code> or CAST before dividing.</p>
+
+<h2>4. Window functions — the modern answer to "top N per group"</h2>
+<p>An aggregate collapses rows; a window function computes over a group <em>while keeping every
+row</em>. Anatomy: <code>FUNC(...) OVER (PARTITION BY … ORDER BY …)</code>.</p>
+<table class="tbl">
+  <tr><th>Function</th><th>On scores 100, 95, 95, 90</th><th>Use for</th></tr>
+  <tr><td><code>ROW_NUMBER()</code></td><td>1, 2, 3, 4</td><td>dedup, pagination, pick-one-per-group</td></tr>
+  <tr><td><code>RANK()</code></td><td>1, 2, 2, <strong>4</strong></td><td>competition ranking (gaps)</td></tr>
+  <tr><td><code>DENSE_RANK()</code></td><td>1, 2, 2, <strong>3</strong></td><td>"Nth highest value" (no gaps)</td></tr>
+  <tr><td><code>LAG(x) / LEAD(x)</code></td><td>previous / next row's x</td><td>consecutive rows, growth vs last month</td></tr>
+  <tr><td><code>SUM(x) OVER (ORDER BY …)</code></td><td>running total</td><td>cumulative revenue, sweep line (Module 10!)</td></tr>
+</table>
+<p>The <strong>top-N-per-group recipe</strong> — rank inside a subquery, filter outside
+(remember the processing order: the alias isn't visible in the same level's WHERE):</p>
+<pre><code>SELECT * FROM (
+  SELECT e.*, DENSE_RANK() OVER (PARTITION BY dept_id ORDER BY salary DESC) AS rk
+  FROM employees e
+) ranked
+WHERE rk &lt;= 3;</code></pre>
+<p>Interview classics that fall to this: department top earners, Nth-highest salary, latest order
+per customer (<code>ROW_NUMBER() = 1</code>), de-duplicate keeping newest, consecutive-login streaks
+(LAG), month-over-month growth (LAG), peak concurrent bookings (running SUM over +1/−1 events —
+the Module 10 sweep line translated literally into SQL).</p>
+
+<h2>5. NULL — three-valued logic in ninety seconds</h2>
+<p>Comparisons with NULL yield <em>unknown</em>, not false: <code>NULL = NULL</code> is unknown,
+so <code>WHERE col = NULL</code> matches nothing — use <code>IS NULL</code>. WHERE keeps only rows
+where the condition is <em>true</em>; unknown rows are dropped too.</p>
+<div class="callout warn"><div class="callout-title">The NOT IN bomb</div>
+<p><code>x NOT IN (1, 2, NULL)</code> expands to <code>x≠1 AND x≠2 AND x≠NULL</code> — that last
+term is unknown, so the whole predicate is never true and the query returns
+<strong>zero rows</strong>. One NULL in the subquery silently empties your result. This is why
+the anti-join idioms prefer <code>NOT EXISTS</code> or <code>LEFT JOIN … IS NULL</code>, both
+NULL-safe. If an interviewer asks "what's wrong with this query?", check NOT IN + nullable
+column first.</p></div>
+<p>Tools: <code>COALESCE(a, b, …)</code> = first non-NULL (default values, LEFT JOIN padding);
+<code>NULLIF(a, b)</code> = NULL if equal (divide-by-zero guard:
+<code>x / NULLIF(y, 0)</code>). Aggregates ignore NULLs — <code>AVG(grade)</code> averages only
+graded rows, which is sometimes exactly right and sometimes a subtle bug; say which you want.</p>
+
+<h2>6. Self-joins</h2>
+<p>A table joined to itself under two aliases — the moment a row needs to talk about
+<em>another row of the same table</em>:</p>
+<pre><code>-- employees earning more than their manager
+SELECT e.name
+FROM employees e
+JOIN employees m ON e.manager_id = m.id
+WHERE e.salary &gt; m.salary;</code></pre>
+<p>Same move: pairs of events in one log, flights with matching return legs, duplicate detection
+(<code>a.email = b.email AND a.id &gt; b.id</code>). With window functions available, LAG often
+replaces a self-join on adjacent rows — offer both and note LAG scans once.</p>
+
+<h2>7. Dialect notes for the live interview</h2>
+<table class="tbl">
+  <tr><th>Thing</th><th>SQLite (this workbench)</th><th>PostgreSQL (what Odoo runs)</th><th>MySQL</th></tr>
+  <tr><td>String concat</td><td><code>||</code></td><td><code>||</code></td><td><code>CONCAT()</code></td></tr>
+  <tr><td>Case-insensitive match</td><td><code>LIKE</code> (default insensitive for ASCII)</td><td><code>ILIKE</code></td><td><code>LIKE</code> (collation-dependent)</td></tr>
+  <tr><td>Top-N</td><td><code>LIMIT n OFFSET m</code></td><td><code>LIMIT n OFFSET m</code></td><td><code>LIMIT m, n</code> also legal</td></tr>
+  <tr><td>Auto-increment key</td><td><code>INTEGER PRIMARY KEY</code></td><td><code>GENERATED … AS IDENTITY</code> / <code>SERIAL</code></td><td><code>AUTO_INCREMENT</code></td></tr>
+  <tr><td>Window functions</td><td>yes (3.25+)</td><td>yes</td><td>yes (8.0+)</td></tr>
+</table>
+<p>In the interview, name your dialect ("I'll write Postgres-flavored SQL") and don't sweat
+punctuation differences — interviewers care about JOIN/GROUP BY/window correctness, not whether
+you remembered <code>ILIKE</code>.</p>
+`,
+      },
+      {
+        kind: "mcq",
+        q: "Why does SELECT name, AVG(grade) AS avg_g FROM enrollments GROUP BY name WHERE avg_g > 80 fail?",
+        options: [
+          { label: "Two reasons: WHERE runs before GROUP BY/SELECT (so avg_g doesn't exist yet), and WHERE can't hold aggregate conditions — this needs HAVING AVG(grade) > 80 after GROUP BY.", correct: true },
+          { label: "Only the clause order is wrong — WHERE avg_g > 80 works if written before GROUP BY.", correct: false },
+          { label: "AVG can't be aliased.", correct: false },
+          { label: "GROUP BY must list avg_g too.", correct: false },
+        ],
+        explain:
+          "<p>Logical processing order: FROM → WHERE → GROUP BY → HAVING → SELECT → ORDER BY. WHERE runs on ungrouped rows before any aggregate exists and before SELECT defines aliases — both facts independently doom this query. The fix is <code>HAVING AVG(grade) &gt; 80</code> (post-grouping filter). Also worth saying: conditions that don't need aggregates belong in WHERE, where they shrink the data before grouping.</p>",
+      },
+      {
+        kind: "mcq",
+        q: "orders.customer_id is nullable. What does SELECT name FROM customers WHERE id NOT IN (SELECT customer_id FROM orders) return when some order has customer_id NULL?",
+        options: [
+          { label: "Zero rows, always — the NULL makes every NOT IN comparison 'unknown', so no row passes.", correct: true },
+          { label: "Customers without orders, as intended — NULLs are skipped by IN lists.", correct: false },
+          { label: "All customers.", correct: false },
+          { label: "A syntax error in strict mode.", correct: false },
+        ],
+        explain:
+          "<p><code>id NOT IN (3, 1, NULL)</code> means <code>id≠3 AND id≠1 AND id≠NULL</code>; the last comparison is unknown, so the conjunction can never be true — WHERE drops every row and the result is empty. Fix with <code>NOT EXISTS</code> or <code>LEFT JOIN … IS NULL</code> (both NULL-safe), or filter the NULLs inside the subquery. This is the single most common 'spot the bug' SQL question.</p>",
+      },
+      {
+        kind: "mcq",
+        q: "Scores are 100, 95, 95, 90. You need 'the 3rd highest score' to be 90. Which ranking function — and what would the other one give?",
+        options: [
+          { label: "DENSE_RANK: ranks 1,2,2,3 make 90 the 3rd. RANK gives 1,2,2,4 — no rank 3 exists and 90 would be 'the 4th'.", correct: true },
+          { label: "RANK: ties must consume ranks for '3rd highest' to be meaningful.", correct: false },
+          { label: "ROW_NUMBER: 3rd row is 95, which is the 3rd highest.", correct: false },
+          { label: "Any of the three — they differ only in performance.", correct: false },
+        ],
+        explain:
+          "<p>'Nth highest <em>value</em>' means distinct values, so ties share a rank with no gaps: DENSE_RANK. RANK leaves gaps after ties (1,2,2,4) — fine for competition standings, wrong here. ROW_NUMBER arbitrarily orders the tied 95s and calls one of them '3rd', which answers a different question ('3rd row'). Expect the follow-up 'what if there is no 3rd?' — return NULL, which the subquery form does naturally.</p>",
+      },
+    ],
+  },
+
+  M13: {
+    id: "M13",
+    title: "Module 13 — Database Design & Indexes",
+    subtitle: "Schema walk-throughs, normalization, clustered vs non-clustered",
+    practiceSet: "PS13",
+    body: [
+      {
+        kind: "html",
+        html: `
+<div class="hero">
+  <h1>Module 13 — Database Design &amp; Indexes</h1>
+  <p>The database task in the final interview is often a <em>design conversation</em>: "how would
+  you model X?" — followed by "and how would you make it fast?". Interview reports from this exact
+  process mention <strong>clustered vs non-clustered indexes</strong> by name. This module gives you
+  a walk-through recipe for live schema design, the normalization ladder, and an indexing section
+  deep enough to answer follow-ups.</p>
+</div>
+
+<h2>1. The schema-design walk-through (your M2 template, database edition)</h2>
+<ol>
+  <li><strong>Nouns → entities.</strong> Read the prompt, list the nouns: customer, product, order…
+  Each becomes a candidate table.</li>
+  <li><strong>Verbs → relationships.</strong> "A customer places orders" (1:N), "an order contains
+  products" (N:M). State each cardinality out loud — this is where design bugs are born.</li>
+  <li><strong>Tables + keys.</strong> Surrogate PK per entity; FK on the many side of every 1:N;
+  junction table for every N:M.</li>
+  <li><strong>Constraints as documentation.</strong> NOT NULL, UNIQUE, CHECK — every rule the data
+  must obey, encoded where it can't be forgotten.</li>
+  <li><strong>Indexes from the workload.</strong> Ask "what are the hot queries?" — then index for
+  them. Never index speculatively.</li>
+</ol>
+<p>Narrating these five steps in order <em>is</em> the interview. The follow-ups ("what if a product's
+price changes after purchase?") test whether your model survives contact with reality — the standard
+answer is to <strong>snapshot the price into the order line</strong>: rows record history; catalogs
+record the present.</p>
+
+<h2>2. Normalization — the ladder, one example</h2>
+<p>Start from the classic mess: one <code>orders</code> table with
+<code>customer_name, customer_email, product1, product2, product3, …</code></p>
+<table class="tbl">
+  <tr><th>Form</th><th>Rule</th><th>What it kills</th></tr>
+  <tr><td><strong>1NF</strong></td><td>atomic values, no repeating groups</td><td>the product1..3 columns → one row per order line</td></tr>
+  <tr><td><strong>2NF</strong></td><td>no partial dependency on part of a composite key</td><td>product_name stored on (order_id, product_id) rows → move to products</td></tr>
+  <tr><td><strong>3NF</strong></td><td>no transitive dependency on non-key columns</td><td>customer_email riding along with customer_name → move to customers</td></tr>
+</table>
+<p>Practical summary that interviews reward: <em>"every non-key column depends on the key, the whole
+key, and nothing but the key."</em> Then the senior move — knowing when to <strong>stop</strong>:
+denormalize deliberately for read-heavy paths (a cached <code>order_total</code>, a snapshotted
+price), and say what keeps the copy honest (trigger, application logic, or acceptance that it's a
+snapshot by design).</p>
+
+<h2>3. Keys, constraints, and the junction table</h2>
+<ul>
+  <li><strong>Surrogate vs natural keys</strong>: an auto-increment <code>id</code> never changes;
+  emails and usernames do. Use surrogate PKs, put UNIQUE on the natural candidate.</li>
+  <li><strong>1:N</strong> — FK lives on the <em>many</em> side (<code>orders.customer_id</code>).</li>
+  <li><strong>N:M</strong> — junction table with two FKs and
+  <code>UNIQUE(a_id, b_id)</code> (or that pair as composite PK). Junction tables can carry their
+  own data: <code>enrollments.grade</code>, <code>order_items.quantity</code>.</li>
+  <li><strong>1:1</strong> — rare; used to split a huge/optional/secret column group
+  (<code>user_profiles</code>) off a hot table. Be ready to justify it.</li>
+  <li><strong>Self-reference</strong> — <code>employees.manager_id REFERENCES employees(id)</code>;
+  same for category trees. (Traversing them → recursive CTEs; mention, don't derail.)</li>
+  <li><strong>FK actions</strong> — <code>ON DELETE RESTRICT</code> (default-safe),
+  <code>CASCADE</code> (children die with the parent — order_items),
+  <code>SET NULL</code> (orphan but keep — orders whose clerk left).</li>
+</ul>
+
+<h2>4. Indexes — the section the Odoo interview actually asks about</h2>
+<p>A B-tree index is a sorted structure over one or more columns giving O(log n) lookups and sorted
+scans, at the cost of extra writes and storage. Everything else is detail on top:</p>
+
+<table class="tbl">
+  <tr><th></th><th>Clustered index</th><th>Non-clustered (secondary) index</th></tr>
+  <tr><td>What it is</td><td>the table itself, physically ordered by the key</td><td>a separate structure of key → row pointer</td></tr>
+  <tr><td>How many per table</td><td>exactly one (data can only have one physical order)</td><td>many</td></tr>
+  <tr><td>Lookup</td><td>find the key, the row is <em>right there</em></td><td>find the key, then a second hop to fetch the row</td></tr>
+  <tr><td>Great at</td><td>range scans on the key (<code>BETWEEN</code>, newest-first)</td><td>point lookups on non-key columns</td></tr>
+  <tr><td>Who does what</td><td>MySQL/InnoDB: PK is always clustered. SQL Server: by choice.</td><td>everything else you create</td></tr>
+</table>
+<div class="callout tip"><div class="callout-title">The Postgres nuance (Odoo runs Postgres)</div>
+<p>Postgres technically has <em>no</em> clustered index — all its tables are heaps and all indexes
+are secondary; <code>CLUSTER</code> can sort a table once but it doesn't stay sorted. If asked the
+clustered-vs-non-clustered question, give the standard answer (left column above), then add this
+nuance — it turns a memorized answer into an expert one.</p></div>
+
+<p><strong>Composite indexes and the leftmost-prefix rule.</strong> An index on
+<code>(customer_id, created_at)</code> serves <code>WHERE customer_id = ?</code>, and
+<code>WHERE customer_id = ? AND created_at &gt; ?</code>, and even
+<code>WHERE customer_id = ? ORDER BY created_at DESC</code> — but does <em>nothing</em> for
+<code>WHERE created_at &gt; ?</code> alone: the sort order is by customer first, so dates are
+scattered. Order columns <strong>equality-filtered first, range/sort last</strong>.</p>
+
+<p><strong>Covering index</strong>: if the index contains every column a query touches, the table
+is never visited at all ("index-only scan"). <code>(customer_id, created_at, total)</code> answers
+"recent order totals per customer" straight from the index.</p>
+
+<p><strong>When indexes hurt</strong> — the counter-questions interviewers love:</p>
+<ul>
+  <li>Every INSERT/UPDATE/DELETE maintains every index — write-heavy tables want few.</li>
+  <li>Low-selectivity columns (<code>is_active</code>, gender) barely help; the optimizer may
+  ignore them and scan anyway.</li>
+  <li>Functions on the indexed column disable it: <code>WHERE YEAR(created_at) = 2024</code> can't
+  use an index on <code>created_at</code> — rewrite as a range
+  (<code>created_at &gt;= '2024-01-01' AND created_at &lt; '2025-01-01'</code>).</li>
+  <li>Leading-wildcard <code>LIKE '%foo'</code> can't use a B-tree (nothing to descend by).</li>
+</ul>
+<p>And the closing move for any performance question: <em>"I'd check with EXPLAIN / EXPLAIN ANALYZE
+whether the index is actually used before and after."</em> Measuring beats guessing.</p>
+
+<h2>5. Transactions — ACID in interview form</h2>
+<table class="tbl">
+  <tr><th>Letter</th><th>Meaning</th><th>One-liner</th></tr>
+  <tr><td>A — Atomicity</td><td>all or nothing</td><td>transfer debits and credits together or not at all</td></tr>
+  <tr><td>C — Consistency</td><td>constraints hold before and after</td><td>no FK ever dangles mid-commit</td></tr>
+  <tr><td>I — Isolation</td><td>concurrent transactions don't see each other's partial work</td><td>levels below</td></tr>
+  <tr><td>D — Durability</td><td>committed = survives a crash</td><td>write-ahead log</td></tr>
+</table>
+<p>Isolation levels, weakest to strongest: <strong>read uncommitted</strong> (dirty reads) →
+<strong>read committed</strong> (Postgres default) → <strong>repeatable read</strong> (no
+re-reading surprises) → <strong>serializable</strong> (as if one-at-a-time; pays in retries).
+The exam-favorite scenario: two transactions read a stock quantity of 1 and both decrement —
+prevent it with <code>SELECT … FOR UPDATE</code> (row lock), an atomic
+<code>UPDATE stock SET qty = qty - 1 WHERE qty &gt;= 1</code> (check the affected-row count),
+or a CHECK constraint as the last line of defense.</p>
+
+<h2>6. The ORM angle — N+1, because Odoo will care</h2>
+<p>Odoo is a Postgres-backed ORM framework, so one ORM question is fair game, and it's almost
+always <strong>N+1</strong>: fetching 100 orders, then lazily fetching each order's customer —
+1 + 100 queries where 1 join (or 2 batched queries) would do. The fixes, in any ORM's vocabulary:
+eager-load the relation (JOIN up front), or batch-fetch
+(<code>WHERE customer_id IN (…all 100 ids…)</code>). The symptom to name: "page is slow and the
+query log shows hundreds of identical queries with different ids."</p>
+`,
+      },
+      {
+        kind: "mcq",
+        q: "What is the difference between a clustered and a non-clustered index?",
+        options: [
+          { label: "Clustered = the table itself stored in key order (one per table, rows live in the leaves); non-clustered = a separate sorted structure pointing back at rows (many allowed, one extra hop per lookup).", correct: true },
+          { label: "Clustered indexes are for numeric columns; non-clustered for text.", correct: false },
+          { label: "They're synonyms — 'clustered' is the SQL Server name for a B-tree.", correct: false },
+          { label: "Clustered indexes exist only in distributed (clustered) databases.", correct: false },
+        ],
+        explain:
+          "<p>This exact question appears in Odoo final-round reports. Full-marks answer: the clustered index <em>is</em> the physical row order — hence exactly one, hence unbeatable range scans on its key; non-clustered indexes are side structures whose leaves hold pointers (or PK values), so lookups pay a second hop. Bonus point: in MySQL/InnoDB the PK is automatically clustered; in Postgres (Odoo's database) all tables are heaps — every index is secondary, and CLUSTER is a one-time sort that doesn't stick.</p>",
+      },
+      {
+        kind: "mcq",
+        q: "You have one composite index on orders(customer_id, created_at). Which query can NOT use it?",
+        options: [
+          { label: "SELECT * FROM orders WHERE created_at > '2024-01-01'", correct: true },
+          { label: "SELECT * FROM orders WHERE customer_id = 7 AND created_at > '2024-01-01'", correct: false },
+          { label: "SELECT * FROM orders WHERE customer_id = 7 ORDER BY created_at DESC", correct: false },
+          { label: "SELECT * FROM orders WHERE customer_id = 7", correct: false },
+        ],
+        explain:
+          "<p>Leftmost-prefix rule: the index is sorted by customer_id first, created_at second — dates are only ordered <em>within</em> one customer. A date-only predicate faces scattered values and falls back to a full scan (or needs its own index on created_at). The other three all pin customer_id first, so the index serves the filter — and in the ORDER BY case, the sort comes free. Column-order heuristic: equality filters first, range/sort columns last.</p>",
+      },
+      {
+        kind: "mcq",
+        q: "An orders table stores customer_email alongside customer_id. A customer changes email; now old orders show the old address. Which normal form does the design violate, and what's the fix?",
+        options: [
+          { label: "3NF — customer_email transitively depends on customer_id, not on the order key; keep it only in customers and join when needed.", correct: true },
+          { label: "1NF — emails are not atomic values.", correct: false },
+          { label: "2NF — email depends on part of a composite key.", correct: false },
+          { label: "No violation — it's a legitimate snapshot, like a price on an order line.", correct: false },
+        ],
+        explain:
+          "<p>order → customer_id → customer_email is a transitive dependency of a non-key attribute — the textbook 3NF violation, and the update anomaly in the question is exactly the damage it causes. The snapshot defense (option 4) is real but applies to values that are <em>meant</em> to be frozen at transaction time (unit price, shipping address). A contact email is meant to be current — so it belongs in customers only. Being able to argue which columns are snapshots and which are references IS the design interview.</p>",
+      },
+    ],
+  },
+
 };
 
-window.MODULE_ORDER = ["M1", "M2", "M3", "M4", "M5", "M6", "M7", "M8", "M9", "M10", "M11"];
+window.MODULE_ORDER = ["M1", "M2", "M3", "M4", "M5", "M6", "M7", "M8", "M9", "M10", "M11", "M12", "M13"];
