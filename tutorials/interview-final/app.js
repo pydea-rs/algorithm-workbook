@@ -15,6 +15,7 @@
   const TIMING_KEY = "odoo_final_timing_v1";
   const DRAFTS_KEY = "odoo_final_drafts_v1";
   const EXAM_HISTORY_KEY = "odoo_final_exam_history_v1";
+  const REMEMBER_KEY = "odoo_final_remember_v1";
 
   const DEFAULT_PREFS = {
     theme: "dark",
@@ -35,7 +36,65 @@
     timing: loadJSON(TIMING_KEY, {}),                    // qid -> {bestSec, lastSec, attempts:[{sec,date,rating}]}
     drafts: loadJSON(DRAFTS_KEY, {}),                    // qid -> {python:"…", javascript:"…"}
     examHistory: loadJSON(EXAM_HISTORY_KEY, { sessions: [] }),  // recorded final-exam sessions
+    remember: normalizeRemember(loadJSON(REMEMBER_KEY, null)),  // Remembrance hub data
+    missedExamSeed: null,                                       // Separate seed for the missed-questions exam
   };
+
+  // Remembrance data: { missed:[qid], must:[data-mr id], links:[{id,title,url,date}],
+  //                     notes:[{id,title,desc,meta,date}] }. Kept as plain arrays so
+  //  insertion order (= the order you marked things) is preserved everywhere.
+  function normalizeRemember(raw) {
+    const r = raw && typeof raw === "object" ? raw : {};
+    return {
+      missed: Array.isArray(r.missed) ? r.missed : [],
+      must:   Array.isArray(r.must)   ? r.must   : [],
+      links:  Array.isArray(r.links)  ? r.links  : [],
+      notes:  Array.isArray(r.notes)  ? r.notes  : [],
+    };
+  }
+  function saveRemember() { saveJSON(REMEMBER_KEY, state.remember); }
+  function freshId(prefix) {
+    return prefix + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  }
+
+  function isMissed(qid) { return state.remember.missed.includes(qid); }
+  function toggleMissed(qid) {
+    const i = state.remember.missed.indexOf(qid);
+    if (i >= 0) state.remember.missed.splice(i, 1);
+    else state.remember.missed.push(qid);
+    saveRemember();
+    updateRememberNavCounts();
+    return isMissed(qid);
+  }
+  function isMust(id) { return state.remember.must.includes(id); }
+  function toggleMust(id) {
+    const i = state.remember.must.indexOf(id);
+    if (i >= 0) state.remember.must.splice(i, 1);
+    else state.remember.must.push(id);
+    saveRemember();
+    updateRememberNavCounts();
+    return isMust(id);
+  }
+  function addLink(title, url) {
+    state.remember.links.push({ id: freshId("L"), title, url, date: new Date().toISOString() });
+    saveRemember();
+    updateRememberNavCounts();
+  }
+  function removeLink(id) {
+    state.remember.links = state.remember.links.filter((l) => l.id !== id);
+    saveRemember();
+    updateRememberNavCounts();
+  }
+  function addNote(title, desc, meta) {
+    state.remember.notes.push({ id: freshId("N"), title, desc, meta: meta || "", date: new Date().toISOString() });
+    saveRemember();
+    updateRememberNavCounts();
+  }
+  function removeNote(id) {
+    state.remember.notes = state.remember.notes.filter((n) => n.id !== id);
+    saveRemember();
+    updateRememberNavCounts();
+  }
 
   function loadJSON(key, fallback) {
     try {
@@ -310,10 +369,43 @@
       })),
     },
     {
+      title: "Remembrance",
+      items: [
+        { kind: "remember", id: "missed", label: "Missed Questions", num: "⚑" },
+        { kind: "remember", id: "must",   label: "Must Remember",    num: "★" },
+        { kind: "remember", id: "links",  label: "Link Box",         num: "⛓" },
+        { kind: "remember", id: "notes",  label: "My Notes",         num: "✎" },
+      ],
+    },
+    {
       title: "Exam",
-      items: [{ kind: "exam", id: null, label: "Final Exam (12 random)" }],
+      items: [
+        { kind: "exam", id: null, label: "Final Exam (12 random)" },
+        { kind: "missedexam", id: null, label: "Missed-Questions Exam", num: "⚑" },
+      ],
     },
   ];
+
+  const REMEMBER_LABELS = {
+    missed: "Missed Questions",
+    must: "Must Remember",
+    links: "Link Box",
+    notes: "My Notes",
+  };
+  function updateRememberNavCounts() {
+    const counts = {
+      missed: state.remember.missed.length,
+      must:   state.remember.must.length,
+      links:  state.remember.links.length,
+      notes:  state.remember.notes.length,
+    };
+    $$(".nav-item[data-kind='remember']").forEach((n) => {
+      const id = n.dataset.id;
+      const label = n.querySelector(".nav-label");
+      if (!label || !REMEMBER_LABELS[id]) return;
+      label.textContent = counts[id] ? `${REMEMBER_LABELS[id]} (${counts[id]})` : REMEMBER_LABELS[id];
+    });
+  }
 
   function buildNav() {
     const navList = $("#nav-list");
@@ -387,6 +479,7 @@
     state.activeView = { kind, id };
     setActiveNav();
     setCrumbs();
+    syncHash(kind, id);
 
     const root = $("#view-container");
     const motion = document.body.dataset.motion;
@@ -401,6 +494,8 @@
       else if (kind === "module") root.appendChild(renderModule(id));
       else if (kind === "practice") root.appendChild(renderPracticeSet(id));
       else if (kind === "exam") root.appendChild(renderExam());
+      else if (kind === "missedexam") root.appendChild(renderMissedExam());
+      else if (kind === "remember") root.appendChild(renderRemember(id));
       // Trigger enter animation (drop any leftover class first).
       root.classList.remove("leaving");
       if (animate) {
@@ -435,7 +530,38 @@
       crumbs.innerHTML = `Practice &nbsp;/&nbsp; <strong>${escapeHtml(p.title)}</strong>`;
     } else if (view.kind === "exam") {
       crumbs.innerHTML = `Exam &nbsp;/&nbsp; <strong>Final Exam</strong>`;
+    } else if (view.kind === "missedexam") {
+      crumbs.innerHTML = `Exam &nbsp;/&nbsp; <strong>Missed-Questions Exam</strong>`;
+    } else if (view.kind === "remember") {
+      crumbs.innerHTML =
+        `Remembrance &nbsp;/&nbsp; <strong>${escapeHtml(REMEMBER_LABELS[view.id] || "")}</strong>`;
     }
+  }
+
+  // ----------------------------------------------------------------
+  // Hash deep-links (#m/M3, #ps/PS3, #exam, #missed-exam, #re/missed)
+  // — refresh keeps your place, and views are directly linkable.
+  // replaceState (not location.hash=) so navigation doesn't spam history.
+  // ----------------------------------------------------------------
+  function syncHash(kind, id) {
+    let h = "";
+    if (kind === "module") h = "m/" + id;
+    else if (kind === "practice") h = "ps/" + id;
+    else if (kind === "exam") h = "exam";
+    else if (kind === "missedexam") h = "missed-exam";
+    else if (kind === "remember") h = "re/" + id;
+    try { history.replaceState(null, "", h ? "#" + h : location.pathname + location.search); } catch (_) {}
+  }
+  function viewFromHash() {
+    const h = (location.hash || "").replace(/^#/, "");
+    if (!h) return null;
+    const [head, rest] = [h.split("/")[0], h.split("/").slice(1).join("/")];
+    if (head === "m" && window.MODULES[rest]) return { kind: "module", id: rest };
+    if (head === "ps" && window.PRACTICE_SETS[rest]) return { kind: "practice", id: rest };
+    if (head === "exam") return { kind: "exam", id: null };
+    if (head === "missed-exam") return { kind: "missedexam", id: null };
+    if (head === "re" && REMEMBER_LABELS[rest]) return { kind: "remember", id: rest };
+    return null;
   }
 
   // ----------------------------------------------------------------
@@ -471,6 +597,20 @@
   <li>Not sure how to pace all this before the interview? Follow the
   <a href="../roadmap/index.html" target="_top"><strong>Final Week Roadmap</strong></a> — a
   day-by-day plan through every module, practice set, mock exam and logic-test attempt.</li>
+</ul>
+<h2>Remembrance — your night-before review kit</h2>
+<ul>
+  <li>Every question card has a <strong>⚑ Mark missed</strong> button — flag anything that
+  costs you (over budget, hint used, wrong first idea). Flagged questions collect in
+  <strong>Missed Questions</strong> with their module origin hidden, and the
+  <strong>Missed-Questions Exam</strong> re-deals up to 12 of them under one clock.
+  Un-flag a question once it feels easy; an empty queue is the goal.</li>
+  <li>Key callouts, tables and code skeletons inside the modules carry a small
+  <strong>★ pin</strong> — click it to save that exact block into
+  <strong>Must Remember</strong> for one-scroll revision.</li>
+  <li>The two icons in the <strong>top bar</strong> save a <strong>link</strong> (hard
+  LeetCode problems to re-attempt → Link Box) or a <strong>note</strong> in your own words
+  (→ My Notes). Everything lives in localStorage and survives the progress Reset.</li>
 </ul>
 <h2>The code workbench</h2>
 <ul>
@@ -525,6 +665,8 @@ all of it and start fresh.</p>
       if (block.kind === "html") {
         const div = el("div");
         div.innerHTML = block.html;
+        // Attach the ★ Must-Remember pin to every tagged block.
+        div.querySelectorAll("[data-mr]").forEach(decorateMustBlock);
         wrap.appendChild(div);
       } else if (block.kind === "mcq") {
         wrap.appendChild(renderMCQ(block));
@@ -760,6 +902,563 @@ learning's sake but score honestly.</p>
   }
 
   // ----------------------------------------------------------------
+  // Remembrance hub
+  //
+  // Four curated lists that survive in localStorage (odoo_final_remember_v1):
+  //   missed — questions flagged for re-practice (⚑ on every card)
+  //   must   — pinned module blocks (★ on key callouts/tables/snippets)
+  //   links  — saved URLs (topbar link button)
+  //   notes  — self-written notes (topbar note button)
+  // Deliberately NOT wiped by the sidebar Reset — it clears *progress*;
+  // these are curation, the night-before review kit.
+  // ----------------------------------------------------------------
+
+  // Where does a question live? (module + practice set) — used by the
+  // "show origin" reveal in the Missed Questions view.
+  function questionOrigin(qid) {
+    for (const pid of Object.keys(window.PRACTICE_SETS)) {
+      const ps = window.PRACTICE_SETS[pid];
+      if (!ps.qids.includes(qid)) continue;
+      const mid = window.MODULE_ORDER.find((m) => window.MODULES[m].practiceSet === pid);
+      return {
+        pid,
+        psTitle: ps.title,
+        mid: mid || null,
+        mTitle: mid ? window.MODULES[mid].title : null,
+      };
+    }
+    return null;
+  }
+
+  function rememberHero(title, sub) {
+    return el("div", { class: "hero hero-compact" }, [
+      el("h1", { text: title }),
+      el("p", { text: sub }),
+    ]);
+  }
+  function emptyState(iconChar, title, bodyHtml) {
+    return el("div", { class: "card empty-state" }, [
+      el("div", { class: "empty-icon", text: iconChar }),
+      el("h2", { text: title }),
+      el("div", { class: "empty-body", html: bodyHtml }),
+    ]);
+  }
+
+  function renderRemember(id) {
+    if (id === "missed") return renderMissedList();
+    if (id === "must") return renderMustList();
+    if (id === "links") return renderLinkBox();
+    if (id === "notes") return renderNotesList();
+    return el("div", { class: "view-narrow" }, [rememberHero("Remembrance", "Unknown section.")]);
+  }
+
+  // ---------------- Missed Questions ----------------
+  function renderMissedList() {
+    const wrap = el("div", { class: "view-narrow" });
+    wrap.appendChild(rememberHero(
+      "Missed Questions",
+      "Your re-practice queue: everything you flagged with ⚑ — blew the time budget, " +
+      "leaned on the hint, or the idea just didn't come. Solve them again cold; " +
+      "un-flag them once they feel easy."
+    ));
+
+    const missed = state.remember.missed.slice();
+    if (!missed.length) {
+      wrap.appendChild(emptyState("⚑", "Nothing here yet",
+        `Every question card — in practice sets and in the exams — has a
+         <strong>⚑ Mark missed</strong> button. Flag a question the moment it costs you
+         (over time budget, hint used, wrong first approach) and it lands here for
+         spaced re-practice. When enough pile up, take the
+         <strong>Missed-Questions Exam</strong> to re-solve a random dozen under one clock.`));
+      return wrap;
+    }
+
+    // Origin (module / practice set) is hidden by default so the problem
+    // statement is your only clue — exactly like the missed exam and the
+    // real interview. A per-card reveal shows it on demand.
+    const bar = el("div", { class: "missed-bar" });
+    bar.appendChild(el("div", {
+      class: "missed-bar-text",
+      html: `<strong>${missed.length}</strong> question${missed.length === 1 ? "" : "s"} in the queue.
+             Module origins are hidden — recognising the pattern is the exercise.`,
+    }));
+    bar.appendChild(el("button", {
+      class: "btn primary small",
+      text: "⚑ Take the Missed-Questions Exam",
+      onclick: () => navigate("missedexam", null),
+    }));
+    wrap.appendChild(bar);
+
+    missed.forEach((qid, idx) => {
+      const q = window.QUESTIONS[qid];
+      const item = el("div", { class: "missed-item" });
+      if (!q) {
+        // Question id no longer exists (content evolved) — offer cleanup.
+        item.appendChild(el("div", { class: "card" }, [
+          el("p", { text: `Question ${qid} no longer exists in the bank.` }),
+          el("button", {
+            class: "btn ghost small", text: "Remove from list",
+            onclick: () => { toggleMissed(qid); item.remove(); },
+          }),
+        ]));
+        wrap.appendChild(item);
+        return;
+      }
+
+      const origin = questionOrigin(qid);
+      const originLine = el("div", { class: "missed-origin hidden" });
+      if (origin) {
+        const tags = (q.tags || []).join(" · ");
+        originLine.innerHTML =
+          `<strong>${escapeHtml(origin.mTitle || "—")}</strong> &nbsp;·&nbsp; ${escapeHtml(origin.psTitle)}` +
+          (tags ? ` &nbsp;·&nbsp; <em>${escapeHtml(tags)}</em>` : "");
+      } else {
+        originLine.textContent = "Origin: exam-pool question (no practice set).";
+      }
+      const originBtn = el("button", {
+        class: "btn ghost small origin-toggle",
+        text: "Show origin ▾",
+        onclick: () => {
+          const willOpen = originLine.classList.contains("hidden");
+          originLine.classList.toggle("hidden");
+          originBtn.textContent = willOpen ? "Hide origin ▴" : "Show origin ▾";
+        },
+      });
+      const head = el("div", { class: "missed-item-head" }, [originBtn, originLine]);
+      item.appendChild(head);
+
+      // hideTopicTags for the same reason origins are hidden.
+      item.appendChild(questionCard(qid, idx + 1, {
+        hideTopicTags: true,
+        onMissedToggle: (nowMissed) => {
+          if (!nowMissed) {
+            item.classList.add("leaving-item");
+            setTimeout(() => item.remove(), 260);
+          }
+        },
+      }));
+      wrap.appendChild(item);
+    });
+
+    return wrap;
+  }
+
+  // ---------------- Missed-Questions Exam ----------------
+  function renderMissedExam() {
+    const wrap = el("div", { class: "view-narrow" });
+    const missed = state.remember.missed.filter((qid) => window.QUESTIONS[qid]);
+    // Only runnable questions can drive the scoreboard/timer (design cards and
+    // fixture-less SQL never fire onPass — same reason FINAL_EXAM_POOL excludes them).
+    const runnable = missed.filter((qid) => {
+      const q = window.QUESTIONS[qid];
+      return q.type === "python" || (q.sqlSchema && q.tests && q.tests.length);
+    });
+    const nonRunnable = missed.length - runnable.length;
+
+    if (!runnable.length) {
+      wrap.appendChild(rememberHero(
+        "Missed-Questions Exam",
+        "A dress rehearsal built from your own weak spots."
+      ));
+      wrap.appendChild(emptyState("⚑", "No runnable missed questions yet",
+        `Flag questions with <strong>⚑ Mark missed</strong> as you practise; once some are
+         runnable (Python or SQL-with-fixture), this exam deals up to 12 of them at random
+         under a single clock.` +
+        (nonRunnable ? `<br><br>You do have <strong>${nonRunnable}</strong> flagged
+         design/discussion question${nonRunnable === 1 ? "" : "s"} — review
+         ${nonRunnable === 1 ? "it" : "them"} in <strong>Missed Questions</strong>.` : "")));
+      return wrap;
+    }
+
+    if (state.missedExamSeed == null) state.missedExamSeed = Math.floor(Math.random() * 1e9);
+    const chosen = stableShuffle(runnable, state.missedExamSeed).slice(0, 12);
+
+    const examTimer = makeExamTimer(chosen, "missed");
+    wrap.appendChild(examTimer.node);
+
+    const sb = el("div", { class: "exam-scoreboard" });
+    const counters = {
+      attempted: el("div", { class: "stat-val", text: "0" }),
+      solved: el("div", { class: "stat-val", text: "0" }),
+      total: el("div", { class: "stat-val", text: String(chosen.length) }),
+    };
+    sb.appendChild(el("div", { class: "stat" }, [
+      counters.solved, el("div", { class: "stat-lab", text: "Passed" }),
+    ]));
+    sb.appendChild(el("div", { class: "stat" }, [
+      counters.attempted, el("div", { class: "stat-lab", text: "Attempted" }),
+    ]));
+    sb.appendChild(el("div", { class: "stat" }, [
+      counters.total, el("div", { class: "stat-lab", text: "Questions" }),
+    ]));
+    sb.appendChild(el("div", { class: "spacer" }));
+    sb.appendChild(el("button", {
+      class: "btn ghost small",
+      text: "Reshuffle",
+      onclick: () => {
+        state.missedExamSeed = Math.floor(Math.random() * 1e9);
+        navigate("missedexam", null);
+      },
+    }));
+    wrap.appendChild(sb);
+
+    wrap.appendChild(el("div", { class: "card", html: `
+<h2>Missed-Questions Exam</h2>
+<p>Up to twelve questions dealt at random from <strong>your own missed list</strong>
+(${runnable.length} runnable in the pool right now${
+      nonRunnable ? ` — plus ${nonRunnable} design/discussion question${nonRunnable === 1 ? "" : "s"} excluded, review those in Missed Questions` : ""}).
+Same rules as the Final Exam: topic tags hidden, one global clock, solve to completion
+before revealing anything. Pass a question comfortably? Un-flag it with its
+<strong>⚑</strong> button so the pool shrinks toward zero — an empty missed list is
+the goal for interview eve.</p>
+` }));
+
+    const passSet = new Set();
+    const attemptSet = new Set();
+    const bump = (node) => {
+      if (document.body.dataset.motion === "reduced") return;
+      node.classList.remove("bump");
+      void node.offsetWidth;
+      node.classList.add("bump");
+      setTimeout(() => node.classList.remove("bump"), 520);
+    };
+    chosen.forEach((qid, idx) => {
+      wrap.appendChild(questionCard(qid, idx + 1, {
+        hideTopicTags: true,
+        examMode: true,
+        onPass: () => {
+          if (!passSet.has(qid)) {
+            passSet.add(qid);
+            counters.solved.textContent = String(passSet.size);
+            bump(counters.solved);
+          }
+          examTimer.markPass(qid);
+        },
+        onAttempt: () => {
+          if (!attemptSet.has(qid)) {
+            attemptSet.add(qid);
+            counters.attempted.textContent = String(attemptSet.size);
+            bump(counters.attempted);
+          }
+          examTimer.markAttempt(qid);
+        },
+      }));
+    });
+
+    return wrap;
+  }
+
+  // ---------------- Must Remember ----------------
+  // Index of every [data-mr]-tagged block in the module content, built once
+  // from the pristine content.js strings (so pin buttons injected into live
+  // module views never leak into the saved rendering).
+  let _mrIndexCache = null;
+  function mrIndex() {
+    if (_mrIndexCache) return _mrIndexCache;
+    _mrIndexCache = {};
+    for (const mid of window.MODULE_ORDER) {
+      for (const block of window.MODULES[mid].body) {
+        if (block.kind !== "html") continue;
+        const t = document.createElement("template");
+        t.innerHTML = block.html;
+        t.content.querySelectorAll("[data-mr]").forEach((node) => {
+          _mrIndexCache[node.dataset.mr] = {
+            id: node.dataset.mr,
+            mid,
+            title: node.dataset.mrTitle || "Untitled",
+            html: node.outerHTML,
+          };
+        });
+      }
+    }
+    return _mrIndexCache;
+  }
+
+  // Wrap a tagged block (inside a live module view) and attach the ★ pin.
+  function decorateMustBlock(node) {
+    const id = node.dataset.mr;
+    if (!id) return;
+    const wrapNode = document.createElement("div");
+    wrapNode.className = "mr-wrap";
+    node.parentNode.insertBefore(wrapNode, node);
+    wrapNode.appendChild(node);
+    const btn = el("button", { class: "mr-pin", "aria-label": "Pin to Must Remember" });
+    const sync = () => {
+      const on = isMust(id);
+      btn.textContent = "★";
+      btn.classList.toggle("on", on);
+      btn.title = on
+        ? "Unpin from Remembrance → Must Remember"
+        : "Pin to Remembrance → Must Remember (hard-to-memorize bits, reviewed in one place)";
+    };
+    sync();
+    btn.onclick = () => {
+      const on = toggleMust(id);
+      sync();
+      const title = node.dataset.mrTitle || id;
+      toast(on ? `Pinned: ${title}` : `Unpinned: ${title}`, "info");
+    };
+    wrapNode.appendChild(btn);
+  }
+
+  function renderMustList() {
+    const wrap = el("div", { class: "view-narrow" });
+    wrap.appendChild(rememberHero(
+      "Must Remember",
+      "The blocks you pinned with ★ inside the modules — invariants, decision rules, " +
+      "canonical skeletons. One scroll through this page is your night-before review."
+    ));
+
+    const saved = state.remember.must.slice();
+    if (!saved.length) {
+      wrap.appendChild(emptyState("★", "Nothing pinned yet",
+        `While reading a module, hover the key callouts, tables and code skeletons —
+         the ones that are hardest to keep in your head carry a small <strong>★</strong>
+         pin in their corner. Click it and the block is saved here, verbatim, for fast
+         re-reading before the interview.`));
+      return wrap;
+    }
+
+    const idx = mrIndex();
+    saved.forEach((id) => {
+      const entry = idx[id];
+      const item = el("div", { class: "mr-item" });
+      const head = el("div", { class: "mr-item-head" });
+      head.appendChild(el("span", { class: "mr-star", text: "★" }));
+      head.appendChild(el("span", { class: "mr-item-title", text: entry ? entry.title : id }));
+      if (entry) {
+        head.appendChild(el("button", {
+          class: "tag mr-module-chip",
+          text: window.MODULES[entry.mid].title,
+          title: "Open this module",
+          onclick: () => navigate("module", entry.mid),
+        }));
+      }
+      head.appendChild(el("div", { class: "spacer" }));
+      head.appendChild(el("button", {
+        class: "btn ghost small",
+        text: "Remove",
+        onclick: () => {
+          toggleMust(id);
+          item.classList.add("leaving-item");
+          setTimeout(() => item.remove(), 260);
+        },
+      }));
+      item.appendChild(head);
+
+      const body = el("div", { class: "mr-snippet" });
+      body.innerHTML = entry
+        ? entry.html
+        : `<p class="note-soft">This pinned block no longer exists in the module content.</p>`;
+      item.appendChild(body);
+      wrap.appendChild(item);
+    });
+
+    return wrap;
+  }
+
+  // ---------------- Link Box ----------------
+  function domainOf(url) {
+    try { return new URL(url).hostname.replace(/^www\./, ""); } catch (_) { return ""; }
+  }
+  function renderLinkBox() {
+    const wrap = el("div", { class: "view-narrow" });
+    wrap.appendChild(rememberHero(
+      "Link Box",
+      "Problems and articles that hurt — LeetCode questions you want a second round with, " +
+      "references worth re-opening. Saved locally, one click away."
+    ));
+
+    const addBtn = el("button", {
+      class: "btn primary",
+      text: "+ Save a link",
+      onclick: () => openCapture("link"),
+    });
+    wrap.appendChild(el("div", { class: "remember-toolbar" }, [addBtn]));
+
+    const links = state.remember.links.slice();
+    if (!links.length) {
+      wrap.appendChild(emptyState("⛓", "No links saved yet",
+        `Hit the <strong>link button in the top bar</strong> (or “Save a link” above)
+         whenever a LeetCode problem beats you — give it a title, paste the URL, done.
+         Re-attempt everything in this box before Monday.`));
+      return wrap;
+    }
+
+    links.slice().reverse().forEach((l) => {
+      const item = el("div", { class: "link-card" });
+      item.appendChild(el("div", { class: "link-favicon", text: (domainOf(l.url) || "?")[0].toUpperCase() }));
+      const main = el("div", { class: "link-main" });
+      const a = el("a", {
+        class: "link-title", text: l.title, href: l.url,
+        target: "_blank", rel: "noopener noreferrer",
+      });
+      main.appendChild(a);
+      main.appendChild(el("div", { class: "link-url", text: l.url }));
+      item.appendChild(main);
+      const side = el("div", { class: "link-side" });
+      side.appendChild(el("span", { class: "link-domain", text: domainOf(l.url) }));
+      side.appendChild(el("span", {
+        class: "link-date",
+        text: new Date(l.date).toLocaleDateString(),
+        title: new Date(l.date).toLocaleString(),
+      }));
+      side.appendChild(el("button", {
+        class: "btn ghost small",
+        text: "Remove",
+        onclick: () => {
+          removeLink(l.id);
+          item.classList.add("leaving-item");
+          setTimeout(() => item.remove(), 260);
+        },
+      }));
+      item.appendChild(side);
+      wrap.appendChild(item);
+    });
+
+    return wrap;
+  }
+
+  // ---------------- My Notes ----------------
+  function renderNotesList() {
+    const wrap = el("div", { class: "view-narrow" });
+    wrap.appendChild(rememberHero(
+      "My Notes",
+      "Your own words beat any tutorial: summaries, mnemonics, gotchas in the phrasing " +
+      "that finally made a concept click."
+    ));
+
+    const addBtn = el("button", {
+      class: "btn primary",
+      text: "+ Add a note",
+      onclick: () => openCapture("note"),
+    });
+    wrap.appendChild(el("div", { class: "remember-toolbar" }, [addBtn]));
+
+    const notes = state.remember.notes.slice();
+    if (!notes.length) {
+      wrap.appendChild(emptyState("✎", "No notes yet",
+        `Use the <strong>note button in the top bar</strong> (or “Add a note” above)
+         while you read or practise. Title, your own summarized explanation, and an
+         optional metadata line (e.g. <em>Module 6 · DP · re-read Friday</em>).`));
+      return wrap;
+    }
+
+    notes.slice().reverse().forEach((n) => {
+      const item = el("div", { class: "note-card" });
+      const head = el("div", { class: "note-head" });
+      head.appendChild(el("span", { class: "note-icon", text: "✎" }));
+      head.appendChild(el("span", { class: "note-title", text: n.title }));
+      head.appendChild(el("div", { class: "spacer" }));
+      head.appendChild(el("span", {
+        class: "link-date",
+        text: new Date(n.date).toLocaleDateString(),
+        title: new Date(n.date).toLocaleString(),
+      }));
+      head.appendChild(el("button", {
+        class: "btn ghost small",
+        text: "Remove",
+        onclick: () => {
+          removeNote(n.id);
+          item.classList.add("leaving-item");
+          setTimeout(() => item.remove(), 260);
+        },
+      }));
+      item.appendChild(head);
+      item.appendChild(el("div", { class: "note-desc", text: n.desc }));
+      if (n.meta) {
+        item.appendChild(el("div", { class: "note-meta" }, [
+          el("span", { class: "tag", text: n.meta }),
+        ]));
+      }
+      wrap.appendChild(item);
+    });
+
+    return wrap;
+  }
+
+  // ---------------- Capture modal (links + notes) ----------------
+  let captureMode = "link";
+  function openCapture(mode) {
+    captureMode = mode;
+    $("#capture-title").textContent = mode === "link" ? "Save a link" : "Add a note";
+    $("#cap-url-row").classList.toggle("hidden", mode !== "link");
+    $("#cap-desc-row").classList.toggle("hidden", mode !== "note");
+    $("#cap-meta-row").classList.toggle("hidden", mode !== "note");
+    $("#cap-title").value = "";
+    $("#cap-url").value = "";
+    $("#cap-desc").value = "";
+    $("#cap-meta").value = "";
+    hideCaptureError();
+    const m = $("#capture-modal");
+    m.classList.remove("closing");
+    m.classList.remove("hidden");
+    setTimeout(() => $("#cap-title").focus(), 50);
+  }
+  function closeCapture() {
+    const m = $("#capture-modal");
+    if (m.classList.contains("hidden")) return;
+    if (document.body.dataset.motion === "reduced") {
+      m.classList.add("hidden");
+      return;
+    }
+    m.classList.add("closing");
+    setTimeout(() => {
+      m.classList.remove("closing");
+      m.classList.add("hidden");
+    }, 200);
+  }
+  function showCaptureError(msg) {
+    const e = $("#cap-error");
+    e.textContent = msg;
+    e.classList.remove("hidden");
+  }
+  function hideCaptureError() { $("#cap-error").classList.add("hidden"); }
+
+  function saveCapture() {
+    const title = $("#cap-title").value.trim();
+    if (captureMode === "link") {
+      let url = $("#cap-url").value.trim();
+      if (!url) { showCaptureError("A URL is required."); return; }
+      if (!/^[a-z][a-z0-9+.-]*:\/\//i.test(url)) url = "https://" + url;
+      let parsed;
+      try { parsed = new URL(url); } catch (_) {
+        showCaptureError("That doesn't look like a valid URL."); return;
+      }
+      addLink(title || parsed.hostname.replace(/^www\./, ""), url);
+      toast("Link saved to the Link Box.", "good");
+    } else {
+      const desc = $("#cap-desc").value.trim();
+      if (!title) { showCaptureError("A title is required."); return; }
+      if (!desc) { showCaptureError("The description is the note — write a line or two."); return; }
+      addNote(title, desc, $("#cap-meta").value.trim());
+      toast("Note saved to My Notes.", "good");
+    }
+    closeCapture();
+    // If the matching Remembrance view is open, refresh it so the item appears.
+    const v = state.activeView;
+    if (v && v.kind === "remember" &&
+        ((captureMode === "link" && v.id === "links") || (captureMode === "note" && v.id === "notes"))) {
+      navigate("remember", v.id);
+    }
+  }
+
+  function bindCaptureModal() {
+    $("#add-link-btn").addEventListener("click", () => openCapture("link"));
+    $("#add-note-btn").addEventListener("click", () => openCapture("note"));
+    $("#cap-save").addEventListener("click", saveCapture);
+    $$("#capture-modal [data-close-capture]").forEach((b) =>
+      b.addEventListener("click", closeCapture)
+    );
+    // Enter in the single-line fields saves (textarea keeps Enter for newlines).
+    ["cap-title", "cap-url", "cap-meta"].forEach((fid) => {
+      document.getElementById(fid).addEventListener("keydown", (e) => {
+        if (e.key === "Enter") { e.preventDefault(); saveCapture(); }
+      });
+    });
+  }
+
+  // ----------------------------------------------------------------
   // Per-question timer widget (practice sets only)
   //
   // Returns { node, onAllPass(), isRunning() }. The runner calls
@@ -871,7 +1570,7 @@ learning's sake but score honestly.</p>
   // pass; when every chosen question has been marked, the timer
   // auto-finishes and records the session.
   // ----------------------------------------------------------------
-  function makeExamTimer(chosenQids) {
+  function makeExamTimer(chosenQids, mode = "final") {
     const banner = el("div", { class: "exam-timer-banner idle" });
     const left = el("div", { class: "etb-left" });
     const title = el("div", { class: "etb-title", text: "Exam timer" });
@@ -892,7 +1591,10 @@ learning's sake but score honestly.</p>
     let finished = false;
 
     function renderLast() {
-      const sessions = (state.examHistory && state.examHistory.sessions) || [];
+      // Only show history from the same exam kind (final vs missed) —
+      // pre-existing sessions have no mode and count as "final".
+      const sessions = ((state.examHistory && state.examHistory.sessions) || [])
+        .filter((s) => (s.mode || "final") === mode);
       if (!sessions.length) {
         sub.textContent = "Click Start exam to begin the clock.";
         return;
@@ -937,6 +1639,7 @@ learning's sake but score honestly.</p>
       const passed = Object.keys(perQ).length;
       recordExamSession({
         date: new Date().toISOString(),
+        mode,
         totalSec,
         passed,
         attempted: attemptedSet.size,
@@ -986,7 +1689,9 @@ learning's sake but score honestly.</p>
     const q = window.QUESTIONS[qid];
     if (!q) return el("div", { text: "Missing question: " + qid });
 
-    const card = el("div", { class: "q-card" + (state.solved.has(qid) ? " solved" : "") });
+    const card = el("div", {
+      class: "q-card" + (state.solved.has(qid) ? " solved" : "") + (isMissed(qid) ? " missed" : ""),
+    });
 
     // Header
     const head = el("div", { class: "q-head" });
@@ -1151,7 +1856,35 @@ learning's sake but score honestly.</p>
       card.appendChild(actions);
     }
 
+    // Missed-questions toggle — on every card, in every context (practice,
+    // final exam, missed views). `actions` is already in the DOM; appending
+    // here just places the button last in the row.
+    actions.appendChild(makeMissedToggle(qid, card, hooks));
+
     return card;
+  }
+
+  // "Mark missed" flag: adds/removes the question from the Remembrance
+  // re-practice queue (took too long, needed the hint, fumbled the idea…).
+  function makeMissedToggle(qid, card, hooks = {}) {
+    const btn = el("button", { class: "btn ghost small missed-toggle" });
+    const sync = () => {
+      const on = isMissed(qid);
+      btn.innerHTML = on ? "⚑ Missed &times;" : "⚑ Mark missed";
+      btn.classList.toggle("on", on);
+      btn.title = on
+        ? "Remove from Remembrance → Missed Questions"
+        : "Add to Remembrance → Missed Questions (took too long, used the hint, shaky idea…)";
+      if (card) card.classList.toggle("missed", on);
+    };
+    sync();
+    btn.onclick = () => {
+      const on = toggleMissed(qid);
+      sync();
+      toast(on ? `${qid} added to Missed Questions.` : `${qid} removed from Missed Questions.`, "info");
+      if (hooks.onMissedToggle) hooks.onMissedToggle(on);
+    };
+    return btn;
   }
 
   // ----------------------------------------------------------------
@@ -1725,8 +2458,10 @@ learning's sake but score honestly.</p>
     buildNav();
     updateProgressUI();
     updateNavCheckmarks();
+    updateRememberNavCounts();
     setActiveNav();
     bindSettingsModal();
+    bindCaptureModal();
 
     // Clicking the Python status pill preloads Pyodide on demand.
     const statusPill = document.getElementById("pyodide-status");
@@ -1772,6 +2507,7 @@ learning's sake but score honestly.</p>
       if (e.key === "Escape") {
         closeAnswerModal();
         closeSettings();
+        closeCapture();
       }
     });
 
@@ -1795,7 +2531,10 @@ learning's sake but score honestly.</p>
     initCursorRing();
     initClickPulse();
 
-    navigate("welcome", null);
+    // Deep link / refresh restore: #m/M3, #ps/PS3, #exam, #missed-exam, #re/missed.
+    const initial = viewFromHash();
+    if (initial) navigate(initial.kind, initial.id);
+    else navigate("welcome", null);
   }
 
   // ----------------------------------------------------------------

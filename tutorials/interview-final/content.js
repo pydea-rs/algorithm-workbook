@@ -58,7 +58,7 @@ curated pool spanning the whole course — save it for a dress rehearsal.</p>
 <p>The algorithms tutorial went deep on eight modules. Here's what to keep sharp:</p>
 
 <h3>Module 1 (Stage-1) — Foundations</h3>
-<ul>
+<ul data-mr="m1-foundations-recap" data-mr-title="Stage-1 foundations: Big-O, ADTs, RAPID">
   <li><strong>Big-O</strong>: <code>O(1) &lt; O(log n) &lt; O(n) &lt; O(n log n) &lt; O(n²) &lt; O(2ⁿ)</code>.
     Every solution you propose in the interview should be paired with a spoken complexity claim.</li>
   <li><strong>ADTs</strong>: know when to reach for a list (indexed access), set (membership), dict
@@ -75,7 +75,7 @@ curated pool spanning the whole course — save it for a dress rehearsal.</p>
 </ul>
 
 <h3>Module 3 (Stage-1) — SQL</h3>
-<ul>
+<ul data-mr="m1-sql-recap" data-mr-title="SQL recap: joins, anti-join, windows">
   <li>Aggregates + <code>GROUP BY</code> + <code>HAVING</code> — the workhorse triad.</li>
   <li><code>JOIN</code>s (INNER / LEFT / RIGHT / FULL OUTER / SELF): know each one and when to reach for it.</li>
   <li>Anti-join pattern: <code>LEFT JOIN … WHERE right.pk IS NULL</code>, or <code>NOT EXISTS</code>
@@ -86,7 +86,7 @@ curated pool spanning the whole course — save it for a dress rehearsal.</p>
 </ul>
 
 <h3>Module 4 (Stage-1) — Graphs & Search</h3>
-<ul>
+<ul data-mr="m1-graphs-recap" data-mr-title="Graph recap: BFS, DFS, grids, Union-Find">
   <li>BFS with a <code>deque</code> for shortest-path-in-unweighted-graph. Level tracking is either
     a per-node distance or a size-of-queue trick.</li>
   <li>DFS iterative (stack) or recursive. Recursion is cleaner; iterative is safer under Python's
@@ -200,7 +200,7 @@ and clear beats fast and cryptic every time.</p>
 adds friction; it actually saves time because you avoid the "code first, realize you misread the
 problem 20 minutes in" trap.</p>
 
-<div class="callout tip">
+<div class="callout tip" data-mr="m2-six-step-template" data-mr-title="The 6-step live-coding template">
   <div class="callout-title">The template</div>
   <ol style="margin: 6px 0 0 18px;">
     <li><strong>Repeat the problem back</strong> in your own words. (30s)</li>
@@ -227,7 +227,7 @@ Here's the checklist to mentally run through. Ask the ones that <em>actually mat
 problem in front of you — not all of them.</p>
 
 <h3>Universal questions</h3>
-<ul>
+<ul data-mr="m2-clarifying-questions" data-mr-title="Universal clarifying questions">
   <li>What's the size range of the input? (Affects O(n²) vs O(n log n).)</li>
   <li>Can the input be empty? Contain a single element?</li>
   <li>Are the values bounded? Negative? Zero? Duplicates allowed?</li>
@@ -325,7 +325,7 @@ trace again" and the interviewer knows you were being methodical, not sloppy.</p
   <li>"For small n, the constant factor matters and the simpler algorithm wins."</li>
 </ul>
 
-<div class="callout warn">
+<div class="callout warn" data-mr="m2-silent-killers" data-mr-title="Two silent killers: panic-coding, silence">
   <div class="callout-title">The two silent killers</div>
   <p><strong>1. Panic-coding.</strong> The interviewer asks you a problem, you don't know it, you
   start typing something anyway. This <em>always</em> ends badly — every keystroke digs a deeper
@@ -476,7 +476,7 @@ and by interview day it will be automatic.</p>
 <h2>Day-of-interview checklist</h2>
 <p>Odoo's own scheduling email spells out what they expect — treat it as a checklist and clear
 every item the day <em>before</em>, not 10 minutes before:</p>
-<ul>
+<ul data-mr="m2-day-of-checklist" data-mr-title="Day-of-interview setup checklist">
   <li>🎧 <strong>Headset &amp; microphone tested</strong> — they even link a mic-test site;
     do a real Google Meet test call, not just the OS sound panel.</li>
   <li>📷 <strong>Webcam working</strong> — you'll be on camera the whole session.</li>
@@ -542,7 +542,7 @@ for comparison.</p>
 
 <p>The single most important pattern is <strong>"three-pointer surgery"</strong> — this is
 reverse-a-list, and you should be able to write it from memory:</p>
-<pre><code>prev = <span class="tok-kw">None</span>; curr = head
+<pre data-mr="m2b-reverse-list" data-mr-title="Reverse linked list: 3-pointer surgery"><code>prev = <span class="tok-kw">None</span>; curr = head
 <span class="tok-kw">while</span> curr:
     nxt = curr.next        <span class="tok-cmt"># 1. remember next</span>
     curr.next = prev       <span class="tok-cmt"># 2. rewire</span>
@@ -595,7 +595,7 @@ distance) even if you don't re-derive it live.</p>
 last  = n % 10        <span class="tok-cmt"># 5</span>
 rest  = n // 10       <span class="tok-cmt"># 1234</span>
 ndig  = len(str(n))   <span class="tok-cmt"># 5 (or count by loop with //10)</span></code></pre>
-<div class="callout warn">
+<div class="callout warn" data-mr="m2b-python-modulo" data-mr-title="Python % vs C % on negatives">
   <div class="callout-title">Signed integers: Python's % is not C's %</div>
   Python's <code>%</code> always returns a result with the divisor's sign (<code>-7 % 10 == 3</code>).
   C/Java's <code>%</code> keeps the dividend's sign (<code>-7 % 10 == -7</code>). When a problem
@@ -613,7 +613,7 @@ ndig  = len(str(n))   <span class="tok-cmt"># 5 (or count by loop with //10)</sp
         <span class="tok-kw">if</span> n % i == 0: <span class="tok-kw">return</span> <span class="tok-kw">False</span>
     <span class="tok-kw">return</span> <span class="tok-kw">True</span></code></pre>
 <p>All primes below n in O(n log log n) — the Sieve:</p>
-<pre><code>is_prime = [<span class="tok-kw">True</span>] * n
+<pre data-mr="m2b-sieve" data-mr-title="Sieve of Eratosthenes"><code>is_prime = [<span class="tok-kw">True</span>] * n
 is_prime[0] = is_prime[1] = <span class="tok-kw">False</span>
 <span class="tok-kw">for</span> i <span class="tok-kw">in</span> range(2, int(n**0.5) + 1):
     <span class="tok-kw">if</span> is_prime[i]:
@@ -650,7 +650,7 @@ O(log exp) — peel the exponent's bits from the right:</p>
 the loop anyway; the loop is what's being tested.)</p>
 
 <h2>Bit manipulation tricks</h2>
-<table class="tbl">
+<table class="tbl" data-mr="m2b-bit-tricks" data-mr-title="Bit manipulation tricks table">
   <tr><th>Trick</th><th>Code</th></tr>
   <tr><td>Is n a power of 2?</td><td><code>n &gt; 0 and (n &amp; (n-1)) == 0</code></td></tr>
   <tr><td>Lowest set bit value</td><td><code>n &amp; -n</code></td></tr>
@@ -759,7 +759,7 @@ move forward. What makes it powerful is the <strong>invariant</strong>: a proper
 always true about the window <code>s[left..right]</code>.</p>
 
 <p>The universal template:</p>
-<pre><code>def window_template(s):
+<pre data-mr="m3-window-template" data-mr-title="Variable-size sliding-window template"><code>def window_template(s):
     left = 0
     best = 0
     state = {}                     # whatever describes the window
@@ -772,7 +772,7 @@ always true about the window <code>s[left..right]</code>.</p>
     return best</code></pre>
 
 <p>Everything is in choosing <code>state</code> and <code>broken()</code>:</p>
-<table class="tbl">
+<table class="tbl" data-mr="m3-window-state-table" data-mr-title="Window state and invariant per problem">
   <tr><th>Problem</th><th>state</th><th>broken(state)</th></tr>
   <tr><td>Longest substring without repeats</td><td>set of chars in window</td><td>duplicate just entered</td></tr>
   <tr><td>Longest substring with ≤ k distinct</td><td>char → count map</td><td>len(map) &gt; k</td></tr>
@@ -806,7 +806,7 @@ dies instantly.</p>
 <p>"Count subarrays summing to k" becomes: for each prefix <code>P[j+1]</code>, how many earlier
 prefixes equal <code>P[j+1] - k</code>? A hash map of prefix-value → count answers that in O(1):</p>
 
-<pre><code>def subarray_sum(nums, k):
+<pre data-mr="m3-prefix-sum-map" data-mr-title="Prefix sum + hash map pattern"><code>def subarray_sum(nums, k):
     seen = {0: 1}          # empty prefix
     total = run = 0
     for x in nums:
@@ -831,7 +831,7 @@ prefixes equal <code>P[j+1] - k</code>? A hash map of prefix-value → count ans
   <li>Pop from the front when the front index slides out of the window.</li>
   <li>The front is always the current window's max.</li>
 </ul>
-<pre><code>from collections import deque
+<pre data-mr="m3-monotonic-deque" data-mr-title="Monotonic deque: sliding window max"><code>from collections import deque
 def max_sliding_window(nums, k):
     dq, out = deque(), []
     for i, x in enumerate(nums):
@@ -938,7 +938,7 @@ integers, O(n) required." Sorting is O(n log n) — explicitly banned. The set i
     the set.</li>
   <li>Only from starts, walk forward counting <code>x+1, x+2, …</code></li>
 </ul>
-<pre><code>def longest_consecutive(nums):
+<pre data-mr="m4-longest-consecutive" data-mr-title="Longest consecutive: set + start guard"><code>def longest_consecutive(nums):
     s = set(nums)
     best = 0
     for x in s:
@@ -959,7 +959,7 @@ the "only start from sequence heads" guard is what kills the quadratic behavior.
 c = Counter("abracadabra")
 c.most_common(2)        # [('a', 5), ('b', 2)]</code></pre>
 <p>For Top-K Frequent Elements, know the ladder of solutions and their costs:</p>
-<table class="tbl">
+<table class="tbl" data-mr="m4-topk-ladder" data-mr-title="Top-K frequent: solution ladder">
   <tr><th>Approach</th><th>Time</th><th>When to mention</th></tr>
   <tr><td>Sort by count</td><td>O(n log n)</td><td>the baseline</td></tr>
   <tr><td>Heap of size k</td><td>O(n log k)</td><td>the expected answer</td></tr>
@@ -985,7 +985,7 @@ for the first index where <code>nums[i] != i+1</code>.</p>
         if nums[i] != i + 1:
             return i + 1
     return n + 1</code></pre>
-<div class="callout warn">
+<div class="callout warn" data-mr="m4-swap-bug" data-mr-title="Python tuple-swap indexing trap">
   <div class="callout-title">The swap-loop bug everyone writes</div>
   Writing <code>nums[i], nums[nums[i]-1] = nums[nums[i]-1], nums[i]</code> is broken: Python
   evaluates the right side first, then assigns <em>left-to-right</em> — after <code>nums[i]</code>
@@ -995,7 +995,7 @@ for the first index where <code>nums[i] != i+1</code>.</p>
 
 <h2>5. When a hash map is the wrong tool</h2>
 <p>Have this list ready for "why not a dict?" follow-ups:</p>
-<ul>
+<ul data-mr="m4-hashmap-wrong-tool" data-mr-title="When a hash map is the wrong tool">
   <li><strong>Need ordering / range queries</strong> ("all keys between a and b") → sorted array +
     bisect, or a tree structure.</li>
   <li><strong>Need the min/max repeatedly with updates</strong> → heap.</li>
@@ -1064,7 +1064,7 @@ your head is how people get lost mid-interview. Don't trace; trust, then verify 
 </div>
 
 <h2>2. The backtracking template</h2>
-<pre><code>def backtrack(path, choices):
+<pre data-mr="m5-backtrack-template" data-mr-title="Backtracking: choose, explore, un-choose"><code>def backtrack(path, choices):
     if is_complete(path):
         results.append(path.copy())      # snapshot!
         return
@@ -1081,7 +1081,7 @@ your head is how people get lost mid-interview. Don't trace; trust, then verify 
     call is undone after it — append/pop, mark/unmark, add/subtract.</li>
   <li><strong>The three shapes differ only in <code>available()</code>:</strong></li>
 </ul>
-<table class="tbl">
+<table class="tbl" data-mr="m5-three-shapes" data-mr-title="Permutations vs subsets vs combinations">
   <tr><th>Shape</th><th>available()</th><th>Count for n items</th></tr>
   <tr><td>Permutations</td><td>everything not already used</td><td>n!</td></tr>
   <tr><td>Subsets</td><td>only items <em>after</em> the last chosen (start index)</td><td>2ⁿ</td></tr>
@@ -1093,7 +1093,7 @@ forward, [1,2] can be generated but [2,1] cannot.</p>
 <h2>3. Pruning — where the marks are earned</h2>
 <p>An unpruned exponential search times out; interviewers plant that on purpose. The two standard
 prunes:</p>
-<ul>
+<ul data-mr="m5-pruning" data-mr-title="The two standard backtracking prunes">
   <li><strong>Feasibility</strong>: in Combination Sum, if <code>remaining - candidate &lt; 0</code>,
     skip. If candidates are sorted, <code>break</code> instead of <code>continue</code> — everything
     after is bigger too.</li>
@@ -1106,7 +1106,7 @@ prunes:</p>
 <p>DFS from every cell, matching the word one letter at a time. The trick worth saying out loud:
 <strong>mark visited cells in-place</strong> (overwrite with <code>"#"</code>), restore on
 backtrack — O(1) space instead of a visited-set per path:</p>
-<pre><code>def exist(board, word):
+<pre data-mr="m5-word-search" data-mr-title="Word Search: in-place mark and restore"><code>def exist(board, word):
     R, C = len(board), len(board[0])
     def dfs(r, c, i):
         if i == len(word): return True
@@ -1196,7 +1196,7 @@ reason.</p>
 </div>
 
 <h2>1. One template, memorized cold</h2>
-<pre><code>def binary_search(nums, target):
+<pre data-mr="m6-exact-template" data-mr-title="Binary search exact-match template"><code>def binary_search(nums, target):
     lo, hi = 0, len(nums) - 1          # inclusive bounds
     while lo <= hi:
         mid = (lo + hi) // 2
@@ -1229,7 +1229,7 @@ variant. Python's <code>bisect</code> module defines the two clean primitives:</
 </ul>
 <p>So the occurrences of x live in <code>[bisect_left, bisect_right)</code>, and
 <code>bisect_right - bisect_left</code> is the count. Hand-rolling <code>bisect_left</code>:</p>
-<pre><code>def bisect_left(a, x):
+<pre data-mr="m6-boundary-template" data-mr-title="Boundary search (bisect_left) template"><code>def bisect_left(a, x):
     lo, hi = 0, len(a)          # note: hi = n, half-open
     while lo < hi:
         mid = (lo + hi) // 2
@@ -1264,7 +1264,7 @@ once true, it stays true for all larger X.</p>
 <p>Koko's bananas: eating speed k works ⇒ any faster speed also works. So the answer space
 <code>[1, max(piles)]</code> splits into a false-zone then a true-zone, and you binary-search
 the boundary:</p>
-<pre><code>def min_eating_speed(piles, h):
+<pre data-mr="m6-search-on-answer" data-mr-title="Binary search on the answer (Koko)"><code>def min_eating_speed(piles, h):
     def can(k):                    # monotone: True stays True as k grows
         return sum((p + k - 1) // k for p in piles) <= h
     lo, hi = 1, max(piles)
@@ -1341,7 +1341,7 @@ Even a spoken sketch of this earns serious points — few candidates produce it 
 </div>
 
 <h2>1. Two directions of information flow</h2>
-<table class="tbl">
+<table class="tbl" data-mr="m7-two-directions" data-mr-title="Top-down vs bottom-up tree recursion">
   <tr><th></th><th>Top-down</th><th>Bottom-up</th></tr>
   <tr><td>Information flows</td><td>root → leaves via parameters</td><td>leaves → root via return values</td></tr>
   <tr><td>Feels like</td><td>preorder</td><td>postorder</td></tr>
@@ -1361,7 +1361,7 @@ right.val</code>. That's a <em>local</em> check; BST is a <em>global</em> proper
        / \\
       3   7     ← 3 < 5 but sits in 5's right subtree: NOT a BST</code></pre>
 <p>The fix: every node lives inside a range that its ancestors carved out. Pass it down:</p>
-<pre><code>def is_valid_bst(root):
+<pre data-mr="m7-validate-bst" data-mr-title="Validate BST: pass range down"><code>def is_valid_bst(root):
     def check(node, lo, hi):
         if node is None:
             return True
@@ -1376,7 +1376,7 @@ verify. Same complexity, different flavor.</p>
 <h2>3. Diameter — the "return one thing, track another" pattern</h2>
 <p>Diameter = longest path between any two nodes (in edges). The subtlety: the recursion
 <strong>returns height</strong> but the <strong>answer is tracked on the side</strong>:</p>
-<pre><code>def diameter_of_binary_tree(root):
+<pre data-mr="m7-diameter" data-mr-title="Diameter: return height, track answer"><code>def diameter_of_binary_tree(root):
     best = 0
     def height(node):
         nonlocal best
@@ -1395,7 +1395,7 @@ from trying to force the answer through the return value, which doesn't work.</p
 <h2>4. Lowest Common Ancestor</h2>
 <p>The elegant recursion: <em>"the LCA is the first node where p and q are on different
 sides."</em></p>
-<pre><code>def lowest_common_ancestor(root, p, q):
+<pre data-mr="m7-lca" data-mr-title="Lowest common ancestor recursion"><code>def lowest_common_ancestor(root, p, q):
     if root is None or root is p or root is q:
         return root
     left  = lowest_common_ancestor(root.left,  p, q)
@@ -1520,7 +1520,7 @@ for a, b in edges:
 in the dict — iterate over <code>range(n)</code>, not over the dict, when that matters).</p>
 
 <h2>2. The algorithm decision table</h2>
-<table class="tbl">
+<table class="tbl" data-mr="m8-decision-table" data-mr-title="Graph algorithm decision table">
   <tr><th>Question smells like…</th><th>Reach for</th><th>Complexity</th></tr>
   <tr><td>Shortest path, unweighted</td><td>BFS</td><td>O(V+E)</td></tr>
   <tr><td>Shortest path, weighted, no negatives</td><td>Dijkstra</td><td>O(E log V)</td></tr>
@@ -1535,7 +1535,7 @@ huge signal.</p>
 <h2>3. Topological sort — Kahn's algorithm</h2>
 <p>Order the nodes of a directed graph so every edge points forward. Only DAGs have one; the
 algorithm doubles as the cycle detector:</p>
-<pre><code>from collections import deque
+<pre data-mr="m8-kahn" data-mr-title="Kahn topological sort + cycle detect"><code>from collections import deque
 def can_finish(n, prerequisites):
     graph = [[] for _ in range(n)]
     indegree = [0] * n
@@ -1557,7 +1557,7 @@ before everyone is processed, the survivors form a cycle. The DFS-coloring alter
 (white/gray/black; a gray→gray edge = cycle) is worth naming as "the other way".</p>
 
 <h2>4. Dijkstra — the lazy-deletion heap version</h2>
-<pre><code>import heapq
+<pre data-mr="m8-dijkstra" data-mr-title="Dijkstra with lazy deletion"><code>import heapq
 def network_delay_time(times, n, k):
     graph = [[] for _ in range(n + 1)]
     for u, v, w in times:
@@ -1603,7 +1603,7 @@ the reversed graph". If a straightforward simulation looks quadratic, ask: <em>c
 the destination?</em></p>
 
 <h2>7. Union-Find — the 60-second recap</h2>
-<pre><code>parent = list(range(n))
+<pre data-mr="m8-union-find" data-mr-title="Union-Find 60-second recap"><code>parent = list(range(n))
 def find(x):
     while parent[x] != x:
         parent[x] = parent[parent[x]]   # path halving
@@ -1689,7 +1689,7 @@ The scary name hides a boring idea.</p>
 </ul>
 
 <h2>2. The four-step recipe (always top-down first)</h2>
-<ol>
+<ol data-mr="m9-four-step-recipe" data-mr-title="DP four-step recipe">
   <li><strong>Write the brute-force recursion.</strong> Don't optimize. Just answer:
   "if I make one choice, what smaller problem remains?"</li>
   <li><strong>Name the state.</strong> The state is exactly the set of arguments that change
@@ -1741,7 +1741,7 @@ Transition: try every coin.</p>
                 dp[a] = min(dp[a], dp[a - c] + 1)
     return dp[amount] if dp[amount] &lt;= amount else -1</code></pre>
 
-<div class="callout warn"><div class="callout-title">Loop order changes the meaning</div>
+<div class="callout warn" data-mr="m9-loop-order" data-mr-title="Coin loops: combinations vs permutations"><div class="callout-title">Loop order changes the meaning</div>
 <p>For <em>counting ways</em> problems: coins in the <strong>outer</strong> loop counts
 <em>combinations</em> (order doesn't matter); amount in the outer loop counts
 <em>permutations</em> (order matters — that variant is "Combination Sum IV"). For min-coins it makes
@@ -1771,7 +1771,7 @@ Distinct Subsequences and Interleaving String.</p>
 <p><strong>Longest Increasing Subsequence</strong>: the O(n²) DP is
 "<code>dp[i]</code> = longest ending at <code>i</code>; check all earlier smaller elements".
 Say it, then offer the upgrade:</p>
-<pre><code>import bisect
+<pre data-mr="m9-lis-tails" data-mr-title="LIS in O(n log n) with tails array"><code>import bisect
 def length_of_lis(nums):
     tails = []     # tails[k] = smallest tail of an increasing subseq of length k+1
     for x in nums:
@@ -1801,7 +1801,7 @@ position <code>j</code> has <code>s[j:i]</code> in the dictionary.</p>
 <em>the answer for a prefix depends on answers for shorter prefixes plus a validity check on the gap</em>.</p>
 
 <h2>8. Choosing DP vs greedy vs backtracking</h2>
-<table class="tbl">
+<table class="tbl" data-mr="m9-dp-vs-greedy" data-mr-title="DP vs greedy vs backtracking test">
   <tr><th>Ask</th><th>If yes →</th></tr>
   <tr><td>Does a locally best choice provably never hurt? (exchange argument works)</td><td>Greedy — O(n log n) or better</td></tr>
   <tr><td>Need the count/min/max over exponentially many paths, and subproblems repeat?</td><td>DP</td></tr>
@@ -1889,7 +1889,7 @@ of two things:</p>
 without breaking anything, so picking earliest-end first is safe."</p>
 
 <h2>2. The interval toolkit — sort key decides everything</h2>
-<table class="tbl">
+<table class="tbl" data-mr="m10-interval-toolkit" data-mr-title="Interval toolkit: sort key decides">
   <tr><th>Goal</th><th>Sort by</th><th>Then</th></tr>
   <tr><td>Merge overlapping intervals</td><td><strong>start</strong></td><td>extend current merged block while <code>next.start ≤ cur.end</code></td></tr>
   <tr><td>Keep max non-overlapping set (= remove min to de-overlap)</td><td><strong>end</strong></td><td>take every interval that starts at/after the last taken end</td></tr>
@@ -1908,7 +1908,7 @@ without breaking anything, so picking earliest-end first is safe."</p>
             out.append([s, e])
     return out</code></pre>
 
-<div class="callout warn"><div class="callout-title">The classic merge bug</div>
+<div class="callout warn" data-mr="m10-merge-bug" data-mr-title="Merge intervals: max, not just e"><div class="callout-title">The classic merge bug</div>
 <p><code>out[-1][1] = e</code> instead of <code>max(out[-1][1], e)</code> fails when a short interval
 is swallowed by a longer one: merging <code>[1,10]</code> with <code>[2,3]</code> must stay
 <code>[1,10]</code>, not shrink to <code>[1,3]</code>. Sorting by start does <em>not</em> sort by end.
@@ -1922,7 +1922,7 @@ Sorting by start instead is the trap — a long early-starting interval can bloc
 <h2>3. Sweep line — the +1/−1 trick</h2>
 <p><strong>Meeting Rooms II</strong>: minimum rooms = maximum number of meetings alive at once.
 Turn every interval into two events and sweep:</p>
-<pre><code>def min_meeting_rooms(intervals):
+<pre data-mr="m10-sweep-line" data-mr-title="Sweep line +1/-1 room counter"><code>def min_meeting_rooms(intervals):
     events = []
     for s, e in intervals:
         events.append((s, 1))      # meeting starts: need a room
@@ -1977,7 +1977,7 @@ Gas Station and Video Stitching.</p>
 <p>One pass, and the "skip the whole failed prefix" lemma is the whole interview — say it clearly
 and the code writes itself.</p>
 
-<div class="callout tip"><div class="callout-title">When greedy fails, say why</div>
+<div class="callout tip" data-mr="m10-greedy-counterexample" data-mr-title="Greedy coin counterexample [1,3,4]"><div class="callout-title">When greedy fails, say why</div>
 <p>Coin change with coins <code>[1, 3, 4]</code> and amount 6: greedy takes 4+1+1 (three coins),
 optimal is 3+3 (two). Keep this counterexample in your pocket — producing it instantly when an
 interviewer asks "would greedy work here?" is a strong signal. Greedy works for <em>canonical</em>
@@ -2055,14 +2055,14 @@ heapq.heappush(h, 5)
 smallest = heapq.heappop(h)
 heapq.heapify(existing_list)          # in-place, O(n)
 h[0]                                  # peek min, O(1)</code></pre>
-<table class="tbl">
+<table class="tbl" data-mr="m11-heapq-idioms" data-mr-title="heapq idioms: max-heap, tuples, top-k">
   <tr><th>Need</th><th>Idiom</th></tr>
   <tr><td>Max-heap</td><td>push <code>-x</code>, negate on pop (heapq is min-only)</td></tr>
   <tr><td>Sort by key, carry payload</td><td>push tuples: <code>(priority, payload)</code> — compares element-wise</td></tr>
   <tr><td>Payloads that can't be compared</td><td>add a tiebreaker: <code>(priority, i, payload)</code> with a counter <code>i</code></td></tr>
   <tr><td>Quick top-k</td><td><code>heapq.nlargest(k, items, key=...)</code> / <code>nsmallest</code></td></tr>
 </table>
-<div class="callout warn"><div class="callout-title">The tuple-comparison crash</div>
+<div class="callout warn" data-mr="m11-tuple-crash" data-mr-title="Heap tuple-comparison TypeError trap"><div class="callout-title">The tuple-comparison crash</div>
 <p><code>heappush(h, (dist, node_object))</code> works until two entries tie on <code>dist</code> —
 then Python tries to compare the node objects and throws <code>TypeError</code>. The counter
 tiebreaker <code>(dist, i, node)</code> fixes it and guarantees stable ordering. This bites people
@@ -2077,7 +2077,7 @@ live, mid-Dijkstra, under time pressure. Pre-empt it.</p></div>
   small graphs.</li>
   <li><strong>Write the heap</strong> — 20 lines, worth memorizing the shape:</li>
 </ol>
-<pre><code>class MinHeap {
+<pre data-mr="m11-js-minheap" data-mr-title="JavaScript MinHeap in 20 lines"><code>class MinHeap {
   constructor() { this.a = []; }
   get size() { return this.a.length; }
   peek() { return this.a[0]; }
@@ -2131,7 +2131,7 @@ heap version — quickselect's worst case and in-place partition are easy to fum
 <p>Maintain the median of a growing stream: split the numbers into a <strong>max-heap of the small
 half</strong> and a <strong>min-heap of the large half</strong>, keeping sizes balanced
 (small may hold one extra).</p>
-<pre><code>small, large = [], []            # small: max-heap via negation
+<pre data-mr="m11-two-heaps" data-mr-title="Two-heap streaming median pattern"><code>small, large = [], []            # small: max-heap via negation
 def add(x):
     heapq.heappush(small, -x)                       # 1. into small
     heapq.heappush(large, -heapq.heappop(small))    # 2. move small's max over
@@ -2161,7 +2161,7 @@ heap once: <strong>O(N log k)</strong> for N total elements.</p>
 The <code>i</code> in the tuple doubles as the tie-breaker from section 2.</p>
 
 <h2>7. Choosing: heap vs sort vs quickselect</h2>
-<table class="tbl">
+<table class="tbl" data-mr="m11-heap-vs-sort" data-mr-title="Heap vs sort vs quickselect">
   <tr><th>Situation</th><th>Tool</th><th>Cost</th></tr>
   <tr><td>Need everything ordered, data static</td><td>sort</td><td>O(n log n)</td></tr>
   <tr><td>Need top-k, k ≪ n, or data streams in</td><td>size-k heap</td><td>O(n log k)</td></tr>
@@ -2229,7 +2229,7 @@ The <code>i</code> in the tuple doubles as the tie-breaker from section 2.</p>
 
 <h2>1. The logical processing order (fixes half your bugs)</h2>
 <p>SQL is written in one order and <em>executed</em> in another. Burn this in:</p>
-<table class="tbl">
+<table class="tbl" data-mr="m12-processing-order" data-mr-title="SQL logical processing order">
   <tr><th>#</th><th>Phase</th><th>What it can see</th></tr>
   <tr><td>1</td><td><code>FROM</code> + <code>JOIN … ON</code></td><td>tables only</td></tr>
   <tr><td>2</td><td><code>WHERE</code></td><td>row-level values — <strong>no aggregates, no SELECT aliases</strong></td></tr>
@@ -2253,7 +2253,7 @@ separate:</p>
 in <code>ON</code> restricts <em>what matches</em> (left rows survive with NULLs); the same condition
 in <code>WHERE</code> runs <em>after</em> padding and throws away the NULL-padded rows — silently
 turning your LEFT JOIN into an INNER JOIN:</p>
-<pre><code>-- "every customer, with their 2024 orders if any"
+<pre data-mr="m12-on-vs-where" data-mr-title="LEFT JOIN: ON vs WHERE trap"><code>-- "every customer, with their 2024 orders if any"
 SELECT c.name, o.id
 FROM customers c
 LEFT JOIN orders o ON o.customer_id = c.id AND o.year = 2024;   -- correct
@@ -2264,7 +2264,7 @@ WHERE o.year = 2024;   -- WRONG: drops customers with no 2024 orders
 
 <p><strong>Trap 2 — the anti-join.</strong> "Customers who never ordered" has three idioms;
 know all three and the reason one of them is booby-trapped:</p>
-<pre><code>-- 1. LEFT JOIN … IS NULL          (the workhorse)
+<pre data-mr="m12-anti-join" data-mr-title="Anti-join: three idioms"><code>-- 1. LEFT JOIN … IS NULL          (the workhorse)
 SELECT c.name FROM customers c
 LEFT JOIN orders o ON o.customer_id = c.id
 WHERE o.id IS NULL;
@@ -2294,7 +2294,7 @@ deduplicates. And watch <strong>integer division</strong>: in SQLite and Postgre
 <h2>4. Window functions — the modern answer to "top N per group"</h2>
 <p>An aggregate collapses rows; a window function computes over a group <em>while keeping every
 row</em>. Anatomy: <code>FUNC(...) OVER (PARTITION BY … ORDER BY …)</code>.</p>
-<table class="tbl">
+<table class="tbl" data-mr="m12-window-functions" data-mr-title="Window functions cheat table">
   <tr><th>Function</th><th>On scores 100, 95, 95, 90</th><th>Use for</th></tr>
   <tr><td><code>ROW_NUMBER()</code></td><td>1, 2, 3, 4</td><td>dedup, pagination, pick-one-per-group</td></tr>
   <tr><td><code>RANK()</code></td><td>1, 2, 2, <strong>4</strong></td><td>competition ranking (gaps)</td></tr>
@@ -2318,7 +2318,7 @@ the Module 10 sweep line translated literally into SQL).</p>
 <p>Comparisons with NULL yield <em>unknown</em>, not false: <code>NULL = NULL</code> is unknown,
 so <code>WHERE col = NULL</code> matches nothing — use <code>IS NULL</code>. WHERE keeps only rows
 where the condition is <em>true</em>; unknown rows are dropped too.</p>
-<div class="callout warn"><div class="callout-title">The NOT IN bomb</div>
+<div class="callout warn" data-mr="m12-not-in-bomb" data-mr-title="NOT IN + NULL returns zero rows"><div class="callout-title">The NOT IN bomb</div>
 <p><code>x NOT IN (1, 2, NULL)</code> expands to <code>x≠1 AND x≠2 AND x≠NULL</code> — that last
 term is unknown, so the whole predicate is never true and the query returns
 <strong>zero rows</strong>. One NULL in the subquery silently empties your result. This is why
@@ -2414,7 +2414,7 @@ you remembered <code>ILIKE</code>.</p>
 </div>
 
 <h2>1. The schema-design walk-through (your M2 template, database edition)</h2>
-<ol>
+<ol data-mr="m13-schema-walkthrough" data-mr-title="Schema-design 5-step walk-through">
   <li><strong>Nouns → entities.</strong> Read the prompt, list the nouns: customer, product, order…
   Each becomes a candidate table.</li>
   <li><strong>Verbs → relationships.</strong> "A customer places orders" (1:N), "an order contains
@@ -2434,7 +2434,7 @@ record the present.</p>
 <h2>2. Normalization — the ladder, one example</h2>
 <p>Start from the classic mess: one <code>orders</code> table with
 <code>customer_name, customer_email, product1, product2, product3, …</code></p>
-<table class="tbl">
+<table class="tbl" data-mr="m13-normalization" data-mr-title="Normalization ladder 1NF-3NF">
   <tr><th>Form</th><th>Rule</th><th>What it kills</th></tr>
   <tr><td><strong>1NF</strong></td><td>atomic values, no repeating groups</td><td>the product1..3 columns → one row per order line</td></tr>
   <tr><td><strong>2NF</strong></td><td>no partial dependency on part of a composite key</td><td>product_name stored on (order_id, product_id) rows → move to products</td></tr>
@@ -2467,7 +2467,7 @@ snapshot by design).</p>
 <p>A B-tree index is a sorted structure over one or more columns giving O(log n) lookups and sorted
 scans, at the cost of extra writes and storage. Everything else is detail on top:</p>
 
-<table class="tbl">
+<table class="tbl" data-mr="m13-clustered-index" data-mr-title="Clustered vs non-clustered index">
   <tr><th></th><th>Clustered index</th><th>Non-clustered (secondary) index</th></tr>
   <tr><td>What it is</td><td>the table itself, physically ordered by the key</td><td>a separate structure of key → row pointer</td></tr>
   <tr><td>How many per table</td><td>exactly one (data can only have one physical order)</td><td>many</td></tr>
@@ -2475,7 +2475,7 @@ scans, at the cost of extra writes and storage. Everything else is detail on top
   <tr><td>Great at</td><td>range scans on the key (<code>BETWEEN</code>, newest-first)</td><td>point lookups on non-key columns</td></tr>
   <tr><td>Who does what</td><td>MySQL/InnoDB: PK is always clustered. SQL Server: by choice.</td><td>everything else you create</td></tr>
 </table>
-<div class="callout tip"><div class="callout-title">The Postgres nuance (Odoo runs Postgres)</div>
+<div class="callout tip" data-mr="m13-postgres-nuance" data-mr-title="Postgres has no clustered index"><div class="callout-title">The Postgres nuance (Odoo runs Postgres)</div>
 <p>Postgres technically has <em>no</em> clustered index — all its tables are heaps and all indexes
 are secondary; <code>CLUSTER</code> can sort a table once but it doesn't stay sorted. If asked the
 clustered-vs-non-clustered question, give the standard answer (left column above), then add this
@@ -2493,7 +2493,7 @@ is never visited at all ("index-only scan"). <code>(customer_id, created_at, tot
 "recent order totals per customer" straight from the index.</p>
 
 <p><strong>When indexes hurt</strong> — the counter-questions interviewers love:</p>
-<ul>
+<ul data-mr="m13-indexes-hurt" data-mr-title="When indexes hurt">
   <li>Every INSERT/UPDATE/DELETE maintains every index — write-heavy tables want few.</li>
   <li>Low-selectivity columns (<code>is_active</code>, gender) barely help; the optimizer may
   ignore them and scan anyway.</li>
@@ -2588,7 +2588,7 @@ query log shows hundreds of identical queries with different ids."</p>
 </div>
 
 <h2>1. The four pillars — definitions that survive follow-ups</h2>
-<table class="tbl">
+<table class="tbl" data-mr="m14-four-pillars" data-mr-title="Four OOP pillars, one sentence each">
   <tr><th>Pillar</th><th>One sentence</th><th>Python spelling</th></tr>
   <tr><td><strong>Encapsulation</strong></td><td>state and the code that guards it live together; outsiders use the interface, not the internals</td><td><code>_single_underscore</code> convention, <code>@property</code> to gate access</td></tr>
   <tr><td><strong>Abstraction</strong></td><td>expose <em>what</em> it does, hide <em>how</em></td><td><code>abc.ABC</code> / duck-typed interfaces</td></tr>
@@ -2622,7 +2622,7 @@ a square can't honor that — code that resizes rectangles breaks when handed a 
 English is not "is-a" in behavior.</p>
 
 <h2>3. SOLID — one line each, plus the smell that violates it</h2>
-<table class="tbl">
+<table class="tbl" data-mr="m14-solid" data-mr-title="SOLID with violation smells">
   <tr><th></th><th>Principle</th><th>Violation smell</th></tr>
   <tr><td><strong>S</strong>ingle responsibility</td><td>one class, one reason to change</td><td>a <code>ReportManager</code> that queries, formats, and emails</td></tr>
   <tr><td><strong>O</strong>pen/closed</td><td>extend behavior without editing working code</td><td>an ever-growing <code>if type == …</code> chain wherever a new case lands</td></tr>
@@ -2652,7 +2652,7 @@ injected. That's S and D in action, no acronyms required.</p>
 </ul>
 
 <h2>5. The five patterns that actually come up</h2>
-<table class="tbl">
+<table class="tbl" data-mr="m14-five-patterns" data-mr-title="Five design patterns that come up">
   <tr><th>Pattern</th><th>Problem it solves</th><th>Pythonic shape</th></tr>
   <tr><td><strong>Strategy</strong></td><td>swap an algorithm at runtime, kill the if-chain</td><td>pass a function/object in: <code>sorted(key=…)</code> IS strategy</td></tr>
   <tr><td><strong>Observer</strong></td><td>N parties react to an event without the source knowing them</td><td>list of callbacks; <code>subscribe(fn)</code> / <code>notify()</code></td></tr>
@@ -2741,7 +2741,7 @@ schema walk-through of Module 13 wearing classes instead of tables. Same recipe,
 </div>
 
 <h2>1. The 4-step framework (works for every question)</h2>
-<ol>
+<ol data-mr="m15-framework" data-mr-title="System design 4-step framework">
   <li><strong>Requirements, 3 minutes.</strong> Functional: what must it do — list 3–5 features and
   <em>cut scope out loud</em> ("I'll skip auth"). Non-functional: reads-vs-writes ratio, rough
   scale, latency needs, consistency needs. Ask for numbers; if none come, assume some and say them.</li>
@@ -2761,7 +2761,7 @@ without a reason is the fastest way to look junior; adding boxes only when a bot
 them is the fastest way to look senior.</p></div>
 
 <h2>2. Numbers worth knowing (rough is fine)</h2>
-<table class="tbl">
+<table class="tbl" data-mr="m15-numbers" data-mr-title="Back-of-envelope numbers">
   <tr><th>Fact</th><th>Ballpark</th><th>What it buys you</th></tr>
   <tr><td>Postgres point lookup (indexed, cached)</td><td>&lt; 1 ms</td><td>most apps never need more than a good schema</td></tr>
   <tr><td>One beefy SQL box handles</td><td>~thousands of simple QPS</td><td>"do we even need to scale?" — usually no</td></tr>
@@ -2774,7 +2774,7 @@ into microservices; 1M requests/day is 12 per second — a single Postgres with 
 naps through it. Doing that division out loud resets the whole conversation.</p>
 
 <h2>3. Building blocks — and the moment each one enters</h2>
-<table class="tbl">
+<table class="tbl" data-mr="m15-building-blocks" data-mr-title="Building blocks and when each enters">
   <tr><th>Block</th><th>Enters when…</th><th>The follow-up you must survive</th></tr>
   <tr><td><strong>Stateless app servers + load balancer</strong></td><td>one box isn't enough / you need zero-downtime deploys</td><td>where did sessions go? (signed cookies / shared store)</td></tr>
   <tr><td><strong>Cache (cache-aside)</strong></td><td>read-heavy + tolerable staleness</td><td>invalidation: TTL vs delete-on-write; stampede (lock or jitter)</td></tr>
@@ -2785,7 +2785,7 @@ naps through it. Doing that division out loud resets the whole conversation.</p>
 </table>
 
 <h2>4. Patterns that answer 80% of follow-ups</h2>
-<ul>
+<ul data-mr="m15-core-patterns" data-mr-title="Cache-aside, idempotency, cursors, fanout">
   <li><strong>Cache-aside</strong>: read → miss → fetch DB → fill cache. Write → update DB →
   <em>delete</em> (don't update) the cache key. Simple, and wrong only briefly.</li>
   <li><strong>Idempotency keys</strong>: client sends a unique key per operation; server stores

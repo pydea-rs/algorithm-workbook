@@ -288,6 +288,10 @@ body {
   grid-column: 2;
   display: grid;
   grid-template-rows: var(--topbar-h) 1fr auto;
+  /* Pin the single column track to the container width — left implicit
+     (auto), it sizes to content and one long crumbs/pre line pushes the
+     topbar, view and footer wider than the viewport on phones. */
+  grid-template-columns: 100%;
   min-height: 0;
   min-width: 0;
 }
@@ -563,6 +567,11 @@ body[data-motion="reduced"] .brand-mark::after { animation: none; }
 #view-container {
   padding: var(--pad-view);
   overflow-y: auto;
+  /* Grid item: without these, one long unwrappable <pre> line sets the
+     item's automatic minimum width and drags the whole page wider than
+     the viewport on phones — code blocks must scroll inside their cards. */
+  overflow-x: hidden;
+  min-width: 0;
   min-height: 0;
   animation: viewIn var(--t-med) var(--ease-out);
   scroll-behavior: smooth;
@@ -2107,4 +2116,269 @@ body[data-motion="reduced"] .click-pulse { display: none; }
   .q-id { font-size: 11px; }
   .q-title { font-size: 15px; }
   table.tbl th, table.tbl td { padding: 8px 10px; font-size: 12.5px; }
+}
+
+/* =====================================================================
+   REMEMBRANCE HUB — missed questions, must-remember pins, link box, notes
+===================================================================== */
+
+.hero-compact { padding: 24px 28px 20px; }
+.hero-compact h1 { font-size: 24px; }
+
+/* ---- toolbar row under a Remembrance hero ---- */
+.remember-toolbar { display: flex; gap: 10px; margin: 0 0 6px; }
+
+/* ---- empty states ---- */
+.empty-state { text-align: center; padding: 40px 28px; }
+.empty-state .empty-icon {
+  font-size: 34px;
+  color: var(--accent);
+  opacity: 0.85;
+  margin-bottom: 10px;
+}
+.empty-state h2 { margin-bottom: 10px; }
+.empty-state .empty-body {
+  color: var(--text-dim);
+  max-width: 560px;
+  margin: 0 auto;
+  line-height: 1.65;
+}
+
+/* ---- shared leave animation for removed items ---- */
+.leaving-item {
+  opacity: 0;
+  transform: translateX(16px);
+  transition: opacity 240ms var(--ease), transform 240ms var(--ease);
+  pointer-events: none;
+}
+
+/* ---- missed toggle on question cards ---- */
+.missed-toggle { white-space: nowrap; }
+.missed-toggle.on {
+  color: var(--warn);
+  border-color: rgba(250, 204, 21, 0.45);
+  background: rgba(250, 204, 21, 0.08);
+}
+.q-card.missed { border-left: 3px solid var(--warn); }
+
+/* ---- missed list ---- */
+.missed-bar {
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  background: var(--bg-1);
+  border: 1px solid var(--border-soft);
+  border-left: 3px solid var(--warn);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  margin: 0 0 4px;
+}
+.missed-bar-text { color: var(--text-dim); flex: 1; min-width: 220px; }
+.missed-item { position: relative; }
+.missed-item-head {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  margin: var(--gap-card) 0 -8px;
+}
+.missed-item-head .origin-toggle { flex-shrink: 0; }
+.missed-origin {
+  color: var(--text-dim);
+  font-size: 13px;
+  background: var(--bg-2);
+  border: 1px solid var(--border-soft);
+  border-radius: 999px;
+  padding: 4px 12px;
+}
+
+/* ---- must-remember pin inside modules ---- */
+.mr-wrap { position: relative; }
+.mr-wrap > .mr-pin {
+  position: absolute;
+  top: 6px; right: 6px;
+  z-index: 3;
+  width: 28px; height: 28px;
+  display: grid; place-items: center;
+  font-size: 15px;
+  line-height: 1;
+  color: var(--text-mute);
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  opacity: 0.45;
+  cursor: pointer;
+  transition: all var(--t-fast);
+}
+.mr-wrap:hover > .mr-pin { opacity: 1; }
+.mr-wrap > .mr-pin:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  transform: scale(1.08);
+}
+.mr-wrap > .mr-pin.on {
+  opacity: 1;
+  color: var(--warn);
+  border-color: rgba(250, 204, 21, 0.5);
+  background: rgba(250, 204, 21, 0.1);
+}
+
+/* ---- must-remember list ---- */
+.mr-item {
+  background: var(--bg-1);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius);
+  padding: var(--pad-card-sm);
+  margin: var(--gap-card) 0;
+  box-shadow: var(--shadow-card);
+}
+.mr-item-head {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border-soft);
+  margin-bottom: 4px;
+}
+.mr-item-head .spacer { flex: 1; }
+.mr-star { color: var(--warn); font-size: 15px; }
+.mr-item-title { font-weight: 600; }
+.mr-module-chip { cursor: pointer; }
+.mr-module-chip:hover { color: var(--accent); border-color: var(--accent); }
+.mr-snippet { overflow-x: auto; }
+.mr-snippet > :first-child { margin-top: 10px; }
+
+/* ---- link box ---- */
+.link-card {
+  display: flex; align-items: center; gap: 14px;
+  background: var(--bg-1);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin: 12px 0;
+  box-shadow: var(--shadow-card);
+  transition: border-color var(--t-fast), transform var(--t-fast);
+}
+.link-card:hover { border-color: var(--accent); transform: translateY(-1px); }
+.link-favicon {
+  width: 40px; height: 40px;
+  flex-shrink: 0;
+  display: grid; place-items: center;
+  font-weight: 700; font-size: 17px;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.link-main { flex: 1; min-width: 0; }
+.link-title {
+  display: block;
+  font-weight: 600;
+  color: var(--text);
+  text-decoration: none;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.link-title:hover { color: var(--accent); text-decoration: underline; }
+.link-url {
+  color: var(--text-mute);
+  font-size: 12.5px;
+  font-family: "JetBrains Mono", monospace;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.link-side {
+  display: flex; align-items: center; gap: 10px;
+  flex-shrink: 0;
+}
+.link-domain {
+  font-size: 11.5px;
+  color: var(--text-dim);
+  background: var(--bg-2);
+  border: 1px solid var(--border-soft);
+  border-radius: 999px;
+  padding: 2px 10px;
+}
+.link-date { font-size: 12px; color: var(--text-mute); white-space: nowrap; }
+
+/* ---- notes ---- */
+.note-card {
+  background: var(--bg-1);
+  border: 1px solid var(--border-soft);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius);
+  padding: 14px 18px;
+  margin: 12px 0;
+  box-shadow: var(--shadow-card);
+}
+.note-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.note-head .spacer { flex: 1; }
+.note-icon { color: var(--accent); }
+.note-title { font-weight: 600; }
+.note-desc {
+  color: var(--text-dim);
+  margin-top: 8px;
+  white-space: pre-wrap;
+  line-height: 1.65;
+}
+.note-meta { margin-top: 10px; }
+
+/* ---- capture modal fields ---- */
+.capture-body .field { margin-bottom: 14px; }
+.capture-body label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+}
+.field-opt { font-weight: 400; color: var(--text-mute); }
+.capture-body input[type="text"],
+.capture-body input[type="url"],
+.capture-body textarea {
+  width: 100%;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  padding: 10px 12px;
+  font-size: 14px;
+  font-family: inherit;
+  transition: border-color var(--t-fast), box-shadow var(--t-fast);
+}
+.capture-body textarea {
+  resize: vertical;
+  min-height: 96px;
+  line-height: 1.55;
+}
+.capture-body input:focus,
+.capture-body textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.capture-footer {
+  display: flex; align-items: center; justify-content: flex-end; gap: 10px;
+  margin-top: 4px;
+}
+.cap-error {
+  flex: 1;
+  color: var(--bad);
+  font-size: 13px;
+}
+
+/* Topbar capture icons keep their orientation (the settings gear rotates). */
+.icon-btn.icon-btn-steady:hover  { transform: none; }
+.icon-btn.icon-btn-steady:active { transform: scale(0.92); }
+
+/* ---- small screens ---- */
+@media (max-width: 700px) {
+  .link-card { flex-wrap: wrap; }
+  .link-side { width: 100%; justify-content: flex-end; }
+  .missed-bar { flex-direction: column; align-items: flex-start; }
+  .mr-wrap > .mr-pin { opacity: 0.8; }   /* no hover on touch — keep it visible */
+}
+
+/* Narrow phones: the topbar's right cluster (Python pill + 3 icon buttons)
+   must never force horizontal scroll. The pill is only a preload shortcut —
+   Python still loads on the first Run — so it yields first. */
+@media (max-width: 620px) {
+  #topbar { padding: 0 12px; gap: 10px; }
+  .topbar-actions { gap: 8px; flex-shrink: 0; }
+  #pyodide-status { display: none; }
+  .missed-item-head { row-gap: 8px; }
+  .missed-origin { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .note-head .link-date { display: none; }   /* title + Remove win the row */
+  .hero-compact { padding: 20px 18px 16px; }
 }
