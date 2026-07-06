@@ -40,11 +40,32 @@
 
   // ---------------------------------------------------------------- helpers
 
+  // A lone UTF-16 surrogate (possible in free-typed notes/drafts) survives
+  // JSON.stringify as a \ud8xx escape that PHP's json_decode rejects — which
+  // would brick every save from then on. Scrub to U+FFFD before shipping.
+  function scrub(str) {
+    if (!/[\uD800-\uDFFF]/.test(str)) return str; // fast path: no surrogates at all
+    var out = "";
+    for (var i = 0; i < str.length; i++) {
+      var c = str.charCodeAt(i);
+      if (c >= 0xd800 && c <= 0xdbff) {
+        var d = i + 1 < str.length ? str.charCodeAt(i + 1) : 0;
+        if (d >= 0xdc00 && d <= 0xdfff) { out += str[i] + str[i + 1]; i++; }
+        else out += "�";
+      } else if (c >= 0xdc00 && c <= 0xdfff) {
+        out += "�"; // low surrogate with no leading high surrogate
+      } else {
+        out += str[i];
+      }
+    }
+    return out;
+  }
+
   function snapshot() {
     var out = {};
     for (var i = 0; i < localStorage.length; i++) {
       var k = localStorage.key(i);
-      if (PREFIX.test(k)) out[k] = localStorage.getItem(k);
+      if (PREFIX.test(k)) out[k] = scrub(localStorage.getItem(k));
     }
     return out;
   }
@@ -121,14 +142,22 @@
   // <script> tag read localStorage. Local round-trip, a few milliseconds.
 
   var server = null;
+  var loadStatus = 0;
   try {
     var xhr = new XMLHttpRequest();
     xhr.open("GET", ENDPOINT + "?action=load", false);
     xhr.send(null);
+    loadStatus = xhr.status;
     if (xhr.status === 200) server = JSON.parse(xhr.responseText);
   } catch (e) { server = null; }
 
   if (!server || server.ok !== true) {
+    // 200-with-non-JSON is the normal static-server case — stay quiet.
+    // A 5xx means the PHP server is there but broken (unwritable sqlite,
+    // disk full…): the journey is NOT being backed up, so say so.
+    if (loadStatus >= 500) {
+      try { console.warn("[journey-sync] disabled: sync.php answered HTTP " + loadStatus + " — this session is not being backed up."); } catch (e) {}
+    }
     window.OdooJourney = { active: false };
     return;
   }

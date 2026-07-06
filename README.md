@@ -125,10 +125,10 @@ algorithms framework — Python/JS/SQL sandboxes, practice sets, final exam — 
   checklist), a stage-1 gap patch (linked lists, math & bits — M2b), algorithm deep dives at
   medium/hard difficulty (M3–M11), SQL and database-design deep dives (M12–M13), OOP &
   design patterns (M14), and application-level system design (M15).
-- **82 questions** across 16 practice sets (every module has one, including the recap):
-  63 Python/JS coding, 8 runnable SQL, and 11 reveal-solution design questions
+- **90 questions** across 16 practice sets (every module has one, including the recap):
+  69 Python/JS coding, 10 runnable SQL, and 11 reveal-solution design questions
   (schema design, OOD, system design).
-- A **Final Exam** dealing 12 questions from a curated 43-question runnable-only pool,
+- A **Final Exam** dealing 12 questions from a curated 51-question runnable-only pool,
   stratified to always give 8 algorithm + 4 SQL — the real interview's 2:1 ratio.
 - Per-question **timers** rated against each question's time budget, plus a global exam
   timer with recorded sessions.
@@ -140,7 +140,7 @@ question-type breakdown, module map, and editing format.
 
 A single-file simulation of the timed aptitude & logical-reasoning screening test:
 
-- **25 questions in 25 minutes**, dealt at random from a bank of ~140 questions across
+- **25 questions in 25 minutes**, dealt at random from a bank of 160+ questions across
   10 categories — numerical reasoning, work rate, patterns & sequences, logical deduction,
   verbal reasoning, trick/attention questions, geometry, data interpretation, general
   reasoning, and SVG-rendered **shape & spatial reasoning** puzzles (matching the

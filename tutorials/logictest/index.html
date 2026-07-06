@@ -854,6 +854,12 @@
             color: #b7791f;
             border: 1px solid rgba(243,156,18,0.3);
         }
+        .verdict-banner.expl {
+            background: rgba(113,75,103,0.05);
+            color: #4a4a4a;
+            border: 1px solid rgba(113,75,103,0.18);
+            font-weight: 500;
+        }
 
         @keyframes shakeX {
             0%, 100% { transform: translateX(0); }
@@ -1086,7 +1092,7 @@
             <p class="subtitle">Simulates the 25-minute Coderbyte aptitude & logical reasoning test before the final Odoo interview.</p>
             <ul class="rules-list">
                 <li><span class="icon">⏱️</span> <strong>25 minutes</strong> total time</li>
-                <li><span class="icon">📋</span> <strong>25 questions</strong> randomly selected from a bank of 140+ real-style questions</li>
+                <li><span class="icon">📋</span> <strong>25 questions</strong> randomly selected from a bank of 160+ real-style questions</li>
                 <li><span class="icon">🔷</span> Includes <strong>shape & spatial reasoning</strong> questions</li>
                 <li><span class="icon">⏭️</span> You can <strong>skip</strong> questions and return to them later</li>
                 <li><span class="icon">🚩</span> <strong>Flag</strong> questions for review</li>
@@ -1286,11 +1292,21 @@
             matrixDots1: `<svg width="190" height="190" viewBox="0 0 190 190"><rect x="20" y="20" width="150" height="150" fill="none" stroke="#714B67" stroke-width="2"/><line x1="70" y1="20" x2="70" y2="170" stroke="#714B67" stroke-width="1.5"/><line x1="120" y1="20" x2="120" y2="170" stroke="#714B67" stroke-width="1.5"/><line x1="20" y1="70" x2="170" y2="70" stroke="#714B67" stroke-width="1.5"/><line x1="20" y1="120" x2="170" y2="120" stroke="#714B67" stroke-width="1.5"/><circle cx="45" cy="45" r="5" fill="#714B67"/><circle cx="86" cy="45" r="5" fill="#714B67"/><circle cx="104" cy="45" r="5" fill="#714B67"/><circle cx="131" cy="45" r="5" fill="#714B67"/><circle cx="145" cy="45" r="5" fill="#714B67"/><circle cx="159" cy="45" r="5" fill="#714B67"/><circle cx="45" cy="95" r="5" fill="#714B67"/><circle cx="86" cy="95" r="5" fill="#714B67"/><circle cx="104" cy="95" r="5" fill="#714B67"/><circle cx="131" cy="95" r="5" fill="#714B67"/><circle cx="145" cy="95" r="5" fill="#714B67"/><circle cx="159" cy="95" r="5" fill="#714B67"/><circle cx="45" cy="145" r="5" fill="#714B67"/><circle cx="86" cy="145" r="5" fill="#714B67"/><circle cx="104" cy="145" r="5" fill="#714B67"/><text x="138" y="152" font-size="18" fill="#999">?</text></svg>`,
 
             // Arrow rotating 90° clockwise across the row: up, right, down, ?
-            arrowRotate1: `<svg width="280" height="90" viewBox="0 0 280 90"><rect x="20" y="20" width="50" height="50" fill="none" stroke="#e0e0e0" stroke-width="1"/><rect x="80" y="20" width="50" height="50" fill="none" stroke="#e0e0e0" stroke-width="1"/><rect x="140" y="20" width="50" height="50" fill="none" stroke="#e0e0e0" stroke-width="1"/><rect x="200" y="20" width="50" height="50" fill="none" stroke="#e0e0e0" stroke-width="1"/><polygon points="45,28 33,60 57,60" fill="#714B67"/><polygon points="122,45 90,33 90,57" fill="#714B67"/><polygon points="165,62 153,30 177,30" fill="#714B67"/><text x="218" y="53" font-size="22" fill="#999">?</text></svg>`
+            arrowRotate1: `<svg width="280" height="90" viewBox="0 0 280 90"><rect x="20" y="20" width="50" height="50" fill="none" stroke="#e0e0e0" stroke-width="1"/><rect x="80" y="20" width="50" height="50" fill="none" stroke="#e0e0e0" stroke-width="1"/><rect x="140" y="20" width="50" height="50" fill="none" stroke="#e0e0e0" stroke-width="1"/><rect x="200" y="20" width="50" height="50" fill="none" stroke="#e0e0e0" stroke-width="1"/><polygon points="45,28 33,60 57,60" fill="#714B67"/><polygon points="122,45 90,33 90,57" fill="#714B67"/><polygon points="165,62 153,30 177,30" fill="#714B67"/><text x="218" y="53" font-size="22" fill="#999">?</text></svg>`,
+
+            // Square with both diagonals — count triangles (4 small + 4 halves = 8)
+            squareDiag1: `<svg width="160" height="160" viewBox="0 0 160 160"><rect x="20" y="20" width="120" height="120" fill="none" stroke="#714B67" stroke-width="2"/><line x1="20" y1="20" x2="140" y2="140" stroke="#714B67" stroke-width="1.5"/><line x1="140" y1="20" x2="20" y2="140" stroke="#714B67" stroke-width="1.5"/></svg>`,
+
+            // Paper folded along the dashed vertical line, TWO holes punched through both layers
+            paperFold2: `<svg width="220" height="120" viewBox="0 0 220 120"><rect x="30" y="20" width="100" height="80" fill="none" stroke="#714B67" stroke-width="2"/><line x1="80" y1="20" x2="80" y2="100" stroke="#714B67" stroke-width="1" stroke-dasharray="3,3"/><circle cx="50" cy="45" r="6" fill="#714B67"/><circle cx="62" cy="78" r="6" fill="#714B67"/><text x="140" y="65" font-size="14" fill="#999">Unfolded = ?</text></svg>`,
+
+            // Die net: horizontal strip 2,3,5,4 with 1 above the 3 and 6 below the 3.
+            // Folding: strip pairs two-apart → 2↔5 and 3↔4 opposite; 1↔6 opposite.
+            diceNet1: `<svg width="220" height="190" viewBox="0 0 220 190"><rect x="20" y="75" width="45" height="45" fill="none" stroke="#714B67" stroke-width="2"/><rect x="65" y="75" width="45" height="45" fill="none" stroke="#714B67" stroke-width="2"/><rect x="110" y="75" width="45" height="45" fill="none" stroke="#714B67" stroke-width="2"/><rect x="155" y="75" width="45" height="45" fill="none" stroke="#714B67" stroke-width="2"/><rect x="65" y="30" width="45" height="45" fill="none" stroke="#714B67" stroke-width="2"/><rect x="65" y="120" width="45" height="45" fill="none" stroke="#714B67" stroke-width="2"/><text x="42" y="104" font-size="18" fill="#714B67" text-anchor="middle">2</text><text x="87" y="104" font-size="18" fill="#714B67" text-anchor="middle">3</text><text x="132" y="104" font-size="18" fill="#714B67" text-anchor="middle">5</text><text x="177" y="104" font-size="18" fill="#714B67" text-anchor="middle">4</text><text x="87" y="59" font-size="18" fill="#714B67" text-anchor="middle">1</text><text x="87" y="149" font-size="18" fill="#714B67" text-anchor="middle">6</text></svg>`
         };
 
         // ============================
-        // QUESTION BANK (141 questions)
+        // QUESTION BANK (161 questions)
         // ============================
         const allQuestions = [
             // NUMERICAL REASONING (25)
@@ -1417,7 +1433,7 @@
             { q: "The square is reflected across the dashed vertical line. How does the reflection look?", options: ["Identical — a square is symmetric", "Visibly flipped", "Rotated 45°", "Smaller version"], ans: 0, cat: "Shapes", shape: "mirrorShape2" },
             { q: "This triangle points up. If it is rotated 90° clockwise, which way does it point?", options: ["Left", "Right", "Up", "Down"], ans: 1, cat: "Shapes", shape: "rotation1" },
             { q: "If this square is rotated 180°, what does it look like?", options: ["Exactly the same", "Flipped", "A diamond", "A rectangle"], ans: 0, cat: "Shapes", shape: "rotation2" },
-            { q: "If this net is folded into a cube, which face is opposite the face with the dot?", options: ["Top", "Bottom", "Left", "Right"], ans: 1, cat: "Shapes", shape: "cubeUnfold1" },
+            { q: "This net folds into a cube. Counting down the vertical strip from the dotted square (the 1st), which square ends up on the face opposite the dot?", options: ["The 2nd square (directly below the dot)", "The 3rd square of the strip", "The 4th (bottom) square of the strip", "The left square"], ans: 1, cat: "Shapes", shape: "cubeUnfold1", expl: "When a strip of four squares is folded around a cube, squares two apart become opposite faces: 1st↔3rd and 2nd↔4th. The left and right squares form the remaining pair. So the dotted 1st square is opposite the 3rd." },
             { q: "Into how many regions do these two overlapping circles divide the plane (counting the outside region)?", options: ["2", "3", "4", "5"], ans: 2, cat: "Shapes", shape: "overlap1" },
             { q: "How many circles are in this figure?", options: ["3", "4", "5", "6"], ans: 2, cat: "Shapes", shape: "circleCount1" },
             { q: "What is the missing piece in this pattern?", options: ["Empty square", "Filled square", "Circle", "Triangle"], ans: 0, cat: "Shapes", shape: "missingPiece1" },
@@ -1456,7 +1472,43 @@
 
             // NON-VERBAL MATRIX / SERIES (2)
             { q: "In this 3×3 matrix, every row shows 1, 2, then 3 dots. How many dots belong in the missing cell?", options: ["1 dot", "2 dots", "3 dots", "4 dots"], ans: 2, cat: "Shapes", shape: "matrixDots1" },
-            { q: "The arrow rotates 90° clockwise at each step: up, right, down, ... Which way does the next arrow point?", options: ["Left", "Up", "Right", "Down"], ans: 0, cat: "Shapes", shape: "arrowRotate1" }
+            { q: "The arrow rotates 90° clockwise at each step: up, right, down, ... Which way does the next arrow point?", options: ["Left", "Up", "Right", "Down"], ans: 0, cat: "Shapes", shape: "arrowRotate1" },
+
+            // ATTENTION TO DETAIL (4) — string/number comparison, a staple of Coderbyte screens
+            { q: "Compare each pair: (1) 583942–583942  (2) 617405–617405  (3) 298361–298631  (4) 730518–730518. How many pairs are exactly identical?", options: ["1", "2", "3", "4"], ans: 2, cat: "Attention", expl: "Pair 3 differs (…361 vs …631 — the 3 and 6 are swapped). Pairs 1, 2 and 4 match, so 3 pairs are identical." },
+            { q: "Three of these strings are identical. Which one is different?", options: ["XQ7TB9K", "XQ7TB9K", "XQ7T89K", "XQ7TB9K"], ans: 2, cat: "Attention", expl: "The third string has the digit 8 where the others have the letter B (XQ7T89K vs XQ7TB9K)." },
+            { q: "An invoice lists 4 chairs at $12.50 each and 3 desks at $45.00 each. The total is written as $180.00. What is wrong with the written total?", options: ["Nothing — it is correct", "It is $5 too low", "It is $5 too high", "It is $10 too low"], ans: 1, cat: "Attention", expl: "4 × $12.50 = $50 and 3 × $45 = $135, so the true total is $185. The written $180 is $5 too low." },
+            { q: "How many times does the letter 'e' appear in the phrase: 'The engineer needs three keys'?", options: ["7", "8", "9", "10"], ans: 2, cat: "Attention", expl: "The (1) + engineer (3) + needs (2) + three (2) + keys (1) = 9." },
+
+            // NUMERICAL top-ups — profit %, averages, simple algebra
+            { q: "A trader buys an item for $80 and sells it for $100. What is the profit percentage?", options: ["20%", "25%", "30%", "35%"], ans: 1, cat: "Numerical", expl: "Profit = $20 on a cost of $80, and 20/80 = 25%. (Profit % is always computed on the cost price.)" },
+            { q: "The average age of 4 friends is 21. When a fifth friend joins, the average becomes 22. How old is the fifth friend?", options: ["24", "25", "26", "27"], ans: 2, cat: "Numerical", expl: "Total goes from 4 × 21 = 84 to 5 × 22 = 110, so the newcomer is 110 − 84 = 26." },
+            { q: "If 3x − 7 = 2x + 5, what is the value of x?", options: ["10", "11", "12", "13"], ans: 2, cat: "Numerical", expl: "Subtract 2x from both sides: x − 7 = 5, so x = 12." },
+
+            // WORK RATE / SPEED top-ups
+            { q: "A cyclist covers 24 km in 1.5 hours. At the same speed, how long will 40 km take?", options: ["2 hours", "2.5 hours", "2 hours 40 min", "3 hours"], ans: 1, cat: "Work Rate", expl: "Speed = 24 / 1.5 = 16 km/h, so 40 km takes 40 / 16 = 2.5 hours." },
+            { q: "Pipe A fills a tank in 4 hours and pipe B fills it in 12 hours. With both pipes open, how long does the tank take to fill?", options: ["2 hours", "2.5 hours", "3 hours", "4 hours"], ans: 2, cat: "Work Rate", expl: "Combined rate = 1/4 + 1/12 = 3/12 + 1/12 = 4/12 = 1/3 of the tank per hour → 3 hours." },
+
+            // PATTERNS top-ups — number-letter series
+            { q: "What comes next in the series: A1, C3, E5, G7, ?", options: ["H8", "I9", "J11", "K9"], ans: 1, cat: "Patterns", expl: "The letters skip one each time (A, C, E, G, I) and the numbers are the matching alphabet positions (1, 3, 5, 7, 9) → I9." },
+            { q: "Find the next number: 4, 7, 13, 25, 49, ?", options: ["95", "96", "97", "98"], ans: 2, cat: "Patterns", expl: "Each term is double the previous minus 1: 4→7, 7→13, 13→25, 25→49, so 49 × 2 − 1 = 97." },
+
+            // LOGIC top-ups — family relations, seating, direction sense
+            { q: "A is B's brother. B is C's sister. C is D's father. How is A related to D?", options: ["Uncle", "Father", "Brother", "Grandfather"], ans: 0, cat: "Logic", expl: "A, B and C are siblings (A is B's brother, B is C's sister). Since C is D's father, C's brother A is D's uncle." },
+            { q: "Five colleagues sit in a straight row. V sits at the left end and Z at the right end. W sits next to V, and X sits between W and Y. Who is in the middle seat?", options: ["W", "X", "Y", "Z"], ans: 1, cat: "Logic", expl: "V=1 and Z=5 are fixed, so W (next to V) is seat 2. X must touch both W and Y, so X=3 and Y=4. Seat 3 — the middle — is X." },
+            { q: "Reza walks 4 km east, then turns left and walks 3 km. How far is he from his starting point in a straight line?", options: ["4 km", "5 km", "6 km", "7 km"], ans: 1, cat: "Logic", expl: "East 4 km then north 3 km form a right angle: distance = √(4² + 3²) = √25 = 5 km." },
+
+            // TRICK / CALENDAR & CLOCK top-ups
+            { q: "If 1 January of some year falls on a Wednesday, what day of the week is 31 January of the same year?", options: ["Thursday", "Friday", "Saturday", "Sunday"], ans: 1, cat: "Trick", expl: "31 Jan is 30 days after 1 Jan, and 30 mod 7 = 2, so the weekday moves ahead 2 days: Wednesday → Friday." },
+            { q: "What is the angle between the hour and minute hands of a clock at 6:30?", options: ["15°", "30°", "45°", "60°"], ans: 0, cat: "Trick", expl: "At 6:30 the minute hand is at 180°; the hour hand is halfway between 6 and 7, at 6×30 + 15 = 195°. Difference = 15°." },
+
+            // DATA top-up — simple pie-chart interpretation
+            { q: "A budget pie chart shows: Rent 25%, Salaries 40%, Marketing 15%, and the rest is Operations. If the total budget is $200,000, how much goes to Operations?", options: ["$30,000", "$35,000", "$40,000", "$45,000"], ans: 2, cat: "Data", expl: "Operations = 100 − (25 + 40 + 15) = 20%, and 20% of $200,000 = $40,000." },
+
+            // SHAPES top-ups — new figures (squareDiag1, paperFold2, diceNet1)
+            { q: "How many triangles are in this figure (a square with both diagonals drawn)?", options: ["4", "6", "8", "10"], ans: 2, cat: "Shapes", shape: "squareDiag1", expl: "The diagonals make 4 small triangles, and each pair of adjacent small triangles forms one of 4 larger half-square triangles: 4 + 4 = 8." },
+            { q: "The paper is folded in half along the dashed line, then two holes are punched through both layers. How many holes are there when the sheet is unfolded?", options: ["2", "3", "4", "6"], ans: 2, cat: "Shapes", shape: "paperFold2", expl: "Each punch goes through 2 layers, so 2 punches × 2 layers = 4 holes." },
+            { q: "This net folds into a die. Which number ends up on the face opposite the 3?", options: ["1", "4", "5", "6"], ans: 1, cat: "Shapes", shape: "diceNet1", expl: "In the horizontal strip 2-3-5-4, squares two apart become opposite faces: 2↔5 and 3↔4. The 1 and 6 (above and below the 3) form the third pair. So 3 is opposite 4." }
         ];
 
         // ============================
@@ -1711,7 +1763,8 @@
                     : (isCorrect
                         ? '✅ You answered this correctly'
                         : `❌ Not quite — the correct answer is “${q.options[q.ans]}”`);
-                verdictArea.innerHTML = `<div class="verdict-banner ${cls}">${label}</div>`;
+                const explHtml = q.expl ? `<div class="verdict-banner expl">💡 ${q.expl}</div>` : '';
+                verdictArea.innerHTML = `<div class="verdict-banner ${cls}">${label}</div>` + explHtml;
             } else {
                 verdictArea.innerHTML = '';
             }

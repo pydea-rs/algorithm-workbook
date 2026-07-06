@@ -1724,6 +1724,195 @@ function deserialize(data) {
 }`,
   };
 
+  // ============ F83 — Number of Islands ============
+  J.F83 = {
+    functionName: "numIslands",
+    signature: "function numIslands(grid: string[][]): number",
+    starter:
+`function numIslands(grid) {
+  // your code here
+}
+`,
+    solution:
+`function numIslands(grid) {
+  if (!grid.length || !grid[0].length) return 0;
+  const R = grid.length, C = grid[0].length;
+  let count = 0;
+  for (let r = 0; r < R; r++) {
+    for (let c = 0; c < C; c++) {
+      if (grid[r][c] === "1") {
+        count++;                          // a new island's first cell
+        const stack = [[r, c]];
+        grid[r][c] = "0";                 // sink so it's never recounted
+        while (stack.length) {
+          const [cr, cc] = stack.pop();
+          for (const [dr, dc] of [[0, 1], [0, -1], [1, 0], [-1, 0]]) {
+            const nr = cr + dr, nc = cc + dc;
+            if (nr >= 0 && nr < R && nc >= 0 && nc < C && grid[nr][nc] === "1") {
+              grid[nr][nc] = "0";
+              stack.push([nr, nc]);
+            }
+          }
+        }
+      }
+    }
+  }
+  return count;
+}`,
+  };
+
+  // ============ F84 — Spiral Matrix ============
+  J.F84 = {
+    functionName: "spiralOrder",
+    signature: "function spiralOrder(matrix: number[][]): number[]",
+    starter:
+`function spiralOrder(matrix) {
+  // your code here
+}
+`,
+    solution:
+`function spiralOrder(matrix) {
+  if (!matrix.length || !matrix[0].length) return [];
+  let top = 0, bottom = matrix.length - 1;
+  let left = 0, right = matrix[0].length - 1;
+  const out = [];
+  while (top <= bottom && left <= right) {
+    for (let c = left; c <= right; c++) out.push(matrix[top][c]);   // top ->
+    top++;
+    for (let r = top; r <= bottom; r++) out.push(matrix[r][right]); // right v
+    right--;
+    if (top <= bottom) {                                            // a row remains
+      for (let c = right; c >= left; c--) out.push(matrix[bottom][c]);
+      bottom--;
+    }
+    if (left <= right) {                                            // a column remains
+      for (let r = bottom; r >= top; r--) out.push(matrix[r][left]);
+      left++;
+    }
+  }
+  return out;
+}`,
+  };
+
+  // ============ F85 — Rotate Image (Matrix 90°) ============
+  J.F85 = {
+    functionName: "rotate",
+    signature: "function rotate(matrix: number[][]): number[][]",
+    starter:
+`function rotate(matrix) {
+  // rotate in place, then return matrix
+}
+`,
+    solution:
+`function rotate(matrix) {
+  const n = matrix.length;
+  for (let i = 0; i < n; i++) {
+    for (let j = i + 1; j < n; j++) {     // upper triangle only!
+      const tmp = matrix[i][j];
+      matrix[i][j] = matrix[j][i];
+      matrix[j][i] = tmp;
+    }
+  }
+  for (const row of matrix) row.reverse();
+  return matrix;
+}`,
+    testsTransform:
+      "result = (result === undefined || result === null) ? args[0] : result;",
+  };
+
+  // ============ F86 — Subsets (Power Set) ============
+  J.F86 = {
+    functionName: "subsets",
+    signature: "function subsets(nums: number[]): number[][]",
+    starter:
+`function subsets(nums) {
+  // your code here
+}
+`,
+    solution:
+`function subsets(nums) {
+  const out = [];
+  const path = [];
+  function backtrack(start) {
+    out.push(path.slice());              // every node is an answer
+    for (let i = start; i < nums.length; i++) {
+      path.push(nums[i]);
+      backtrack(i + 1);
+      path.pop();
+    }
+  }
+  backtrack(0);
+  return out;
+}`,
+    testsTransform:
+      "result = result.map(s => s.slice().sort((a, b) => a - b).join(\",\")).sort();",
+  };
+
+  // ============ F87 — Basic Calculator II (String Parsing) ============
+  J.F87 = {
+    functionName: "calculate",
+    signature: "function calculate(s: string): number",
+    starter:
+`function calculate(s) {
+  // your code here
+}
+`,
+    solution:
+`function calculate(s) {
+  const stack = [];
+  let num = 0;
+  let op = "+";                          // the operator BEFORE the current number
+  for (let i = 0; i < s.length; i++) {
+    const ch = s[i];
+    const isDigit = ch >= "0" && ch <= "9";
+    if (isDigit) num = num * 10 + (ch.charCodeAt(0) - 48);
+    if ((!isDigit && ch !== " ") || i === s.length - 1) {
+      if (op === "+") stack.push(num);
+      else if (op === "-") stack.push(-num);
+      else if (op === "*") stack.push(stack.pop() * num);
+      else stack.push(Math.trunc(stack.pop() / num));  // toward zero
+      op = ch;
+      num = 0;
+    }
+  }
+  return stack.reduce((a, b) => a + b, 0);
+}`,
+  };
+
+  // ============ F88 — Insert Interval ============
+  J.F88 = {
+    functionName: "insertInterval",
+    signature: "function insertInterval(intervals: number[][], newInterval: number[]): number[][]",
+    starter:
+`function insertInterval(intervals, newInterval) {
+  // your code here
+}
+`,
+    solution:
+`function insertInterval(intervals, newInterval) {
+  const out = [];
+  const n = intervals.length;
+  let i = 0;
+  let [s, e] = newInterval;
+
+  while (i < n && intervals[i][1] < s) {   // phase 1: strictly before
+    out.push(intervals[i]);
+    i++;
+  }
+  while (i < n && intervals[i][0] <= e) {  // phase 2: overlap or touch
+    s = Math.min(s, intervals[i][0]);
+    e = Math.max(e, intervals[i][1]);
+    i++;
+  }
+  out.push([s, e]);
+  while (i < n) {                          // phase 3: strictly after
+    out.push(intervals[i]);
+    i++;
+  }
+  return out;
+}`,
+  };
+
   // =================================================================
   // Apply all impls to window.QUESTIONS
   // =================================================================

@@ -5037,6 +5037,541 @@ INSERT INTO employees VALUES
     ],
   },
 
+  // ============================================================
+  // COVERAGE PATCH — interview staples the audit found missing
+  // (matrix traversal, subsets, string parsing, insert-interval,
+  //  SQL LEFT JOIN counting & grouped-subquery joins)
+  // ============================================================
+
+  F83: {
+    id: "F83",
+    title: "Number of Islands",
+    difficulty: "Medium",
+    time: "15-20 min",
+    tags: ["Graph", "Grid", "Flood Fill"],
+    type: "python",
+    statement:
+      "Write <code>num_islands(grid)</code> — the grid holds <code>\"1\"</code> (land) and " +
+      "<code>\"0\"</code> (water) strings; return the number of islands, where an island is a " +
+      "group of land cells connected <strong>up/down/left/right</strong> (not diagonally). " +
+      "The single most-asked grid question in live interviews: one outer scan, one flood fill " +
+      "per undiscovered island.",
+    examples:
+      'Input:  [["1","1","0","0","0"],\n' +
+      '         ["1","1","0","0","0"],\n' +
+      '         ["0","0","1","0","0"],\n' +
+      '         ["0","0","0","1","1"]]  -> 3\n' +
+      'Input:  [["1","0"],\n' +
+      '         ["0","1"]]              -> 2   (diagonals do NOT connect)',
+    hint: "Scan every cell; each time you meet an unvisited '1', count += 1 and flood-fill (DFS/BFS) the whole island, sinking cells to '0' (or marking a visited set) so it's never counted again.",
+    functionName: "num_islands",
+    signature: "num_islands(grid: list[list[str]]) -> int",
+    starter:
+      "def num_islands(grid):\n" +
+      "    # your code here\n" +
+      "    pass\n",
+    solution:
+`def num_islands(grid: list) -> int:
+    if not grid or not grid[0]:
+        return 0
+    R, C = len(grid), len(grid[0])
+    count = 0
+    for r in range(R):
+        for c in range(C):
+            if grid[r][c] == "1":
+                count += 1                      # a new island's first cell
+                stack = [(r, c)]
+                grid[r][c] = "0"                # sink so it's never recounted
+                while stack:
+                    cr, cc = stack.pop()
+                    for dr, dc in ((0, 1), (0, -1), (1, 0), (-1, 0)):
+                        nr, nc = cr + dr, cc + dc
+                        if 0 <= nr < R and 0 <= nc < C and grid[nr][nc] == "1":
+                            grid[nr][nc] = "0"
+                            stack.append((nr, nc))
+    return count`,
+    explanation:
+      "O(R*C) time — every cell is visited a constant number of times — O(R*C) worst-case " +
+      "stack/queue space (one all-land grid). Sink cells WHEN PUSHED, not when popped: " +
+      "marking at pop time lets one cell be queued twice. Sinking the input is fine here; " +
+      "if mutation is off-limits, say so and keep a visited set. Follow-ups to expect: " +
+      "count the LARGEST island (return flood size), diagonal connectivity (8 directions), " +
+      "and 'islands appearing over time' (Union-Find, Number of Islands II).",
+    tests: [
+      { args: [[["1", "1", "1", "1", "0"], ["1", "1", "0", "1", "0"], ["1", "1", "0", "0", "0"], ["0", "0", "0", "0", "0"]]], expected: 1 },
+      { args: [[["1", "1", "0", "0", "0"], ["1", "1", "0", "0", "0"], ["0", "0", "1", "0", "0"], ["0", "0", "0", "1", "1"]]], expected: 3 },
+      { args: [[["1", "0"], ["0", "1"]]], expected: 2 },
+      { args: [[["1", "1", "1"], ["1", "0", "1"], ["1", "1", "1"]]], expected: 1 },
+      { args: [[["0", "0"], ["0", "0"]]], expected: 0 },
+      { args: [[["1"]]], expected: 1 },
+      { args: [[]], expected: 0 },
+    ],
+  },
+
+  F84: {
+    id: "F84",
+    title: "Spiral Matrix",
+    difficulty: "Medium",
+    time: "15-20 min",
+    tags: ["Matrix", "Simulation", "Boundary Bookkeeping"],
+    type: "python",
+    statement:
+      "Write <code>spiral_order(matrix)</code> returning all elements of an m×n matrix in " +
+      "clockwise spiral order, starting at the top-left. Zero algorithms, one hundred percent " +
+      "index discipline — which is exactly why interviewers love it live: it exposes whether " +
+      "you can keep four boundaries straight while narrating.",
+    examples:
+      "Input:  [[1,2,3],\n" +
+      "         [4,5,6],\n" +
+      "         [7,8,9]]        -> [1,2,3,6,9,8,7,4,5]\n" +
+      "Input:  [[1,2,3,4],\n" +
+      "         [5,6,7,8],\n" +
+      "         [9,10,11,12]]   -> [1,2,3,4,8,12,11,10,9,5,6,7]\n" +
+      "Input:  [[1,2,3]]        -> [1,2,3]   (single row: no bottom pass!)",
+    hint: "Four boundaries: top, bottom, left, right. Walk top row left->right, right column top->bottom, then — ONLY if a row/column remains — bottom row right->left and left column bottom->top, shrinking each boundary after its pass.",
+    functionName: "spiral_order",
+    signature: "spiral_order(matrix: list[list[int]]) -> list[int]",
+    starter:
+      "def spiral_order(matrix):\n" +
+      "    # your code here\n" +
+      "    pass\n",
+    solution:
+`def spiral_order(matrix: list) -> list:
+    if not matrix or not matrix[0]:
+        return []
+    top, bottom = 0, len(matrix) - 1
+    left, right = 0, len(matrix[0]) - 1
+    out = []
+    while top <= bottom and left <= right:
+        for c in range(left, right + 1):            # top row ->
+            out.append(matrix[top][c])
+        top += 1
+        for r in range(top, bottom + 1):            # right column v
+            out.append(matrix[r][right])
+        right -= 1
+        if top <= bottom:                           # guard: a row remains
+            for c in range(right, left - 1, -1):    # bottom row <-
+                out.append(matrix[bottom][c])
+            bottom -= 1
+        if left <= right:                           # guard: a column remains
+            for r in range(bottom, top - 1, -1):    # left column ^
+                out.append(matrix[r][left])
+            left += 1
+    return out`,
+    explanation:
+      "O(mn) time, O(1) extra space beyond the output. The two `if` guards before the reverse " +
+      "passes are the whole question: without them a single row is emitted twice (left-to-right, " +
+      "then right-to-left) and a single column likewise — test 3 and 4 exist to catch exactly " +
+      "that. Narrate the invariant: 'after each pass I shrink that boundary; the loop condition " +
+      "top <= bottom and left <= right means an unvisited ring remains.' Follow-ups: generate " +
+      "the spiral (Spiral Matrix II) and rotate the matrix (F85 — same boundary discipline).",
+    tests: [
+      { args: [[[1, 2, 3], [4, 5, 6], [7, 8, 9]]], expected: [1, 2, 3, 6, 9, 8, 7, 4, 5] },
+      { args: [[[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]]], expected: [1, 2, 3, 4, 8, 12, 11, 10, 9, 5, 6, 7] },
+      { args: [[[1, 2, 3]]], expected: [1, 2, 3] },
+      { args: [[[1], [2], [3]]], expected: [1, 2, 3] },
+      { args: [[[1]]], expected: [1] },
+      { args: [[[1, 2], [3, 4]]], expected: [1, 2, 4, 3] },
+      { args: [[[1, 2, 3], [4, 5, 6]]], expected: [1, 2, 3, 6, 5, 4] },
+    ],
+  },
+
+  F85: {
+    id: "F85",
+    title: "Rotate Image (Matrix 90°)",
+    difficulty: "Medium",
+    time: "12-18 min",
+    tags: ["Matrix", "In-Place", "Transpose"],
+    type: "python",
+    statement:
+      "Write <code>rotate(matrix)</code> rotating an n×n matrix 90° clockwise " +
+      "<strong>in place</strong>, and return it (returning a freshly built rotated matrix also " +
+      "passes, but the in-place version is what's being asked). The elegant answer is a " +
+      "two-step identity: <strong>transpose, then reverse each row</strong> — allocating a " +
+      "second matrix is the explicitly-banned easy way out.",
+    examples:
+      "Input:  [[1,2,3],          [[7,4,1],\n" +
+      "         [4,5,6],    ->     [8,5,2],\n" +
+      "         [7,8,9]]           [9,6,3]]\n" +
+      "Input:  [[1,2],            [[3,1],\n" +
+      "         [3,4]]      ->     [4,2]]",
+    hint: "Transpose swaps matrix[i][j] with matrix[j][i] for j > i (loop the upper triangle only, or every pair swaps twice = no-op). Then row.reverse() on each row. Counter-clockwise is the mirror recipe: transpose, then reverse each COLUMN.",
+    functionName: "rotate",
+    signature: "rotate(matrix: list[list[int]]) -> list[list[int]]",
+    starter:
+      "def rotate(matrix):\n" +
+      "    # rotate in place, then return matrix\n" +
+      "    pass\n",
+    solution:
+`def rotate(matrix: list) -> list:
+    n = len(matrix)
+    for i in range(n):
+        for j in range(i + 1, n):        # upper triangle only!
+            matrix[i][j], matrix[j][i] = matrix[j][i], matrix[i][j]
+    for row in matrix:
+        row.reverse()
+    return matrix`,
+    explanation:
+      "O(n²) time, O(1) extra space. Why it works: transposing maps (i, j) -> (j, i); " +
+      "reversing rows maps (j, i) -> (j, n-1-i) — composed, (i, j) lands at (j, n-1-i), which " +
+      "is precisely a 90° clockwise rotation. The trap the upper-triangle bound prevents: " +
+      "looping the full square swaps every pair twice, silently restoring the original. The " +
+      "four-way cycle swap (moving 4 cells per step along ring offsets) is the other accepted " +
+      "answer — more index pain for zero asymptotic gain; name it, then transpose.",
+    tests: [
+      { args: [[[1, 2, 3], [4, 5, 6], [7, 8, 9]]], expected: [[7, 4, 1], [8, 5, 2], [9, 6, 3]],
+        transform: "result = args[0] if result is None else result" },
+      { args: [[[5, 1, 9, 11], [2, 4, 8, 10], [13, 3, 6, 7], [15, 14, 12, 16]]],
+        expected: [[15, 13, 2, 5], [14, 3, 4, 1], [12, 6, 8, 9], [16, 7, 10, 11]],
+        transform: "result = args[0] if result is None else result" },
+      { args: [[[1]]], expected: [[1]],
+        transform: "result = args[0] if result is None else result" },
+      { args: [[[1, 2], [3, 4]]], expected: [[3, 1], [4, 2]],
+        transform: "result = args[0] if result is None else result" },
+    ],
+  },
+
+  F86: {
+    id: "F86",
+    title: "Subsets (Power Set)",
+    difficulty: "Medium",
+    time: "12-18 min",
+    tags: ["Backtracking", "Power Set", "Recursion"],
+    type: "python",
+    statement:
+      "Write <code>subsets(nums)</code> returning <em>all</em> subsets of a list of distinct " +
+      "integers, including the empty set and the full set (any order). The purest backtracking " +
+      "skeleton there is — and the one the permutations/combinations family is graded against: " +
+      "every node of the recursion tree is an answer, not just the leaves.",
+    examples:
+      "Input:  [1,2,3] -> [[],[1],[2],[3],[1,2],[1,3],[2,3],[1,2,3]]  (any order)\n" +
+      "Input:  [0]     -> [[],[0]]\n" +
+      "Count check: n elements -> 2^n subsets, always.",
+    hint: "backtrack(start): record path.copy() FIRST (every prefix is a subset), then for i in start..n-1: append nums[i], recurse with i+1, pop. The include/exclude binary recursion and the bitmask loop (mask 0..2^n-1) are the two alternatives to name.",
+    functionName: "subsets",
+    signature: "subsets(nums: list[int]) -> list[list[int]]",
+    starter:
+      "def subsets(nums):\n" +
+      "    # your code here\n" +
+      "    pass\n",
+    solution:
+`def subsets(nums: list) -> list:
+    out = []
+    path = []
+
+    def backtrack(start):
+        out.append(path.copy())          # every node is an answer
+        for i in range(start, len(nums)):
+            path.append(nums[i])
+            backtrack(i + 1)
+            path.pop()
+
+    backtrack(0)
+    return out`,
+    explanation:
+      "2^n subsets, each up to length n -> O(n * 2^n) output-bound, like permutations. The " +
+      "contrast worth saying out loud: permutations snapshot at the LEAVES (full paths only), " +
+      "subsets snapshot at EVERY node — the start index guarantees each element is considered " +
+      "once per branch, so no duplicates by construction. Alternatives to name: include/exclude " +
+      "recursion (binary tree of depth n) and the bitmask loop for mask in range(2**n) — the " +
+      "bitmask one is iterative and shines when n <= 20. Follow-up: duplicates in nums " +
+      "(Subsets II — sort, skip nums[i] == nums[i-1] at the same depth).",
+    tests: [
+      { args: [[1, 2, 3]],
+        expected: ["", "1", "1,2", "1,2,3", "1,3", "2", "2,3", "3"],
+        transform: 'result = sorted(",".join(map(str, sorted(s))) for s in result)' },
+      { args: [[0]],
+        expected: ["", "0"],
+        transform: 'result = sorted(",".join(map(str, sorted(s))) for s in result)' },
+      { args: [[]],
+        expected: [""],
+        transform: 'result = sorted(",".join(map(str, sorted(s))) for s in result)' },
+      { args: [[4, 7]],
+        expected: ["", "4", "4,7", "7"],
+        transform: 'result = sorted(",".join(map(str, sorted(s))) for s in result)' },
+      { args: [[2, -1, 5]],
+        expected: ["", "-1", "-1,2", "-1,2,5", "-1,5", "2", "2,5", "5"],
+        transform: 'result = sorted(",".join(map(str, sorted(s))) for s in result)' },
+    ],
+  },
+
+  F87: {
+    id: "F87",
+    title: "Basic Calculator II (String Parsing)",
+    difficulty: "Medium-Hard",
+    time: "20-25 min",
+    tags: ["String", "Stack", "Parsing"],
+    type: "python",
+    statement:
+      "Write <code>calculate(s)</code> evaluating an expression string containing non-negative " +
+      "integers, <code>+ - * /</code> and spaces (no parentheses). Normal precedence: " +
+      "<code>*</code> and <code>/</code> bind tighter; division <strong>truncates toward " +
+      "zero</strong>. The classic string-parsing interview: one pass, a stack of signed terms, " +
+      "and the precedence handled by <em>when</em> you fold a number in.",
+    examples:
+      'Input:  "3+2*2"     -> 7\n' +
+      'Input:  " 3+5 / 2 " -> 5    (5/2 truncates to 2)\n' +
+      'Input:  "14-3/2"    -> 13\n' +
+      'Input:  "0-3/2"     -> -1   (toward zero, NOT floor: floor would say -2)',
+    hint: "Walk the string keeping (num, last_op). On +/- push +num/-num onto the stack; on * or / pop the top and push top*num or trunc(top/num). At the end, sum the stack. Flush the pending number when you hit an operator OR the last character.",
+    functionName: "calculate",
+    signature: "calculate(s: str) -> int",
+    starter:
+      "def calculate(s):\n" +
+      "    # your code here\n" +
+      "    pass\n",
+    solution:
+`def calculate(s: str) -> int:
+    stack = []
+    num = 0
+    op = "+"                             # the operator BEFORE the current number
+    for i, ch in enumerate(s):
+        if ch.isdigit():
+            num = num * 10 + int(ch)
+        if (not ch.isdigit() and ch != " ") or i == len(s) - 1:
+            if op == "+":
+                stack.append(num)
+            elif op == "-":
+                stack.append(-num)
+            elif op == "*":
+                stack.append(stack.pop() * num)
+            else:                        # "/" truncates toward zero
+                stack.append(int(stack.pop() / num))
+            op = ch
+            num = 0
+    return sum(stack)`,
+    explanation:
+      "O(n) time, O(n) stack. The design insight to narrate: +/- terms can't be committed " +
+      "until the end (a later * might grab their right operand? no — but a * after THIS number " +
+      "grabs it), so push them signed and defer the sum; * and / apply immediately to the " +
+      "previous term, which IS the precedence. Two planted traps: the final flush " +
+      "(`i == len(s) - 1` — same off-by-one family as RLE F73), and Python's floor division: " +
+      "-3 // 2 == -2, but the spec (and C/Java/JS) truncates toward zero, so use " +
+      "int(a / b) or math.trunc. Follow-up: parentheses (Basic Calculator I) — recurse or " +
+      "push (result, sign) frames on '('.",
+    tests: [
+      { args: ["3+2*2"], expected: 7 },
+      { args: [" 3/2 "], expected: 1 },
+      { args: [" 3+5 / 2 "], expected: 5 },
+      { args: ["14-3/2"], expected: 13 },
+      { args: ["2*3+4"], expected: 10 },
+      { args: ["1-1+1"], expected: 1 },
+      { args: ["0-3/2"], expected: -1 },
+      { args: ["42"], expected: 42 },
+      { args: ["100000*3-1"], expected: 299999 },
+    ],
+  },
+
+  F88: {
+    id: "F88",
+    title: "Insert Interval",
+    difficulty: "Medium",
+    time: "15-20 min",
+    tags: ["Intervals", "Merge", "Three Phases"],
+    type: "python",
+    statement:
+      "Write <code>insert_interval(intervals, new_interval)</code> — intervals is sorted by " +
+      "start and non-overlapping; insert the new interval, merging where needed (touching " +
+      "endpoints like [1,4]+[4,5] merge, matching F37's convention), and return the result " +
+      "still sorted and non-overlapping. The follow-up F37 promises — and the point is doing " +
+      "it in <strong>one O(n) pass with no re-sort</strong>.",
+    examples:
+      "Input:  [[1,3],[6,9]], new=[2,5]                        -> [[1,5],[6,9]]\n" +
+      "Input:  [[1,2],[3,5],[6,7],[8,10],[12,16]], new=[4,8]   -> [[1,2],[3,10],[12,16]]\n" +
+      "Input:  [], new=[5,7]                                   -> [[5,7]]\n" +
+      "Input:  [[1,5]], new=[2,3]                              -> [[1,5]]   (swallowed)",
+    hint: "Three phases: (1) copy intervals ending strictly before new_start; (2) while intervals start at/before new_end, absorb them — new = [min(starts), max(ends)]; (3) append the merged block, then copy the rest verbatim.",
+    functionName: "insert_interval",
+    signature: "insert_interval(intervals: list[list[int]], new_interval: list[int]) -> list[list[int]]",
+    starter:
+      "def insert_interval(intervals, new_interval):\n" +
+      "    # your code here\n" +
+      "    pass\n",
+    solution:
+`def insert_interval(intervals: list, new_interval: list) -> list:
+    out = []
+    i, n = 0, len(intervals)
+    s, e = new_interval
+
+    while i < n and intervals[i][1] < s:     # phase 1: strictly before
+        out.append(intervals[i])
+        i += 1
+
+    while i < n and intervals[i][0] <= e:    # phase 2: overlap or touch
+        s = min(s, intervals[i][0])
+        e = max(e, intervals[i][1])
+        i += 1
+    out.append([s, e])
+
+    out.extend(intervals[i:])                # phase 3: strictly after
+    return out`,
+    explanation:
+      "O(n) time, one pass, no sort — that's the entire advantage over 'append and re-run F37' " +
+      "(which is O(n log n) and a weaker answer, though a correct fallback to name). The " +
+      "boundary conditions carry the merge convention: phase 1 uses end < new_start and phase 2 " +
+      "uses start <= new_end, so touching intervals fall into the absorb loop. Off-by-one " +
+      "checkpoints to narrate: new interval before everything (phase 1 never runs), after " +
+      "everything (phase 2 never runs), swallowed whole (phase 2 runs once and min/max keep " +
+      "the old block). This shape — before / conflict zone / after — recurs in calendar " +
+      "bookings and range-update questions.",
+    tests: [
+      { args: [[[1, 3], [6, 9]], [2, 5]], expected: [[1, 5], [6, 9]] },
+      { args: [[[1, 2], [3, 5], [6, 7], [8, 10], [12, 16]], [4, 8]], expected: [[1, 2], [3, 10], [12, 16]] },
+      { args: [[], [5, 7]], expected: [[5, 7]] },
+      { args: [[[1, 5]], [2, 3]], expected: [[1, 5]] },
+      { args: [[[1, 4]], [4, 5]], expected: [[1, 5]] },
+      { args: [[[3, 5], [8, 9]], [0, 1]], expected: [[0, 1], [3, 5], [8, 9]] },
+      { args: [[[3, 5], [8, 9]], [10, 12]], expected: [[3, 5], [8, 9], [10, 12]] },
+    ],
+  },
+
+  F89: {
+    id: "F89",
+    title: "SQL — Order Counts Including Zeros",
+    difficulty: "Medium",
+    time: "10-15 min",
+    tags: ["SQL", "LEFT JOIN", "COUNT Trap", "GROUP BY"],
+    type: "sql",
+    statement:
+      "Tables <code>customers(id, name)</code> and <code>orders(id, customer_id, total)</code>. " +
+      "Return every customer's name and how many orders they've placed — <strong>including " +
+      "customers with zero orders</strong> — as columns <code>name, order_count</code>. Two " +
+      "planted traps in one query: an INNER JOIN silently deletes the zero-order customers, " +
+      "and on a LEFT JOIN <code>COUNT(*)</code> counts the wrong thing.",
+    examples:
+      "customers: (1,'Ada'),(2,'Ben'),(3,'Cleo')\n" +
+      "orders:    (1, customer 1, 50),(2, customer 1, 30),(3, customer 3, 20)\n" +
+      "-> Ada 2, Ben 0, Cleo 1   (Ben must appear!)",
+    hint: "LEFT JOIN orders and GROUP BY the customer. Then COUNT(o.id), not COUNT(*): the zero-order customer still produces ONE row (all order columns NULL) — COUNT(*) counts that row as 1, COUNT(o.id) skips the NULL and says 0.",
+    solution:
+`-- LEFT JOIN keeps zero-order customers; COUNT(o.id) makes them count as 0:
+SELECT c.name AS name, COUNT(o.id) AS order_count
+FROM customers c
+LEFT JOIN orders o ON o.customer_id = c.id
+GROUP BY c.id, c.name;
+
+-- The two broken versions to be able to explain:
+--   INNER JOIN ... GROUP BY  -> Ben vanishes entirely
+--   LEFT JOIN + COUNT(*)     -> Ben "has" 1 order (his NULL-extended row)`,
+    sqlSchema:
+`CREATE TABLE customers (id INTEGER PRIMARY KEY, name TEXT);
+CREATE TABLE orders (id INTEGER PRIMARY KEY, customer_id INTEGER, total INTEGER);
+INSERT INTO customers VALUES (1,'Ada'),(2,'Ben'),(3,'Cleo');
+INSERT INTO orders VALUES (1,1,50),(2,1,30),(3,3,20);`,
+    sqlStarter:
+      "-- Tables: customers(id, name), orders(id, customer_id, total)\n" +
+      "-- Columns to return: name, order_count (zero-order customers included!)\n" +
+      "SELECT\n",
+    sqlSolution:
+`SELECT c.name AS name, COUNT(o.id) AS order_count
+FROM customers c
+LEFT JOIN orders o ON o.customer_id = c.id
+GROUP BY c.id, c.name;`,
+    explanation:
+      "The mechanics: a LEFT JOIN customer with no orders still yields one row, with every " +
+      "orders column NULL. COUNT(*) counts rows — 1. COUNT(o.id) counts non-NULL values — 0. " +
+      "That distinction (COUNT(*) vs COUNT(column)) is a stock 'what's wrong with this query' " +
+      "interview probe. Also GROUP BY c.id, not just c.name — two customers can share a name, " +
+      "and grouping by the key is what makes the query correct rather than accidentally right. " +
+      "Test 2 adds an order with customer_id NULL (imported/guest data): it joins to nobody " +
+      "and must inflate no one's count. Follow-up: 'only customers with 2+ orders' -> HAVING " +
+      "COUNT(o.id) >= 2 (F71's WHERE-vs-HAVING recap, now on a join).",
+    tests: [
+      {
+        name: "Base case — Ben has zero orders and must appear",
+        orderMatters: false,
+        expected: { columns: ["name", "order_count"], rows: [["Ada", 2], ["Ben", 0], ["Cleo", 1]] },
+      },
+      {
+        name: "Stray NULL customer_id order inflates nobody",
+        orderMatters: false,
+        schema:
+`CREATE TABLE customers (id INTEGER PRIMARY KEY, name TEXT);
+CREATE TABLE orders (id INTEGER PRIMARY KEY, customer_id INTEGER, total INTEGER);
+INSERT INTO customers VALUES (1,'Ada'),(2,'Ben');
+INSERT INTO orders VALUES (1,1,10),(2,NULL,99);`,
+        expected: { columns: ["name", "order_count"], rows: [["Ada", 1], ["Ben", 0]] },
+      },
+    ],
+  },
+
+  F90: {
+    id: "F90",
+    title: "SQL — Earning Above the Department Average",
+    difficulty: "Medium",
+    time: "15-20 min",
+    tags: ["SQL", "GROUP BY", "Subquery Join", "Aggregates"],
+    type: "sql",
+    statement:
+      "Table <code>employees(id, name, department, salary)</code>. Return the employees who " +
+      "earn <strong>strictly more</strong> than the average salary of their own department, " +
+      "as columns <code>employee, department</code>. The follow-up F47 promises, and a " +
+      "grading favorite because the obvious first draft — <code>WHERE salary &gt; " +
+      "AVG(salary)</code> — is illegal SQL, and explaining <em>why</em> is the question.",
+    examples:
+      "employees: Ada/Eng/95k, Ben/Eng/85k, Fay/Eng/90k, Cleo/Sales/60k, Dan/Sales/70k, Eve/HR/55k\n" +
+      "Eng avg 90k   -> Ada (95k) qualifies; Fay is AT the average — strictly means out\n" +
+      "Sales avg 65k -> Dan (70k)\n" +
+      "HR avg 55k    -> nobody (a single-person department can never beat its own average)",
+    hint: "Aggregate first, compare second: GROUP BY department in a subquery computing AVG(salary), JOIN it back on department, then WHERE e.salary > d.avg_salary. (WHERE can't hold an aggregate — aggregates don't exist until grouping, which runs after WHERE.)",
+    solution:
+`-- Aggregate in a subquery, join back, compare row vs group:
+SELECT e.name AS employee, e.department AS department
+FROM employees e
+JOIN (
+    SELECT department, AVG(salary) AS avg_salary
+    FROM employees
+    GROUP BY department
+) d ON d.department = e.department
+WHERE e.salary > d.avg_salary;
+
+-- Window alternative (name it): AVG(salary) OVER (PARTITION BY department)
+-- computed in a subquery, filtered outside — same processing-order logic as F49.`,
+    sqlSchema:
+`CREATE TABLE employees (id INTEGER PRIMARY KEY, name TEXT, department TEXT, salary INTEGER);
+INSERT INTO employees VALUES
+  (1,'Ada','Eng',95000),(2,'Ben','Eng',85000),(3,'Fay','Eng',90000),
+  (4,'Cleo','Sales',60000),(5,'Dan','Sales',70000),(6,'Eve','HR',55000);`,
+    sqlStarter:
+      "-- Table: employees(id, name, department, salary)\n" +
+      "-- Columns to return: employee, department (strictly above own dept average)\n" +
+      "SELECT\n",
+    sqlSolution:
+`SELECT e.name AS employee, e.department AS department
+FROM employees e
+JOIN (
+    SELECT department, AVG(salary) AS avg_salary
+    FROM employees
+    GROUP BY department
+) d ON d.department = e.department
+WHERE e.salary > d.avg_salary;`,
+    explanation:
+      "Why the naive version fails: WHERE runs before GROUP BY, so at WHERE time there IS no " +
+      "AVG yet — aggregates can only be compared after they exist, hence the grouped subquery " +
+      "(or a window function, or a correlated subquery — know all three, lead with the join). " +
+      "The strictness detail is test 2's whole point: everyone AT the average drops out, so a " +
+      "department of identical salaries returns nobody, and a single-person department can " +
+      "never qualify (their salary IS the average). Follow-ups: 'below average' (flip the " +
+      "comparison), 'top earner per department' (MAX instead of AVG — or F49's DENSE_RANK " +
+      "when ties and top-N enter).",
+    tests: [
+      {
+        name: "Base case — strict inequality, single-person dept excluded",
+        orderMatters: false,
+        expected: { columns: ["employee", "department"], rows: [["Ada", "Eng"], ["Dan", "Sales"]] },
+      },
+      {
+        name: "All-equal departments -> empty result",
+        orderMatters: false,
+        schema:
+`CREATE TABLE employees (id INTEGER PRIMARY KEY, name TEXT, department TEXT, salary INTEGER);
+INSERT INTO employees VALUES
+  (1,'Solo','Ops',50000),(2,'Twin1','QA',60000),(3,'Twin2','QA',60000);`,
+        expected: { columns: ["employee", "department"], rows: [] },
+      },
+    ],
+  },
+
 };
 
 // ----------------------------------------------------------------
@@ -5050,25 +5585,25 @@ window.PRACTICE_SETS = {
   PS2B: { module: "M2B", title: "Practice Set 2b — Linked Lists, Math & Bits",
           qids: ["F75", "F76", "F77", "F78", "F79", "F80", "F81", "F82"] },
   PS3: { module: "M3", title: "Practice Set 3 — Arrays & Windows, Advanced",
-         qids: ["F01", "F02", "F03", "F04", "F05", "F06"] },
+         qids: ["F01", "F02", "F03", "F04", "F05", "F06", "F84", "F85", "F87"] },
   PS4: { module: "M4", title: "Practice Set 4 — Hash Maps, Sets & Counting",
          qids: ["F07", "F08", "F09", "F10"] },
   PS5: { module: "M5", title: "Practice Set 5 — Recursion & Backtracking",
-         qids: ["F11", "F12", "F13", "F14", "F15"] },
+         qids: ["F11", "F12", "F13", "F14", "F15", "F86"] },
   PS6: { module: "M6", title: "Practice Set 6 — Binary Search Mastery",
          qids: ["F16", "F17", "F18", "F19", "F20"] },
   PS7: { module: "M7", title: "Practice Set 7 — Trees Deep Dive",
          qids: ["F21", "F22", "F23", "F24", "F25"] },
   PS8: { module: "M8", title: "Practice Set 8 — Graphs Deep Dive",
-         qids: ["F26", "F27", "F28", "F29", "F30"] },
+         qids: ["F26", "F27", "F28", "F29", "F30", "F83"] },
   PS9: { module: "M9", title: "Practice Set 9 — Dynamic Programming",
          qids: ["F31", "F32", "F33", "F34", "F35", "F36"] },
   PS10: { module: "M10", title: "Practice Set 10 — Greedy & Intervals",
-          qids: ["F37", "F38", "F39", "F40", "F41"] },
+          qids: ["F37", "F38", "F39", "F40", "F41", "F88"] },
   PS11: { module: "M11", title: "Practice Set 11 — Heaps & Priority Queues",
           qids: ["F42", "F43", "F44", "F45"] },
   PS12: { module: "M12", title: "Practice Set 12 — SQL Deep Dive",
-          qids: ["F46", "F47", "F48", "F49", "F50", "F51"] },
+          qids: ["F46", "F47", "F48", "F49", "F50", "F51", "F89", "F90"] },
   PS13: { module: "M13", title: "Practice Set 13 — Database Design & Indexes",
           qids: ["F52", "F53", "F54", "F55"] },
   PS14: { module: "M14", title: "Practice Set 14 — OOP & Design Patterns",
@@ -5100,4 +5635,8 @@ window.FINAL_EXAM_POOL = [
   "F73", "F74",
   // Linked lists, math & bits (M2b)
   "F75", "F76", "F77", "F78", "F79", "F80", "F81", "F82",
+  // Coverage patch — matrix, subsets, parsing, insert-interval (algo stratum)
+  "F83", "F84", "F85", "F86", "F87", "F88",
+  // Coverage patch — SQL stratum
+  "F89", "F90",
 ];

@@ -175,17 +175,23 @@ switch ($action) {
         $snapshot = clean_snapshot($body["data"] ?? null);
         $pdo = db();
         $now = now_iso();
-        $pdo->beginTransaction();
+        // BEGIN IMMEDIATE takes the write lock up front so concurrent workers
+        // queue on busy_timeout instead of failing with "database is locked"
+        // (a DEFERRED read->write upgrade returns SQLITE_BUSY immediately).
+        $pdo->exec("BEGIN IMMEDIATE");
         try {
-            if (!empty($body["stashFirst"])) {
-                $existing = current_kv($pdo);
-                // Only stash when we're about to overwrite something different.
-                if ($existing && $existing != $snapshot) {
-                    insert_stash($pdo, $existing, (string)($body["reason"] ?? "replaced-by-save"));
-                }
+            $existing = current_kv($pdo);
+            // Safety net: an empty snapshot overwriting a non-empty journey is
+            // almost always an accident (cleared site data in an open tab, a
+            // broken client) — keep a copy even when the client didn't ask.
+            $autoStash = !$snapshot && $existing && empty($body["stashFirst"]);
+            if ($existing && $existing != $snapshot && (!empty($body["stashFirst"]) || $autoStash)) {
+                insert_stash($pdo, $existing,
+                    $autoStash ? "auto-stash-empty-overwrite"
+                               : (string)($body["reason"] ?? "replaced-by-save"));
             }
             $del = $pdo->prepare("DELETE FROM journey_kv WHERE key = ?");
-            foreach (array_keys(current_kv($pdo)) as $k) {
+            foreach (array_keys($existing) as $k) {
                 if (!array_key_exists($k, $snapshot)) $del->execute([$k]);
             }
             $up = $pdo->prepare(
@@ -198,9 +204,9 @@ switch ($action) {
             $pdo->prepare("INSERT INTO journey_meta (key, value) VALUES ('saved_at', ?)
                            ON CONFLICT(key) DO UPDATE SET value = excluded.value")
                 ->execute([$now]);
-            $pdo->commit();
+            $pdo->exec("COMMIT");
         } catch (Throwable $e) {
-            $pdo->rollBack();
+            try { $pdo->exec("ROLLBACK"); } catch (Throwable $_) {}
             fail(500, "save failed: " . $e->getMessage());
         }
         echo json_encode([

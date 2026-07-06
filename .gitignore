@@ -3,3 +3,4 @@ others/
 journey.sqlite*
 .claude
 __pycache__/
+__probe.html
