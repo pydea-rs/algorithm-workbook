@@ -910,6 +910,128 @@
         }
         .history-line strong { color: var(--primary); }
 
+        /* ---------- Records (attempt history) ---------- */
+        .records-btn {
+            position: fixed;
+            top: 16px;
+            right: 16px;
+            z-index: 900;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            color: var(--primary);
+            font-weight: 700;
+            font-size: 0.85rem;
+            padding: 8px 14px;
+            border-radius: 999px;
+            cursor: pointer;
+            box-shadow: var(--shadow);
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+        .records-btn:hover { transform: translateY(-1px); box-shadow: var(--shadow-lg); }
+        .records-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            background: rgba(44, 62, 80, 0.45);
+            backdrop-filter: blur(3px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .records-panel {
+            background: var(--card-bg);
+            border-radius: 20px;
+            box-shadow: var(--shadow-lg);
+            width: 100%;
+            max-width: 640px;
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .records-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 22px;
+            border-bottom: 1px solid var(--border);
+        }
+        .records-head h3 { font-size: 1.05rem; color: var(--text); }
+        .records-close {
+            background: none;
+            border: none;
+            font-size: 1.6rem;
+            line-height: 1;
+            color: var(--text-light);
+            cursor: pointer;
+            padding: 0 4px;
+        }
+        .records-close:hover { color: var(--danger); }
+        .records-body { padding: 18px 22px; overflow-y: auto; }
+        .records-summary {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+        .records-summary .rs-cell {
+            text-align: center;
+            padding: 10px 6px;
+            background: var(--bg);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+        .records-summary .rs-val { font-size: 1.25rem; font-weight: 800; color: var(--primary); }
+        .records-summary .rs-lbl { font-size: 0.7rem; color: var(--text-light); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .records-chart {
+            display: flex;
+            align-items: flex-end;
+            gap: 4px;
+            height: 90px;
+            padding: 10px 12px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            margin-bottom: 16px;
+        }
+        .records-chart .rc-bar {
+            flex: 1;
+            min-width: 6px;
+            max-width: 28px;
+            border-radius: 4px 4px 0 0;
+            opacity: 0.85;
+        }
+        .record-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            padding: 12px 14px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            margin-bottom: 10px;
+            background: var(--card-bg);
+        }
+        .record-row .rr-score { font-weight: 800; font-size: 1.05rem; min-width: 62px; }
+        .record-row .rr-delta { font-size: 0.78rem; font-weight: 700; }
+        .record-row .rr-time { font-size: 0.8rem; color: var(--text-light); }
+        .record-row .rr-date { font-size: 0.8rem; color: var(--text-light); margin-left: auto; }
+        .record-cats { display: flex; flex-wrap: wrap; gap: 6px; width: 100%; margin-top: 6px; }
+        .record-cats .rc-chip {
+            font-size: 0.72rem;
+            padding: 3px 8px;
+            border-radius: 999px;
+            background: var(--accent-light);
+            color: var(--primary);
+            font-weight: 600;
+        }
+        .records-empty { text-align: center; color: var(--text-light); padding: 30px 10px; font-size: 0.95rem; line-height: 1.6; }
+        @media (max-width: 560px) {
+            .records-summary { grid-template-columns: repeat(2, 1fr); }
+            .records-btn { top: 10px; right: 10px; padding: 7px 11px; font-size: 0.8rem; }
+        }
+
         .review-item { cursor: pointer; }
 
         .btn:focus-visible, .option:focus-visible, .shape-option:focus-visible, .q-dot:focus-visible {
@@ -938,10 +1060,12 @@
             .options-grid { grid-template-columns: repeat(2, 1fr); }
         }
     </style>
+    <script src="../../sync.js"></script>
 </head>
 <body>
     <div class="bg-decoration"></div>
     <div class="confetti-container" id="confettiContainer"></div>
+    <button class="records-btn" id="recordsBtn" onclick="openRecords()" title="Your past logic-test results">📊 Records</button>
     <div class="container">
         <div class="header" id="header" style="display:none;">
             <div class="header-brand">
@@ -1052,6 +1176,17 @@
             </div>
 
             <div class="review-section" id="reviewSection"></div>
+        </div>
+    </div>
+
+    <!-- Records overlay: past attempt results & analysis -->
+    <div class="records-overlay hidden" id="recordsOverlay">
+        <div class="records-panel">
+            <div class="records-head">
+                <h3>📊 My Logic-Test Records</h3>
+                <button class="records-close" onclick="closeRecords()" aria-label="Close">&times;</button>
+            </div>
+            <div class="records-body" id="recordsBody"></div>
         </div>
     </div>
 
@@ -1356,6 +1491,79 @@
         }
 
         // ============================
+        // RECORDS (attempt history viewer)
+        // ============================
+        function openRecords() {
+            renderRecords();
+            document.getElementById('recordsOverlay').classList.remove('hidden');
+        }
+        function closeRecords() {
+            document.getElementById('recordsOverlay').classList.add('hidden');
+        }
+        function recordsOpen() {
+            return !document.getElementById('recordsOverlay').classList.contains('hidden');
+        }
+        document.getElementById('recordsOverlay').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) closeRecords();
+        });
+        function attemptPct(a) {
+            return typeof a.pct === 'number' ? a.pct : Math.round(a.score * 100 / Math.max(1, a.total));
+        }
+        function pctColor(p) {
+            return p >= 70 ? 'var(--success)' : p >= 50 ? 'var(--warning)' : 'var(--danger)';
+        }
+        function renderRecords() {
+            const body = document.getElementById('recordsBody');
+            const h = loadHistory();
+            if (!h.length) {
+                body.innerHTML = '<div class="records-empty">No attempts recorded yet.<br>' +
+                    'Finish a test and it will appear here — score, accuracy, time used and per-category breakdown.</div>';
+                return;
+            }
+            const best = h.reduce((m, a) => (a.score > m.score ? a : m), h[0]);
+            const avg = Math.round(h.reduce((s, a) => s + attemptPct(a), 0) / h.length);
+            const last = h[h.length - 1];
+            let html = `
+                <div class="records-summary">
+                    <div class="rs-cell"><div class="rs-val">${h.length}</div><div class="rs-lbl">Attempts</div></div>
+                    <div class="rs-cell"><div class="rs-val">${best.score}/${best.total}</div><div class="rs-lbl">Best</div></div>
+                    <div class="rs-cell"><div class="rs-val">${avg}%</div><div class="rs-lbl">Average</div></div>
+                    <div class="rs-cell"><div class="rs-val">${attemptPct(last)}%</div><div class="rs-lbl">Latest</div></div>
+                </div>`;
+            if (h.length > 1) {
+                html += '<div class="records-chart" title="Accuracy per attempt (oldest → newest)">' +
+                    h.map(a => {
+                        const p = attemptPct(a);
+                        return `<div class="rc-bar" style="height:${Math.max(6, p)}%;background:${pctColor(p)}" title="${p}%"></div>`;
+                    }).join('') + '</div>';
+            }
+            html += h.slice().reverse().map((a, ri) => {
+                const i = h.length - 1 - ri; // chronological index
+                const p = attemptPct(a);
+                const prev = i > 0 ? attemptPct(h[i - 1]) : null;
+                const delta = prev === null ? '' :
+                    p > prev ? `<span class="rr-delta" style="color:var(--success)">▲ +${p - prev}%</span>` :
+                    p < prev ? `<span class="rr-delta" style="color:var(--danger)">▼ ${p - prev}%</span>` :
+                               `<span class="rr-delta" style="color:var(--text-light)">＝ same</span>`;
+                const when = a.date
+                    ? new Date(a.date).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+                    : '—';
+                const cats = a.byCat
+                    ? '<div class="record-cats">' + Object.keys(a.byCat).map(c =>
+                        `<span class="rc-chip">${c} ${a.byCat[c][0]}/${a.byCat[c][1]}</span>`).join('') + '</div>'
+                    : '';
+                return `<div class="record-row">
+                    <span class="rr-score" style="color:${pctColor(p)}">${a.score}/${a.total}</span>
+                    ${delta}
+                    <span class="rr-time">⏱ ${typeof a.timeUsed === 'number' ? fmtTime(a.timeUsed) : '—'}</span>
+                    <span class="rr-date">#${i + 1} · ${when}</span>
+                    ${cats}
+                </div>`;
+            }).join('');
+            body.innerHTML = html;
+        }
+
+        // ============================
         // UTILITIES
         // ============================
         function shuffleArray(array) {
@@ -1397,6 +1605,8 @@
             flagged = new Array(questions.length).fill(false);
 
             document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('recordsBtn').classList.add('hidden'); // no distractions mid-test
+            closeRecords();
             document.getElementById('header').style.display = 'flex';
             document.getElementById('progressBar').style.display = 'block';
             document.getElementById('questionCard').style.display = 'block';
@@ -1678,6 +1888,7 @@
         function endTest() {
             testEnded = true;
             clearInterval(timerInterval);
+            document.getElementById('recordsBtn').classList.remove('hidden');
             document.getElementById('header').style.display = 'none';
             document.getElementById('progressBar').style.display = 'none';
             document.getElementById('questionCard').style.display = 'none';
@@ -1717,11 +1928,18 @@
                 scoreCircle.textContent = `${shown}/${questions.length}`;
             }, 45);
 
+            const skippedCount = answers.filter(a => a === null).length;
+            const wrongCount = questions.length - score - skippedCount;
+            const byCat = {};
+            for (const cat in totalByCat) byCat[cat] = [correctByCat[cat] || 0, totalByCat[cat]];
             saveAttempt({
                 score,
                 total: questions.length,
                 pct,
                 timeUsed,
+                wrong: wrongCount,
+                skipped: skippedCount,
+                byCat,
                 date: new Date().toISOString(),
             });
 
@@ -1734,8 +1952,6 @@
             document.getElementById('scoreMessage').textContent = `You scored ${score} out of ${questions.length}`;
             document.getElementById('scoreDetail').textContent = msg;
 
-            const wrongCount = questions.length - score - answers.filter(a => a === null).length;
-            const skippedCount = answers.filter(a => a === null).length;
             document.getElementById('correctCount').textContent = score;
             document.getElementById('wrongCount').textContent = wrongCount;
             document.getElementById('skippedCountResult').textContent = skippedCount;
@@ -1805,6 +2021,11 @@
         // KEYBOARD SHORTCUTS
         // ============================
         document.addEventListener('keydown', (e) => {
+            if (recordsOpen()) {
+                if (e.key === 'Escape') closeRecords();
+                return; // swallow shortcuts (esp. Enter-to-start) while the overlay is up
+            }
+
             if (document.getElementById('startScreen').classList.contains('hidden') === false) {
                 if (e.key === 'Enter') startTest();
                 return;

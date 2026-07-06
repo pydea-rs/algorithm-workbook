@@ -263,8 +263,17 @@
   function recordExamSession(record) {
     state.examHistory.sessions = state.examHistory.sessions || [];
     state.examHistory.sessions.push(record);
-    if (state.examHistory.sessions.length > 20) {
-      state.examHistory.sessions = state.examHistory.sessions.slice(-20);
+    // Cap history per exam mode (20 each) so a streak of missed-exam runs
+    // can't silently evict the final-exam attempts, or vice versa.
+    const byMode = {};
+    state.examHistory.sessions.forEach((s) => {
+      const m = s.mode || "final";
+      (byMode[m] = byMode[m] || []).push(s);
+    });
+    if (Object.values(byMode).some((list) => list.length > 20)) {
+      const keep = new Set();
+      Object.values(byMode).forEach((list) => list.slice(-20).forEach((s) => keep.add(s)));
+      state.examHistory.sessions = state.examHistory.sessions.filter((s) => keep.has(s));
     }
     saveJSON(EXAM_HISTORY_KEY, state.examHistory);
   }
@@ -977,11 +986,26 @@ learning's sake but score honestly.</p>
     // statement is your only clue — exactly like the missed exam and the
     // real interview. A per-card reveal shows it on demand.
     const bar = el("div", { class: "missed-bar" });
-    bar.appendChild(el("div", {
+    const barText = el("div", {
       class: "missed-bar-text",
       html: `<strong>${missed.length}</strong> question${missed.length === 1 ? "" : "s"} in the queue.
              Module origins are hidden — recognising the pattern is the exercise.`,
-    }));
+    });
+    bar.appendChild(barText);
+    // Keep the header honest as items are un-flagged; when the last one goes,
+    // re-render so the empty state (not a dead-end exam CTA) takes over.
+    function refreshAfterRemoval() {
+      const v = state.activeView;
+      const stillHere = v && v.kind === "remember" && v.id === "missed";
+      const left = state.remember.missed.length;
+      if (left === 0) {
+        if (stillHere) navigate("remember", "missed");
+        return;
+      }
+      barText.innerHTML =
+        `<strong>${left}</strong> question${left === 1 ? "" : "s"} in the queue.
+             Module origins are hidden — recognising the pattern is the exercise.`;
+    }
     bar.appendChild(el("button", {
       class: "btn primary small",
       text: "⚑ Take the Missed-Questions Exam",
@@ -998,7 +1022,7 @@ learning's sake but score honestly.</p>
           el("p", { text: `Question ${qid} no longer exists in the bank.` }),
           el("button", {
             class: "btn ghost small", text: "Remove from list",
-            onclick: () => { toggleMissed(qid); item.remove(); },
+            onclick: () => { toggleMissed(qid); item.remove(); refreshAfterRemoval(); },
           }),
         ]));
         wrap.appendChild(item);
@@ -1033,7 +1057,9 @@ learning's sake but score honestly.</p>
         onMissedToggle: (nowMissed) => {
           if (!nowMissed) {
             item.classList.add("leaving-item");
-            setTimeout(() => item.remove(), 260);
+            setTimeout(() => { item.remove(); refreshAfterRemoval(); }, 260);
+          } else {
+            refreshAfterRemoval(); // re-flagged mid-animation — just fix the count
           }
         },
       }));
@@ -1395,9 +1421,18 @@ the goal for interview eve.</p>
     m.classList.remove("hidden");
     setTimeout(() => $("#cap-title").focus(), 50);
   }
-  function closeCapture() {
+  function captureDirty() {
+    if (captureMode === "link") {
+      return $("#cap-title").value.trim() !== "" || $("#cap-url").value.trim() !== "";
+    }
+    return $("#cap-title").value.trim() !== "" || $("#cap-desc").value.trim() !== "";
+  }
+  function closeCapture(force) {
     const m = $("#capture-modal");
     if (m.classList.contains("hidden")) return;
+    // Escape / backdrop / Cancel with typed content: don't silently eat the note.
+    if (force !== true && captureDirty() &&
+        !confirm("Discard what you've typed here?")) return;
     if (document.body.dataset.motion === "reduced") {
       m.classList.add("hidden");
       return;
@@ -1425,6 +1460,9 @@ the goal for interview eve.</p>
       try { parsed = new URL(url); } catch (_) {
         showCaptureError("That doesn't look like a valid URL."); return;
       }
+      if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+        showCaptureError("Only http(s) links can be saved."); return;
+      }
       addLink(title || parsed.hostname.replace(/^www\./, ""), url);
       toast("Link saved to the Link Box.", "good");
     } else {
@@ -1434,7 +1472,7 @@ the goal for interview eve.</p>
       addNote(title, desc, $("#cap-meta").value.trim());
       toast("Note saved to My Notes.", "good");
     }
-    closeCapture();
+    closeCapture(true); // content was saved — skip the discard guard
     // If the matching Remembrance view is open, refresh it so the item appears.
     const v = state.activeView;
     if (v && v.kind === "remember" &&

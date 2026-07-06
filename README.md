@@ -74,6 +74,23 @@ The workbook is designed to work in two environments and auto-detects which one 
 The front-end tries `list.php` first; if the response isn't JSON, it falls back to the static
 manifest. That means one codebase supports both modes without any config switch.
 
+### Journey backup — PHP mode only
+
+Under `php -S`, `sync.js` + `sync.php` mirror every `odoo_*` localStorage key into a local
+SQLite file (`journey.sqlite`, git-ignored), so progress, drafts, notes and history survive
+browser and device switches:
+
+- On page load the browser is hydrated from SQLite **before** the apps read localStorage.
+  An empty database is seeded *from* localStorage first, never the other way around — an
+  old journey can't be wiped by a fresh DB.
+- Auto-backup every 45 s (only when something changed) plus on tab hide/close; a manual
+  **Save journey** button appears in the tutorials' settings modal.
+- Logic-test results are additionally archived append-only in a `logic_attempts` table,
+  and any snapshot about to be overwritten is kept in `journey_stash` — nothing is lost.
+
+On GitHub Pages or the Python server, `sync.js` detects that `sync.php` isn't executed and
+stays dormant — both static modes behave exactly as before.
+
 ## Interactive tutorials
 
 ### Algorithms masterclass — `tutorials/algorithms/`
