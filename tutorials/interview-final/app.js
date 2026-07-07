@@ -95,6 +95,15 @@
     saveRemember();
     updateRememberNavCounts();
   }
+  function updateNote(id, title, desc, meta) {
+    const n = state.remember.notes.find((x) => x.id === id);
+    if (!n) return;
+    n.title = title;
+    n.desc = desc;
+    n.meta = meta || "";
+    n.edited = new Date().toISOString();
+    saveRemember();
+  }
 
   function loadJSON(key, fallback) {
     try {
@@ -316,6 +325,21 @@
       else node.appendChild(c);
     }
     return node;
+  }
+
+  const ACTION_ICONS = {
+    x: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>',
+    edit: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>',
+  };
+  // Small square icon button (used for Edit / Remove on saved cards).
+  function iconBtn(kind, label, onclick) {
+    return el("button", {
+      class: "icon-action" + (kind === "x" ? " danger" : ""),
+      html: ACTION_ICONS[kind],
+      title: label,
+      "aria-label": label,
+      onclick,
+    });
   }
 
   function escapeHtml(s) {
@@ -1329,14 +1353,10 @@ the goal for interview eve.</p>
         text: new Date(l.date).toLocaleDateString(),
         title: new Date(l.date).toLocaleString(),
       }));
-      side.appendChild(el("button", {
-        class: "btn ghost small",
-        text: "Remove",
-        onclick: () => {
-          removeLink(l.id);
-          item.classList.add("leaving-item");
-          setTimeout(() => item.remove(), 260);
-        },
+      side.appendChild(iconBtn("x", "Remove link", () => {
+        removeLink(l.id);
+        item.classList.add("leaving-item");
+        setTimeout(() => item.remove(), 260);
       }));
       item.appendChild(side);
       wrap.appendChild(item);
@@ -1378,23 +1398,23 @@ the goal for interview eve.</p>
       head.appendChild(el("div", { class: "spacer" }));
       head.appendChild(el("span", {
         class: "link-date",
-        text: new Date(n.date).toLocaleDateString(),
-        title: new Date(n.date).toLocaleString(),
+        text: new Date(n.edited || n.date).toLocaleDateString(),
+        title: (n.edited ? "Edited " : "Saved ") + new Date(n.edited || n.date).toLocaleString(),
       }));
-      head.appendChild(el("button", {
-        class: "btn ghost small",
-        text: "Remove",
-        onclick: () => {
-          removeNote(n.id);
-          item.classList.add("leaving-item");
-          setTimeout(() => item.remove(), 260);
-        },
+      head.appendChild(iconBtn("edit", "Edit note", () => openCapture("note", n)));
+      head.appendChild(iconBtn("x", "Remove note", () => {
+        removeNote(n.id);
+        item.classList.add("leaving-item");
+        setTimeout(() => item.remove(), 260);
       }));
       item.appendChild(head);
       item.appendChild(el("div", { class: "note-desc", text: n.desc }));
       if (n.meta) {
         item.appendChild(el("div", { class: "note-meta" }, [
-          el("span", { class: "tag", text: n.meta }),
+          el("span", {
+            class: "tag" + (/\n/.test(n.meta) ? " tag-block" : ""),
+            text: n.meta,
+          }),
         ]));
       }
       wrap.appendChild(item);
@@ -1405,16 +1425,30 @@ the goal for interview eve.</p>
 
   // ---------------- Capture modal (links + notes) ----------------
   let captureMode = "link";
-  function openCapture(mode) {
+  let captureEditId = null;   // set when editing an existing note
+  let captureBaseline = "";   // field snapshot at open, for the discard guard
+  function captureSnapshot() {
+    return captureMode === "link"
+      ? $("#cap-title").value + " " + $("#cap-url").value
+      : $("#cap-title").value + " " + $("#cap-desc").value + " " + $("#cap-meta").value;
+  }
+  // editItem (a note object) opens the modal in edit mode; omit it to add fresh.
+  function openCapture(mode, editItem) {
     captureMode = mode;
-    $("#capture-title").textContent = mode === "link" ? "Save a link" : "Add a note";
+    captureEditId = editItem ? editItem.id : null;
+    const editing = !!editItem;
+    $("#capture-title").textContent = mode === "link"
+      ? "Save a link"
+      : (editing ? "Edit note" : "Add a note");
+    $("#cap-save").textContent = editing ? "Save changes" : "Save";
     $("#cap-url-row").classList.toggle("hidden", mode !== "link");
     $("#cap-desc-row").classList.toggle("hidden", mode !== "note");
     $("#cap-meta-row").classList.toggle("hidden", mode !== "note");
-    $("#cap-title").value = "";
+    $("#cap-title").value = editItem ? (editItem.title || "") : "";
     $("#cap-url").value = "";
-    $("#cap-desc").value = "";
-    $("#cap-meta").value = "";
+    $("#cap-desc").value = editItem ? (editItem.desc || "") : "";
+    $("#cap-meta").value = editItem ? (editItem.meta || "") : "";
+    captureBaseline = captureSnapshot();
     hideCaptureError();
     const m = $("#capture-modal");
     m.classList.remove("closing");
@@ -1422,10 +1456,7 @@ the goal for interview eve.</p>
     setTimeout(() => $("#cap-title").focus(), 50);
   }
   function captureDirty() {
-    if (captureMode === "link") {
-      return $("#cap-title").value.trim() !== "" || $("#cap-url").value.trim() !== "";
-    }
-    return $("#cap-title").value.trim() !== "" || $("#cap-desc").value.trim() !== "";
+    return captureSnapshot() !== captureBaseline;
   }
   function closeCapture(force) {
     const m = $("#capture-modal");
@@ -1469,8 +1500,14 @@ the goal for interview eve.</p>
       const desc = $("#cap-desc").value.trim();
       if (!title) { showCaptureError("A title is required."); return; }
       if (!desc) { showCaptureError("The description is the note — write a line or two."); return; }
-      addNote(title, desc, $("#cap-meta").value.trim());
-      toast("Note saved to My Notes.", "good");
+      const meta = $("#cap-meta").value.trim();
+      if (captureEditId) {
+        updateNote(captureEditId, title, desc, meta);
+        toast("Note updated.", "good");
+      } else {
+        addNote(title, desc, meta);
+        toast("Note saved to My Notes.", "good");
+      }
     }
     closeCapture(true); // content was saved — skip the discard guard
     // If the matching Remembrance view is open, refresh it so the item appears.
@@ -1488,8 +1525,9 @@ the goal for interview eve.</p>
     $$("#capture-modal [data-close-capture]").forEach((b) =>
       b.addEventListener("click", closeCapture)
     );
-    // Enter in the single-line fields saves (textarea keeps Enter for newlines).
-    ["cap-title", "cap-url", "cap-meta"].forEach((fid) => {
+    // Enter in the single-line fields saves; the desc and meta textareas keep
+    // Enter for newlines (meta can hold a short code snippet now).
+    ["cap-title", "cap-url"].forEach((fid) => {
       document.getElementById(fid).addEventListener("keydown", (e) => {
         if (e.key === "Enter") { e.preventDefault(); saveCapture(); }
       });

@@ -2313,6 +2313,39 @@ body[data-motion="reduced"] .click-pulse { display: none; }
   line-height: 1.65;
 }
 .note-meta { margin-top: 10px; }
+/* Multi-line metadata (e.g. a code snippet): keep the pill look but let it wrap
+   and preserve newlines, softening the radius so a tall box doesn't read as a
+   stadium. Single-line meta is untouched. */
+.note-meta .tag-block {
+  display: block;
+  white-space: pre-wrap;
+  word-break: break-word;
+  border-radius: 8px;
+  padding: 8px 10px;
+  line-height: 1.5;
+  font-family: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+
+/* Small square icon button for Edit / Remove on saved link & note cards. */
+.icon-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  flex-shrink: 0;
+  background: transparent;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+  color: var(--text-mute);
+  cursor: pointer;
+  transition: background-color var(--t-fast), color var(--t-fast), border-color var(--t-fast);
+}
+.icon-action svg { display: block; }
+.icon-action:hover { background: var(--bg-2); color: var(--text); border-color: var(--border); }
+.icon-action:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--accent-soft); border-color: var(--accent); }
+.icon-action.danger:hover { color: var(--bad); border-color: rgba(248, 113, 113, 0.4); }
 
 /* ---- capture modal fields ---- */
 .capture-body .field { margin-bottom: 14px; }
