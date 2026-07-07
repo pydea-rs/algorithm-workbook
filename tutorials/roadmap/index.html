@@ -89,7 +89,8 @@
     /* ---------- rules & rhythm ---------- */
     h2.section { margin: 36px 0 14px; font-size: 1.25rem; }
     h2.section small { color: var(--text-light); font-weight: 400; font-size: 0.85rem; margin-left: 8px; }
-    .rules { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+    /* align-items:start — cards size to their own content instead of stretching to the tallest sibling */
+    .rules { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; align-items: start; }
     .rule {
         background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px;
         padding: 14px 16px; box-shadow: var(--shadow); font-size: 0.92rem;
@@ -175,6 +176,7 @@
     .cat-code  { background: var(--accent); }
     .cat-logic { background: var(--warning); }
     .cat-prep  { background: var(--success); }
+    .cat-api   { background: #b45ad6; }
     .day-note {
         margin-top: 10px; padding: 10px 14px; border-left: 3px solid var(--warning);
         background: rgba(243,156,18,0.08); border-radius: 0 9px 9px 0; font-size: 0.87rem;
@@ -286,88 +288,85 @@ const PLAN = [
     ],
 },
 {
-    date: "2026-07-06", dow: "Mon", title: "Pointers, Numbers & Windows",
-    theme: "The stage-1 gap patch (linked lists, math, bits) plus advanced array technique.",
+    date: "2026-07-06", dow: "Mon", title: "Warm-up & Craft — done here ✔",
+    theme: "Day 1 slipped into today and got finished (ticked under the Sunday card). Its own content moves forward — nothing is skipped, the week below absorbs it.",
+    tasks: [],
+},
+{
+    date: "2026-07-07", dow: "Tue", title: "Gap Patch & Arrays (catch-up)",
+    theme: "Yesterday's content lands here: the stage-1 gap patch plus advanced arrays. Big day on purpose — it's the catch-up. Logic sim closes the evening.",
     tasks: [
         { cat: "read",  est: 60,  label: `<a href="${IF}">Module 2b — Linked Lists, Math &amp; Bit Tricks</a>. Draw the three-pointer surgery on paper at least once.` },
         { cat: "drill", est: 100, label: `Practice Set 2b (8 drills). The linked-list four are the priority — pointer bugs are the classic live-interview time sink.` },
         { cat: "read",  est: 50,  label: `<a href="${IF}">Module 3 — Arrays &amp; Windows, Advanced</a>.` },
-        { cat: "drill", est: 90,  label: `Practice Set 3 (6 drills).` },
-        { cat: "code",  est: 80,  label: `LeetCode: ${lc("reverse-linked-list","Reverse Linked List")} (E), ${lc("linked-list-cycle","Linked List Cycle")} (E), ${lc("longest-substring-without-repeating-characters","Longest Substring Without Repeating Characters")} (M), ${lc("minimum-size-subarray-sum","Minimum Size Subarray Sum")} (M).` },
+        { cat: "drill", est: 120, label: `Practice Set 3 (9 drills — now includes Spiral Matrix, Rotate Image and Basic Calculator II). Covers the LeetCode ground too, so no separate LC block today.` },
+        { cat: "api",   est: 35,  label: `<b>FastAPI book</b>, finish Ch 2 — <b>pp. 29–43</b>: Pydantic validation &amp; errors, defaults/required, JSON parsing, custom responses, <code>HTTPException</code>. Type the HTTPException example yourself, don't just read it.` },
+        { cat: "logic", est: 30,  label: `<a href="${LT}">Logic simulator, attempt 2</a> — end of the day, as planned. Check the new 📊 Records button after: compare per-category vs attempt 1.` },
     ],
 },
 {
-    date: "2026-07-07", dow: "Tue", title: "Hashing & Backtracking",
+    date: "2026-07-08", dow: "Wed", title: "Hashing & Backtracking",
     theme: "The two most-reported Odoo interview topics after arrays.",
     tasks: [
         { cat: "read",  est: 45,  label: `<a href="${IF}">Module 4 — Hash Maps, Sets &amp; Counting</a>.` },
         { cat: "drill", est: 60,  label: `Practice Set 4 (4 drills).` },
         { cat: "read",  est: 50,  label: `<a href="${IF}">Module 5 — Recursion &amp; Backtracking</a>. Be able to write the choose–explore–unchoose skeleton from memory.` },
-        { cat: "drill", est: 85,  label: `Practice Set 5 (5 drills).` },
-        { cat: "code",  est: 90,  label: `LeetCode: ${lc("group-anagrams","Group Anagrams")} (M), ${lc("subarray-sum-equals-k","Subarray Sum Equals K")} (M), ${lc("subsets","Subsets")} (M), ${lc("permutations","Permutations")} (M).` },
-        { cat: "prep",  est: 20,  label: `Evening: re-solve one Day-1 miss from your re-do list, from scratch.` },
+        { cat: "drill", est: 95,  label: `Practice Set 5 (6 drills — now includes Subsets).` },
+        { cat: "code",  est: 70,  label: `LeetCode: ${lc("group-anagrams","Group Anagrams")} (M), ${lc("subarray-sum-equals-k","Subarray Sum Equals K")} (M), ${lc("permutations","Permutations")} (M).` },
+        { cat: "api",   est: 40,  label: `<b>FastAPI book</b>, Ch 3 + §4.1 — <b>pp. 44–59</b>: async/await, <code>async def</code>, SQLAlchemy setup and the CRUD API. Code along with the CRUD example in a scratch venv.` },
+        { cat: "prep",  est: 20,  label: `Evening: re-solve one miss from your ⚑ re-do list, from scratch.` },
     ],
 },
 {
-    date: "2026-07-08", dow: "Wed", title: "Binary Search & Trees",
+    date: "2026-07-09", dow: "Thu", title: "Binary Search & Trees",
     theme: "Invariants and recursion on structure — the topics where narration impresses most.",
     tasks: [
         { cat: "read",  est: 45,  label: `<a href="${IF}">Module 6 — Binary Search Mastery</a>. Own the lo/hi invariant; never debug boundaries by trial and error again.` },
         { cat: "drill", est: 80,  label: `Practice Set 6 (5 drills).` },
         { cat: "read",  est: 50,  label: `<a href="${IF}">Module 7 — Trees Deep Dive</a>.` },
         { cat: "drill", est: 85,  label: `Practice Set 7 (5 drills).` },
-        { cat: "code",  est: 100, label: `LeetCode: ${lc("search-in-rotated-sorted-array","Search in Rotated Sorted Array")} (M), ${lc("find-minimum-in-rotated-sorted-array","Find Minimum in Rotated Sorted Array")} (M), ${lc("binary-tree-level-order-traversal","Binary Tree Level Order Traversal")} (M), ${lc("validate-binary-search-tree","Validate BST")} (M), ${lc("lowest-common-ancestor-of-a-binary-tree","Lowest Common Ancestor")} (M).` },
-        { cat: "logic", est: 30,  label: `<a href="${LT}">Logic simulator, attempt 2</a>. Compare per-category scores with attempt 1 — drill your weakest category's question style.` },
+        { cat: "code",  est: 70,  label: `LeetCode: ${lc("search-in-rotated-sorted-array","Search in Rotated Sorted Array")} (M), ${lc("binary-tree-level-order-traversal","Binary Tree Level Order Traversal")} (M), ${lc("validate-binary-search-tree","Validate BST")} (M).` },
+        { cat: "api",   est: 45,  label: `<b>FastAPI book</b>, §4.2 + §5.1 — <b>pp. 60–74</b>: sessions, transactions, DB error handling, project structure. Then patch the book's gap: <a href="https://fastapi.tiangolo.com/tutorial/bigger-applications/" target="_blank" rel="noopener">APIRouter (Bigger Applications)</a> + <a href="https://fastapi.tiangolo.com/tutorial/response-model/" target="_blank" rel="noopener">response_model</a> — the book never mentions either (~20 min).` },
+        { cat: "logic", est: 30,  label: `<a href="${LT}">Logic simulator, attempt 3</a>. Drill whatever category the 📊 Records trend shows weakest.` },
     ],
 },
 {
-    date: "2026-07-09", dow: "Thu", title: "Graphs & Dynamic Programming",
-    theme: "The heaviest day — schedule it with your best energy, nothing else planned.",
+    date: "2026-07-10", dow: "Fri", title: "Graphs & Dynamic Programming",
+    theme: "The heaviest algorithms day — schedule it with your best energy, nothing else planned.",
     tasks: [
         { cat: "read",  est: 55,  label: `<a href="${IF}">Module 8 — Graphs Deep Dive</a>. BFS/DFS/topological sort as reflexes, grid-as-graph included.` },
-        { cat: "drill", est: 90,  label: `Practice Set 8 (5 drills).` },
+        { cat: "drill", est: 100, label: `Practice Set 8 (6 drills — now includes Number of Islands).` },
         { cat: "read",  est: 55,  label: `<a href="${IF}">Module 9 — Dynamic Programming</a>. For every problem, state the subproblem in one sentence before any code.` },
         { cat: "drill", est: 100, label: `Practice Set 9 (6 drills).` },
-        { cat: "code",  est: 90,  label: `LeetCode: ${lc("number-of-islands","Number of Islands")} (M), ${lc("course-schedule","Course Schedule")} (M), ${lc("house-robber","House Robber")} (M), ${lc("coin-change","Coin Change")} (M).` },
+        { cat: "code",  est: 45,  label: `LeetCode: ${lc("course-schedule","Course Schedule")} (M), ${lc("coin-change","Coin Change")} (M).` },
+        { cat: "api",   est: 45,  label: `<b>FastAPI book</b>, §5.2 + §6.1 — <b>pp. 75–91</b>: security (OAuth2/JWT, CORS, middleware) and microservice principles. The auth flow is the likeliest "small backend task" topic — read it slowly.` },
     ],
 },
 {
-    date: "2026-07-10", dow: "Fri", title: "Greedy, Heaps & SQL",
-    theme: "Close out algorithms, then give SQL the attention a guaranteed interview task deserves.",
+    date: "2026-07-11", dow: "Sat", title: "Algorithms Close-out & SQL Day",
+    theme: "Greedy, heaps, then the SQL deep dive a guaranteed interview task deserves. The week's biggest block — it's the weekend, use it.",
     tasks: [
         { cat: "read",  est: 40,  label: `<a href="${IF}">Module 10 — Greedy &amp; Intervals</a>.` },
-        { cat: "drill", est: 75,  label: `Practice Set 10 (5 drills).` },
+        { cat: "drill", est: 85,  label: `Practice Set 10 (6 drills — now includes Insert Interval).` },
         { cat: "read",  est: 40,  label: `<a href="${IF}">Module 11 — Heaps &amp; Priority Queues</a>.` },
         { cat: "drill", est: 60,  label: `Practice Set 11 (4 drills).` },
         { cat: "read",  est: 50,  label: `<a href="${IF}">Module 12 — SQL Deep Dive</a>. One of your three interview tasks is SQL/DB — this module pays rent.` },
-        { cat: "drill", est: 90,  label: `Practice Set 12 (6 runnable SQL drills).` },
-        { cat: "code",  est: 45,  label: `LeetCode SQL: ${lc("combine-two-tables","Combine Two Tables")} (E), ${lc("department-highest-salary","Department Highest Salary")} (M), ${lc("consecutive-numbers","Consecutive Numbers")} (M).` },
-        { cat: "logic", est: 30,  label: `<a href="${LT}">Logic simulator, attempt 3</a>.` },
+        { cat: "drill", est: 110, label: `Practice Set 12 (8 runnable SQL drills — now includes LEFT-JOIN zero-counts and above-department-average).` },
+        { cat: "api",   est: 55,  label: `<b>FastAPI book</b>, §6.2 + §7.1 — <b>pp. 92–107</b>: Redis/RabbitMQ, API gateway, Gunicorn vs Uvicorn, secure production setup. Then the two doc pages the book skips: <a href="https://fastapi.tiangolo.com/tutorial/dependencies/" target="_blank" rel="noopener">Dependencies (Depends)</a> + <a href="https://fastapi.tiangolo.com/tutorial/testing/" target="_blank" rel="noopener">Testing (TestClient)</a> (~25 min).` },
+        { cat: "prep",  est: 30,  label: `Evening: <b>Missed-Questions Exam</b> in the course — your ⚑ re-do list, dealt cold. Un-flag what's easy now.` },
     ],
 },
 {
-    date: "2026-07-11", dow: "Sat", title: "Design Day + First Mock Exam",
-    theme: "Schema design, OOP and system design — then the first full dress rehearsal.",
+    date: "2026-07-12", dow: "Sun", title: "Design, Dress Rehearsal & Taper",
+    theme: "The slipped day lands here: mock exam in the morning, design content after lunch, book finished, evening guarded. Nothing new after 19:00.",
     tasks: [
+        { cat: "prep",  est: 150, label: `<b>Final Exam, deal #1</b> — morning, best energy. 12 questions (8 algorithm + 4 SQL), global timer on, no notes, treat it as the real thing.` },
+        { cat: "prep",  est: 40,  label: `Review every exam miss; map each to its module and re-read that module's summary now.` },
         { cat: "read",  est: 45,  label: `<a href="${IF}">Module 13 — Database Design &amp; Indexes</a>. Clustered vs non-clustered was asked verbatim in a real Odoo final interview.` },
         { cat: "drill", est: 60,  label: `Practice Set 13 (3 design questions + 1 runnable SQL). Answer the design ones <em>aloud, completely</em> before hitting Reveal.` },
-        { cat: "read",  est: 45,  label: `<a href="${IF}">Module 14 — OOP &amp; Design Patterns</a>.` },
-        { cat: "drill", est: 60,  label: `Practice Set 14 (3 design questions aloud-then-reveal + 2 coding drills).` },
-        { cat: "read",  est: 50,  label: `<a href="${IF}">Module 15 — System Design, Application-Level</a>.` },
-        { cat: "drill", est: 75,  label: `Practice Set 15 (5 questions).` },
-        { cat: "prep",  est: 150, label: `<b>Final Exam, deal #1</b> — 12 questions (8 algorithm + 4 SQL), global timer on, no notes, treat it as the real thing.` },
-        { cat: "prep",  est: 30,  label: `Review every exam miss and write down which module each one maps to — that's tomorrow's review list.` },
-    ],
-},
-{
-    date: "2026-07-12", dow: "Sun", title: "Dress Rehearsal & Taper",
-    theme: "One more mock, patch the weak spots, then deliberately wind down.",
-    tasks: [
-        { cat: "prep",  est: 150, label: `<b>Final Exam, deal #2</b> (it deals different questions). Same conditions as yesterday.` },
-        { cat: "prep",  est: 40,  label: `Review misses. Compare with yesterday's list — repeated module = re-read that module's summary now.` },
-        { cat: "read",  est: 60,  label: `Revisit your two weakest modules (from the exam-miss notes), summaries and callouts only.` },
-        { cat: "code",  est: 40,  label: `At most two LeetCode problems (one M, one E) to stay warm. <em>Do not</em> start a hard-problem spiral today.` },
-        { cat: "logic", est: 30,  label: `<a href="${LT}">Logic simulator, final attempt</a> — target ≥ 22/25 relaxed. You've seen every category now.` },
+        { cat: "read",  est: 30,  label: `<a href="${IF}">Modules 14 &amp; 15 — OOP &amp; System Design</a>, summaries and ★-pinned callouts only. (PS14/PS15 are optional-if-ahead — this interview format leans algorithms + SQL.)` },
+        { cat: "api",   est: 45,  label: `<b>FastAPI book</b>, finish it 🎉 — <b>pp. 108–133</b>: §7.2 Docker/AWS/GCP, Conclusion, then <em>skim</em> Appendices A–E (CLI, env config, common errors, extensions, example project). Appendix C is the one to actually read.` },
+        { cat: "logic", est: 30,  label: `<a href="${LT}">Logic simulator, final attempt</a> (optional if you feel ready) — target ≥ 22/25 relaxed. Real one is tomorrow late morning.` },
         { cat: "prep",  est: 20,  label: `Run Module 2's day-of checklist: mic + webcam via a real Meet test call, IDE font size up, quiet room booked, water, phone silent.` },
         { cat: "prep",  est: 5,   label: `<b>Disable Copilot / ChatGPT / all AI plugins tonight.</b> The recruiter said it plainly: they want to interview you, not a robot.` },
         { cat: "prep",  est: 0,   label: `Early night. Sleep ≥ 8 hours; nothing new after 21:00. The prep is done — trust it.` },
@@ -393,6 +392,18 @@ let state = { tasks: {}, open: {} };
 try { state = Object.assign(state, JSON.parse(localStorage.getItem(KEY) || "{}")); } catch (e) {}
 const save = () => localStorage.setItem(KEY, JSON.stringify(state));
 
+// The plan was rebalanced mid-week (2026-07-07): day-1 ticks are untouched, but any
+// saved tick that no longer points at an existing task is dropped so the counts and
+// the overall percentage stay truthful (the cleaned state syncs to SQLite as usual).
+{
+    let pruned = false;
+    for (const k of Object.keys(state.tasks)) {
+        const [di, ti] = k.split("-").map(Number);
+        if (!PLAN[di] || !PLAN[di].tasks[ti]) { delete state.tasks[k]; pruned = true; }
+    }
+    if (pruned) save();
+}
+
 const todayStr = () => {
     const n = new Date();
     return n.getFullYear() + "-" + String(n.getMonth() + 1).padStart(2, "0") + "-" + String(n.getDate()).padStart(2, "0");
@@ -406,7 +417,7 @@ function fmtEst(mins) {
     const h = Math.floor(mins / 60), m = mins % 60;
     return h + "h" + (m ? String(m).padStart(2, "0") : "");
 }
-const CAT_LABEL = { read: "Read", drill: "Drill", code: "Code", logic: "Logic", prep: "Prep" };
+const CAT_LABEL = { read: "Read", drill: "Drill", code: "Code", logic: "Logic", prep: "Prep", api: "API" };
 
 function render() {
     const tstr = todayStr();
@@ -432,8 +443,8 @@ function render() {
                     <span>${day.theme}</span>
                 </div>
                 <div class="day-meta">
-                    <div class="pct">${pct}%</div>
-                    <div class="est">${done}/${total} · ~${fmtEst(est)}</div>
+                    <div class="pct">${total ? pct + "%" : "✔"}</div>
+                    <div class="est">${total ? `${done}/${total} · ~${fmtEst(est)}` : "moved forward"}</div>
                 </div>
                 <div class="chev">▶</div>
             </div>
@@ -460,7 +471,7 @@ function render() {
         if (day.date === "2026-07-12") {
             const note = document.createElement("div");
             note.className = "day-note";
-            note.innerHTML = "⚠️ <b>Taper day.</b> The goal today is confidence, not coverage. Under-doing it is correct.";
+            note.innerHTML = "⚠️ <b>Guard the evening.</b> Mock and design content in daylight, nothing new after 19:00 — tonight, confidence beats coverage.";
             body.appendChild(note);
         }
         card.querySelector(".day-head").addEventListener("click", (e) => {
