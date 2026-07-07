@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Syntax Quick-Ref — Odoo Interview Prep</title>
+<script src="../../sync.js"></script>
+<style>
+/* =========================================================================
+   Syntax Quick-Ref — self-contained last-minute review sheet.
+   Theme system mirrors interview-final (dark | midnight | light + accents).
+   ========================================================================= */
+:root {
+  --bg-0: #0b0f1a; --bg-1: #121826; --bg-2: #1a2236; --bg-3: #232d45;
+  --bg-elev: #1c2438; --border: #2a3550; --border-soft: #1f2840;
+  --text: #e6ecf7; --text-dim: #a4b0c8; --text-mute: #6a7693;
+  --accent: #7c5cff; --accent-2: #4cc9f0;
+  --accent-glow: rgba(124,92,255,0.28); --accent-soft: rgba(124,92,255,0.12);
+  --ok: #34d399; --warn: #facc15; --danger: #f87171;
+  --code-bg: #0d1220; --code-border: #222c44;
+  --hit: rgba(250,204,21,0.28);
+  --radius: 12px; --radius-sm: 8px; --radius-xs: 6px;
+  --shadow: 0 8px 30px rgba(0,0,0,0.35);
+  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+body[data-theme="midnight"] {
+  --bg-0: #060814; --bg-1: #0d1124; --bg-2: #141938; --bg-3: #1e2547;
+  --bg-elev: #161c3a; --border: #283164; --border-soft: #1a2148;
+  --text: #ecf0ff; --text-dim: #9fa9d4; --text-mute: #5e69a0;
+  --code-bg: #080b1c; --code-border: #1c2450;
+}
+body[data-theme="light"] {
+  --bg-0: #f5f7fb; --bg-1: #ffffff; --bg-2: #f1f4fa; --bg-3: #e6ebf3;
+  --bg-elev: #ffffff; --border: #d8dee9; --border-soft: #e7ecf3;
+  --text: #1d2640; --text-dim: #4b5778; --text-mute: #8995b3;
+  --code-bg: #f5f7fb; --code-border: #dde3ee;
+  --hit: rgba(245,158,11,0.30);
+  --shadow: 0 8px 30px rgba(30,40,80,0.10);
+}
+body[data-accent="indigo"]  { --accent:#6366f1; --accent-2:#818cf8; --accent-glow:rgba(99,102,241,0.28); --accent-soft:rgba(99,102,241,0.12); }
+body[data-accent="cyan"]    { --accent:#22d3ee; --accent-2:#38bdf8; --accent-glow:rgba(34,211,238,0.28); --accent-soft:rgba(34,211,238,0.12); }
+body[data-accent="emerald"] { --accent:#10b981; --accent-2:#34d399; --accent-glow:rgba(16,185,129,0.28); --accent-soft:rgba(16,185,129,0.12); }
+body[data-accent="amber"]   { --accent:#f59e0b; --accent-2:#fbbf24; --accent-glow:rgba(245,158,11,0.28); --accent-soft:rgba(245,158,11,0.12); }
+body[data-accent="rose"]    { --accent:#f43f5e; --accent-2:#fb7185; --accent-glow:rgba(244,63,94,0.28); --accent-soft:rgba(244,63,94,0.12); }
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 90px; }
+body {
+  font-family: var(--sans); background: var(--bg-0); color: var(--text);
+  line-height: 1.55; display: grid; grid-template-columns: 250px 1fr;
+  min-height: 100vh;
+}
+body[data-motion="reduced"] * { animation: none !important; transition: none !important; }
+
+/* ---------- sidebar ---------- */
+#sidebar {
+  background: var(--bg-1); border-right: 1px solid var(--border);
+  padding: 20px 16px; position: sticky; top: 0; height: 100vh;
+  overflow-y: auto; display: flex; flex-direction: column; gap: 6px;
+}
+.brand { display: flex; align-items: center; gap: 11px; margin-bottom: 18px; }
+.brand-mark {
+  width: 40px; height: 40px; border-radius: 11px; flex-shrink: 0;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: #fff; font-weight: 800; font-size: 0.95rem;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 16px var(--accent-glow);
+}
+.brand-title { font-weight: 700; font-size: 0.98rem; line-height: 1.1; }
+.brand-sub { font-size: 0.72rem; color: var(--text-mute); }
+.nav-link {
+  display: flex; align-items: center; gap: 10px; padding: 9px 11px;
+  border-radius: var(--radius-sm); color: var(--text-dim); cursor: pointer;
+  font-size: 0.9rem; font-weight: 500; text-decoration: none;
+  border: 1px solid transparent; transition: background 0.15s, color 0.15s;
+}
+.nav-link:hover { background: var(--bg-2); color: var(--text); }
+.nav-link.active { background: var(--accent-soft); color: var(--text); border-color: var(--accent); }
+.nav-link .ni { font-size: 1.05rem; width: 20px; text-align: center; }
+.nav-link .nt { flex: 1; }
+.nav-link .rt {
+  font-size: 0.66rem; color: var(--text-mute); font-variant-numeric: tabular-nums;
+  background: var(--bg-2); border-radius: 20px; padding: 2px 7px;
+}
+.nav-link.active .rt { background: var(--bg-1); color: var(--text-dim); }
+.nav-sep { height: 1px; background: var(--border-soft); margin: 10px 4px; }
+.side-foot { margin-top: auto; padding-top: 14px; font-size: 0.72rem; color: var(--text-mute); }
+.side-foot a { color: var(--accent-2); text-decoration: none; }
+.side-foot a:hover { text-decoration: underline; }
+
+/* ---------- main ---------- */
+#main { min-width: 0; display: flex; flex-direction: column; }
+#topbar {
+  position: sticky; top: 0; z-index: 30; background: color-mix(in srgb, var(--bg-0) 82%, transparent);
+  backdrop-filter: blur(10px); border-bottom: 1px solid var(--border);
+  padding: 12px 26px; display: flex; align-items: center; gap: 14px;
+}
+#menu-toggle {
+  display: none; background: var(--bg-2); border: 1px solid var(--border);
+  color: var(--text); border-radius: var(--radius-sm); width: 38px; height: 38px;
+  font-size: 1.2rem; cursor: pointer; flex-shrink: 0;
+}
+.filter-wrap { position: relative; flex: 1; max-width: 520px; }
+#filter {
+  width: 100%; background: var(--bg-2); border: 1px solid var(--border);
+  color: var(--text); border-radius: 22px; padding: 10px 40px 10px 40px;
+  font-size: 0.9rem; font-family: var(--sans); outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+#filter:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.filter-wrap .fi { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-mute); pointer-events: none; }
+.filter-wrap .fk {
+  position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+  font-family: var(--mono); font-size: 0.7rem; color: var(--text-mute);
+  border: 1px solid var(--border); border-radius: 5px; padding: 1px 6px;
+}
+.filter-wrap.filtering .fk { display: none; }
+#filter-clear {
+  position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+  display: none; background: var(--bg-3); border: none; color: var(--text-dim);
+  width: 22px; height: 22px; border-radius: 50%; cursor: pointer; font-size: 0.9rem;
+}
+.filter-wrap.filtering #filter-clear { display: block; }
+.topbar-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.seg-mini { display: flex; background: var(--bg-2); border: 1px solid var(--border); border-radius: 20px; padding: 2px; }
+.seg-mini button {
+  background: transparent; border: none; color: var(--text-dim); cursor: pointer;
+  font-size: 0.72rem; font-weight: 600; padding: 5px 10px; border-radius: 16px; font-family: var(--sans);
+}
+.seg-mini button.on { background: var(--accent); color: #fff; }
+.acc-dot { width: 18px; height: 18px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; padding: 0; }
+.acc-dot.on { border-color: var(--text); }
+
+#content { padding: 26px 26px 80px; max-width: 1080px; width: 100%; margin: 0 auto; }
+
+/* ---------- hero ---------- */
+.hero {
+  background: linear-gradient(135deg, var(--bg-2), var(--bg-1));
+  border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 26px 28px; margin-bottom: 26px; position: relative; overflow: hidden;
+}
+.hero::after {
+  content: ""; position: absolute; right: -40px; top: -40px; width: 200px; height: 200px;
+  background: radial-gradient(circle, var(--accent-glow), transparent 70%); pointer-events: none;
+}
+.hero h1 { font-size: 1.5rem; letter-spacing: -0.4px; }
+.hero p { color: var(--text-dim); margin-top: 8px; font-size: 0.95rem; max-width: 640px; }
+.hero .badges { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
+.badge {
+  font-size: 0.74rem; font-weight: 600; padding: 5px 11px; border-radius: 20px;
+  background: var(--bg-3); border: 1px solid var(--border); color: var(--text-dim);
+}
+.badge b { color: var(--accent-2); }
+
+/* ---------- section ---------- */
+.sec { margin-bottom: 44px; scroll-margin-top: 84px; }
+.sec-head { display: flex; align-items: center; gap: 12px; margin-bottom: 4px; }
+.sec-head .si { font-size: 1.5rem; }
+.sec-head h2 { font-size: 1.35rem; letter-spacing: -0.3px; }
+.sec-head .rt-pill {
+  margin-left: auto; font-size: 0.72rem; font-weight: 600; color: var(--text-dim);
+  background: var(--bg-2); border: 1px solid var(--border); border-radius: 20px; padding: 4px 11px;
+}
+.sec-sub { color: var(--text-mute); font-size: 0.88rem; margin-bottom: 18px; }
+.sec-sub b { color: var(--text-dim); }
+
+/* ---------- cards ---------- */
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 14px; align-items: start; }
+.card {
+  background: var(--bg-1); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 16px 17px; box-shadow: var(--shadow);
+}
+.card.wide { grid-column: 1 / -1; }
+.card > h3 {
+  font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.6px;
+  color: var(--accent-2); margin-bottom: 11px; display: flex; align-items: center; gap: 8px;
+}
+.card > h3::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
+
+/* reference table */
+table.ref { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+table.ref td { padding: 6px 8px; border-bottom: 1px solid var(--border-soft); vertical-align: top; }
+table.ref tr:last-child td { border-bottom: none; }
+table.ref td:first-child { width: 40%; white-space: nowrap; }
+table.ref td.desc { color: var(--text-dim); }
+table.ref tr:hover td { background: var(--bg-2); }
+code, kbd, .k {
+  font-family: var(--mono); font-size: 0.82em;
+  background: var(--code-bg); border: 1px solid var(--code-border);
+  border-radius: var(--radius-xs); padding: 1px 6px; color: var(--text); white-space: nowrap;
+}
+td.desc code { white-space: normal; }
+.mut { color: var(--text-mute); }
+.tag { display:inline-block; font-size:0.68rem; font-weight:700; padding:1px 7px; border-radius:20px; margin-left:6px; }
+.tag.py { background: rgba(52,211,153,0.15); color: var(--ok); }
+.tag.warn { background: rgba(250,204,21,0.15); color: var(--warn); }
+
+/* code block */
+.cb { position: relative; margin: 4px 0 2px; }
+.cb pre {
+  background: var(--code-bg); border: 1px solid var(--code-border); border-radius: var(--radius-sm);
+  padding: 12px 14px; overflow-x: auto; font-family: var(--mono); font-size: 0.82rem;
+  line-height: 1.5; color: var(--text);
+}
+.cb pre .cm { color: var(--text-mute); font-style: italic; }
+.copy-btn {
+  position: absolute; top: 8px; right: 8px; background: var(--bg-3); border: 1px solid var(--border);
+  color: var(--text-dim); border-radius: var(--radius-xs); padding: 3px 9px; font-size: 0.7rem;
+  cursor: pointer; opacity: 0; transition: opacity 0.15s; font-family: var(--sans);
+}
+.cb:hover .copy-btn { opacity: 1; }
+.copy-btn.done { color: var(--ok); border-color: var(--ok); }
+.note {
+  margin-top: 10px; padding: 9px 12px; border-left: 3px solid var(--warn);
+  background: rgba(250,204,21,0.08); border-radius: 0 var(--radius-xs) var(--radius-xs) 0;
+  font-size: 0.83rem; color: var(--text-dim);
+}
+.note b { color: var(--warn); }
+.note.ok { border-left-color: var(--ok); background: rgba(52,211,153,0.08); }
+.note.ok b { color: var(--ok); }
+
+/* extras / details */
+details.extras {
+  margin-top: 16px; background: var(--bg-1); border: 1px dashed var(--border);
+  border-radius: var(--radius); overflow: hidden;
+}
+details.extras > summary {
+  padding: 13px 17px; cursor: pointer; font-weight: 600; font-size: 0.9rem;
+  color: var(--text-dim); list-style: none; display: flex; align-items: center; gap: 9px;
+  user-select: none;
+}
+details.extras > summary::-webkit-details-marker { display: none; }
+details.extras > summary .chev { transition: transform 0.2s; color: var(--accent); }
+details.extras[open] > summary .chev { transform: rotate(90deg); }
+details.extras > summary .tl { font-size: 0.72rem; color: var(--text-mute); font-weight: 500; margin-left: auto; }
+details.extras .extras-body { padding: 4px 17px 18px; }
+details.extras .grid { margin-top: 4px; }
+
+/* filter states */
+.hit-mark { background: var(--hit); border-radius: 3px; padding: 0 1px; }
+.filtered-out { display: none !important; }
+#no-results {
+  display: none; text-align: center; padding: 50px 20px; color: var(--text-mute);
+}
+#no-results.show { display: block; }
+#no-results .big { font-size: 2rem; margin-bottom: 8px; }
+
+.backtop {
+  position: fixed; bottom: 22px; right: 22px; z-index: 40;
+  width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--border);
+  background: var(--bg-2); color: var(--text); cursor: pointer; font-size: 1.1rem;
+  box-shadow: var(--shadow); opacity: 0; pointer-events: none; transition: opacity 0.2s;
+}
+.backtop.show { opacity: 1; pointer-events: auto; }
+
+/* mobile */
+#scrim { display: none; }
+@media (max-width: 860px) {
+  body { grid-template-columns: 1fr; }
+  #sidebar {
+    position: fixed; left: 0; top: 0; width: 260px; z-index: 60;
+    transform: translateX(-100%); transition: transform 0.25s;
+  }
+  body.nav-open #sidebar { transform: none; }
+  #scrim { display: block; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 55; opacity: 0; pointer-events: none; transition: opacity 0.25s; }
+  body.nav-open #scrim { opacity: 1; pointer-events: auto; }
+  #menu-toggle { display: block; }
+  .topbar-actions .seg-mini[data-role="accent"] { display: none; }
+}
+@media (max-width: 560px) {
+  #content { padding: 18px 14px 70px; }
+  .grid { grid-template-columns: 1fr; }
+  .filter-wrap .fk { display: none; }
+}
+</style>
+</head>
+<body data-theme="dark" data-accent="purple" data-motion="full">
+
+<!-- ===================== SIDEBAR ===================== -->
+<aside id="sidebar">
+  <div class="brand">
+    <div class="brand-mark">&lt;/&gt;</div>
+    <div>
+      <div class="brand-title">Syntax Quick-Ref</div>
+      <div class="brand-sub">Last-minute review</div>
+    </div>
+  </div>
+  <a class="nav-link" href="#regex"><span class="ni">🔍</span><span class="nt">Regex</span><span class="rt">7m</span></a>
+  <a class="nav-link" href="#sql"><span class="ni">🗄️</span><span class="nt">SQL</span><span class="rt">8m</span></a>
+  <a class="nav-link" href="#python"><span class="ni">🐍</span><span class="nt">Python Essentials</span><span class="rt">9m</span></a>
+  <a class="nav-link" href="#patterns"><span class="ni">🧩</span><span class="nt">Algorithm Templates</span><span class="rt">8m</span></a>
+  <a class="nav-link" href="#complexity"><span class="ni">⏱️</span><span class="nt">Complexity &amp; Gotchas</span><span class="rt">4m</span></a>
+  <div class="nav-sep"></div>
+  <div class="side-foot">
+    Part of the <a href="../interview-final/index.html">Interview Prep</a> workbook.<br>
+    <a href="../roadmap/index.html">🗓️ Roadmap</a> · <a href="../logictest/index.html">🧩 Logic sim</a>
+  </div>
+</aside>
+<div id="scrim"></div>
+
+<!-- ===================== MAIN ===================== -->
+<main id="main">
+  <header id="topbar">
+    <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+    <div class="filter-wrap" id="filter-wrap">
+      <span class="fi">🔎</span>
+      <input id="filter" type="text" placeholder="Filter everything — re.findall, LEFT JOIN, deque, bisect…" autocomplete="off" spellcheck="false" />
+      <span class="fk">/</span>
+      <button id="filter-clear" aria-label="Clear filter">&times;</button>
+    </div>
+    <div class="topbar-actions">
+      <div class="seg-mini" data-role="theme" role="radiogroup" aria-label="Theme">
+        <button data-theme-val="dark" title="Dark">Dark</button>
+        <button data-theme-val="midnight" title="Midnight">Mid</button>
+        <button data-theme-val="light" title="Light">Light</button>
+      </div>
+      <div class="seg-mini" data-role="accent" aria-label="Accent">
+        <button class="acc-dot" data-accent-val="purple"  style="background:#7c5cff" title="Purple"></button>
+        <button class="acc-dot" data-accent-val="cyan"    style="background:#22d3ee" title="Cyan"></button>
+        <button class="acc-dot" data-accent-val="emerald" style="background:#10b981" title="Emerald"></button>
+        <button class="acc-dot" data-accent-val="amber"   style="background:#f59e0b" title="Amber"></button>
+        <button class="acc-dot" data-accent-val="rose"    style="background:#f43f5e" title="Rose"></button>
+      </div>
+    </div>
+  </header>
+
+  <div id="content">
+
+    <div class="hero">
+      <h1>Syntax Quick-Ref 🚀</h1>
+      <p>The stuff you <em>know</em> but blank on under pressure — regex tokens, SQL windows, the Python
+      standard-library helpers, and copy-ready algorithm skeletons. Built to skim in the hour before the
+      interview. Not a tutorial: no explanations, just what to type and when.</p>
+      <div class="badges">
+        <span class="badge">Press <b>/</b> to filter anything</span>
+        <span class="badge">Hover a code block to <b>copy</b></span>
+        <span class="badge">Each section: a <b>5–10 min</b> read</span>
+        <span class="badge"><b>Deep cuts</b> fold open at the end of each</span>
+      </div>
+    </div>
+
+    <!-- ============================================================= REGEX -->
+    <section class="sec" id="regex">
+      <div class="sec-head"><span class="si">🔍</span><h2>Regex</h2><span class="rt-pill">~7 min · Python <code>re</code></span></div>
+      <div class="sec-sub">Import once: <code>import re</code>. Always use <b>raw strings</b> — <code>r"\d+"</code> — so backslashes reach the engine.</div>
+
+      <div class="grid">
+        <div class="card">
+          <h3>The <code>re</code> functions</h3>
+          <table class="ref">
+            <tr><td><code>re.search(p, s)</code></td><td class="desc">First match <em>anywhere</em> → <code>Match</code> or <code>None</code>.</td></tr>
+            <tr><td><code>re.match(p, s)</code></td><td class="desc">Match only at the <em>start</em> of <code>s</code>.</td></tr>
+            <tr><td><code>re.fullmatch(p, s)</code></td><td class="desc">Whole string must match.</td></tr>
+            <tr><td><code>re.findall(p, s)</code></td><td class="desc">List of strings (or tuples if &gt;1 group).</td></tr>
+            <tr><td><code>re.finditer(p, s)</code></td><td class="desc">Iterator of <code>Match</code> objects — use for positions.</td></tr>
+            <tr><td><code>re.sub(p, r, s)</code></td><td class="desc">Replace all; <code>r</code> may be a function.</td></tr>
+            <tr><td><code>re.split(p, s)</code></td><td class="desc">Split on the pattern.</td></tr>
+            <tr><td><code>re.compile(p)</code></td><td class="desc">Pre-compile to reuse: <code>rx.search(s)</code>.</td></tr>
+          </table>
+          <div class="note">Truthy test the result: <code>if re.search(p, s):</code> — never <code>== True</code>. <code>findall</code> returns <em>groups</em>, so wrap in <code>(?:...)</code> when you don't want capture.</div>
+        </div>
+
+        <div class="card">
+          <h3>Match object</h3>
+          <table class="ref">
+            <tr><td><code>m.group()</code> / <code>m[0]</code></td><td class="desc">The whole match.</td></tr>
+            <tr><td><code>m.group(1)</code> / <code>m[1]</code></td><td class="desc">First captured group.</td></tr>
+            <tr><td><code>m.groups()</code></td><td class="desc">Tuple of all groups.</td></tr>
+            <tr><td><code>m.groupdict()</code></td><td class="desc">Named groups → dict.</td></tr>
+            <tr><td><code>m.start() m.end()</code></td><td class="desc">Index bounds of the match.</td></tr>
+            <tr><td><code>m.span()</code></td><td class="desc"><code>(start, end)</code> tuple.</td></tr>
+          </table>
+        </div>
+
+        <div class="card">
+          <h3>Character classes</h3>
+          <table class="ref">
+            <tr><td><code>.</code></td><td class="desc">Any char except newline (<code>\n</code>).</td></tr>
+            <tr><td><code>\d \D</code></td><td class="desc">Digit <code>[0-9]</code> / non-digit.</td></tr>
+            <tr><td><code>\w \W</code></td><td class="desc">Word <code>[A-Za-z0-9_]</code> / non-word.</td></tr>
+            <tr><td><code>\s \S</code></td><td class="desc">Whitespace / non-whitespace.</td></tr>
+            <tr><td><code>[abc]</code></td><td class="desc">Any one of a, b, c.</td></tr>
+            <tr><td><code>[^abc]</code></td><td class="desc">Any char <em>except</em> a, b, c.</td></tr>
+            <tr><td><code>[a-z0-9]</code></td><td class="desc">Ranges combine inside a class.</td></tr>
+            <tr><td><code>\b \B</code></td><td class="desc">Word boundary / non-boundary.</td></tr>
+          </table>
+        </div>
+
+        <div class="card">
+          <h3>Quantifiers &amp; anchors</h3>
+          <table class="ref">
+            <tr><td><code>*</code></td><td class="desc">0 or more.</td></tr>
+            <tr><td><code>+</code></td><td class="desc">1 or more.</td></tr>
+            <tr><td><code>?</code></td><td class="desc">0 or 1 (optional).</td></tr>
+            <tr><td><code>{m}</code> <code>{m,n}</code> <code>{m,}</code></td><td class="desc">Exactly m / between / at least.</td></tr>
+            <tr><td><code>*? +? ??</code></td><td class="desc"><b>Lazy</b> — match as few as possible.</td></tr>
+            <tr><td><code>^ $</code></td><td class="desc">Start / end (of line with <code>re.M</code>).</td></tr>
+            <tr><td><code>\A \Z</code></td><td class="desc">Start / end of whole string.</td></tr>
+            <tr><td><code>a|b</code></td><td class="desc">Alternation (a or b).</td></tr>
+          </table>
+          <div class="note"><b>Greedy vs lazy:</b> <code>&lt;.*&gt;</code> on <code>"&lt;a&gt;&lt;b&gt;"</code> grabs the whole thing; <code>&lt;.*?&gt;</code> stops at the first <code>&gt;</code>.</div>
+        </div>
+
+        <div class="card">
+          <h3>Groups &amp; lookaround</h3>
+          <table class="ref">
+            <tr><td><code>(...)</code></td><td class="desc">Capturing group.</td></tr>
+            <tr><td><code>(?:...)</code></td><td class="desc">Group without capturing.</td></tr>
+            <tr><td><code>(?P&lt;name&gt;...)</code></td><td class="desc">Named group → <code>m["name"]</code>.</td></tr>
+            <tr><td><code>\1</code> <code>(?P=name)</code></td><td class="desc">Backreference to a group.</td></tr>
+            <tr><td><code>(?=...)</code></td><td class="desc">Lookahead — followed by.</td></tr>
+            <tr><td><code>(?!...)</code></td><td class="desc">Negative lookahead — not followed by.</td></tr>
+            <tr><td><code>(?&lt;=...)</code></td><td class="desc">Lookbehind — preceded by.</td></tr>
+            <tr><td><code>(?&lt;!...)</code></td><td class="desc">Negative lookbehind.</td></tr>
+          </table>
+        </div>
+
+        <div class="card">
+          <h3>Flags</h3>
+          <table class="ref">
+            <tr><td><code>re.I</code> / <code>re.IGNORECASE</code></td><td class="desc">Case-insensitive.</td></tr>
+            <tr><td><code>re.M</code> / <code>MULTILINE</code></td><td class="desc"><code>^ $</code> match each line.</td></tr>
+            <tr><td><code>re.S</code> / <code>DOTALL</code></td><td class="desc"><code>.</code> also matches newline.</td></tr>
+            <tr><td><code>re.X</code> / <code>VERBOSE</code></td><td class="desc">Ignore whitespace, allow <code>#</code> comments.</td></tr>
+            <tr><td><code>re.A</code> / <code>ASCII</code></td><td class="desc"><code>\w \d \s</code> = ASCII only.</td></tr>
+            <tr><td><code>flags=re.I|re.M</code></td><td class="desc">Combine with <code>|</code>. Inline: <code>(?im)</code>.</td></tr>
+          </table>
+        </div>
+      </div>
+
+      <div class="grid" style="margin-top:14px">
+        <div class="card wide">
+          <h3>Copy-ready snippets</h3>
+          <div class="cb"><pre><span class="cm"># all integers (with sign) in a string</span>
+nums = [int(x) for x in re.findall(r"-?\d+", s)]
+
+<span class="cm"># collapse runs of whitespace to one space, then trim</span>
+clean = re.sub(r"\s+", " ", s).strip()
+
+<span class="cm"># sub with a function — increment every number</span>
+out = re.sub(r"\d+", lambda m: str(int(m.group()) + 1), s)
+
+<span class="cm"># named groups → dict</span>
+m = re.match(r"(?P&lt;y&gt;\d{4})-(?P&lt;mo&gt;\d{2})-(?P&lt;d&gt;\d{2})", "2026-07-13")
+m.groupdict()          <span class="cm"># {'y':'2026','mo':'07','d':'13'}</span>
+
+<span class="cm"># split on any non-word run (tokenize)</span>
+words = re.findall(r"[A-Za-z']+", text.lower())
+
+<span class="cm"># loose email / word@host.tld</span>
+re.findall(r"[\w.+-]+@[\w-]+\.[\w.-]+", s)</pre></div>
+        </div>
+      </div>
+
+      <details class="extras">
+        <summary><span class="chev">▶</span> Deep cuts — good to know <span class="tl">no timer · skim if ahead</span></summary>
+        <div class="extras-body">
+          <div class="grid">
+            <div class="card">
+              <h3>Handy tricks</h3>
+              <table class="ref">
+                <tr><td><code>(\w)\1</code></td><td class="desc">Find a doubled char (backref).</td></tr>
+                <tr><td><code>re.escape(s)</code></td><td class="desc">Quote user text before embedding in a pattern.</td></tr>
+                <tr><td><code>re.sub(p,r,s,count=1)</code></td><td class="desc">Replace only the first N.</td></tr>
+                <tr><td><code>\g&lt;name&gt;</code> <code>\g&lt;1&gt;</code></td><td class="desc">Reference groups in the replacement string.</td></tr>
+                <tr><td><code>(?i:abc)</code></td><td class="desc">Scoped inline flag (3.6+).</td></tr>
+                <tr><td><code>re.subn(...)</code></td><td class="desc">Like sub but returns <code>(result, n)</code>.</td></tr>
+              </table>
+            </div>
+            <div class="card">
+              <h3>VERBOSE for readable patterns</h3>
+              <div class="cb"><pre>rx = re.compile(r"""
+    (\d{4})   <span class="cm"># year</span>
+    -(\d{2})  <span class="cm"># month</span>
+    -(\d{2})  <span class="cm"># day</span>
+""", re.X)</pre></div>
+              <div class="note"><b>Gotchas:</b> lookbehind must be fixed-width. Avoid nested quantifiers like <code>(a+)+</code> on long input — catastrophic backtracking. Anchor with <code>fullmatch</code> when validating.</div>
+            </div>
+          </div>
+        </div>
+      </details>
+    </section>
+
+    <!-- =============================================================== SQL -->
+    <section class="sec" id="sql">
+      <div class="sec-head"><span class="si">🗄️</span><h2>SQL</h2><span class="rt-pill">~8 min · standard + dialect notes</span></div>
+      <div class="sec-sub">One of the three interview tasks is SQL/DB. This is the syntax card — the <a href="../interview-final/index.html#m/M12" style="color:var(--accent-2)">SQL Deep Dive module</a> has the reasoning.</div>
+
+      <div class="grid">
+        <div class="card wide">
+          <h3>Query skeleton &amp; logical order</h3>
+          <div class="cb"><pre>SELECT   col, AGG(x)          <span class="cm"># 5. pick / compute columns</span>
+FROM     t                    <span class="cm"># 1. source rows</span>
+JOIN     u ON u.tid = t.id    <span class="cm"># 1. combine</span>
+WHERE    t.active             <span class="cm"># 2. filter ROWS (no aggregates)</span>
+GROUP BY col                  <span class="cm"># 3. collapse into groups</span>
+HAVING   COUNT(*) &gt; 1         <span class="cm"># 4. filter GROUPS (aggregates ok)</span>
+ORDER BY AGG(x) DESC          <span class="cm"># 6. sort</span>
+LIMIT 10 OFFSET 20;           <span class="cm"># 7. page</span></pre></div>
+          <div class="note"><b>Why it matters:</b> <code>WHERE</code> runs before <code>GROUP BY</code> (can't reference aggregates); <code>HAVING</code> runs after (can). A column alias from <code>SELECT</code> isn't visible in <code>WHERE</code>.</div>
+        </div>
+
+        <div class="card">
+          <h3>Joins</h3>
+          <table class="ref">
+            <tr><td><code>INNER JOIN</code></td><td class="desc">Only matching rows on both sides.</td></tr>
+            <tr><td><code>LEFT JOIN</code></td><td class="desc">All left rows; NULLs where no right match.</td></tr>
+            <tr><td><code>RIGHT / FULL</code></td><td class="desc">Mirror / both sides kept.</td></tr>
+            <tr><td><code>CROSS JOIN</code></td><td class="desc">Cartesian product.</td></tr>
+            <tr><td>self-join</td><td class="desc">Join a table to itself with aliases.</td></tr>
+          </table>
+          <div class="note"><b>Anti-join</b> (rows with no match): <code>LEFT JOIN … WHERE u.id IS NULL</code>. Putting that filter in <code>ON</code> vs <code>WHERE</code> gives different results!</div>
+        </div>
+
+        <div class="card">
+          <h3>Aggregation</h3>
+          <table class="ref">
+            <tr><td><code>COUNT(*)</code></td><td class="desc">All rows (incl. NULLs).</td></tr>
+            <tr><td><code>COUNT(col)</code></td><td class="desc">Non-NULL values only.</td></tr>
+            <tr><td><code>COUNT(DISTINCT c)</code></td><td class="desc">Unique non-NULL.</td></tr>
+            <tr><td><code>SUM AVG MIN MAX</code></td><td class="desc">Ignore NULLs.</td></tr>
+            <tr><td><code>GROUP BY a, b</code></td><td class="desc">One row per distinct combo.</td></tr>
+          </table>
+        </div>
+
+        <div class="card">
+          <h3>NULL logic</h3>
+          <table class="ref">
+            <tr><td><code>x IS NULL</code></td><td class="desc">Never <code>x = NULL</code> (that's UNKNOWN).</td></tr>
+            <tr><td><code>COALESCE(a,b,0)</code></td><td class="desc">First non-NULL.</td></tr>
+            <tr><td><code>NULLIF(a,b)</code></td><td class="desc">NULL if <code>a=b</code> (avoid ÷0).</td></tr>
+            <tr><td><code>NOT IN (…NULL…)</code></td><td class="desc"><b>Returns 0 rows</b> — use <code>NOT EXISTS</code>.</td></tr>
+          </table>
+        </div>
+
+        <div class="card wide">
+          <h3>Window functions — "top N per group", running totals</h3>
+          <div class="cb"><pre><span class="cm"># highest-paid employee per department</span>
+SELECT * FROM (
+  SELECT e.*,
+         ROW_NUMBER() OVER (PARTITION BY dept_id ORDER BY salary DESC) AS rn
+  FROM employee e
+) t
+WHERE rn = 1;
+
+<span class="cm"># running total, and each row vs the previous</span>
+SELECT d,
+       SUM(amount) OVER (ORDER BY d) AS running,
+       LAG(amount) OVER (ORDER BY d) AS prev
+FROM sales;</pre></div>
+          <table class="ref">
+            <tr><td><code>ROW_NUMBER()</code></td><td class="desc">1,2,3,4 — always unique.</td></tr>
+            <tr><td><code>RANK()</code></td><td class="desc">1,2,2,4 — ties share, gaps after.</td></tr>
+            <tr><td><code>DENSE_RANK()</code></td><td class="desc">1,2,2,3 — ties share, no gap.</td></tr>
+            <tr><td><code>LAG(c) / LEAD(c)</code></td><td class="desc">Previous / next row's value.</td></tr>
+            <tr><td><code>SUM() OVER (…)</code></td><td class="desc">Aggregate without collapsing rows.</td></tr>
+          </table>
+        </div>
+
+        <div class="card">
+          <h3>CTEs, subqueries, CASE</h3>
+          <div class="cb"><pre>WITH big AS (
+  SELECT dept_id, AVG(salary) a
+  FROM employee GROUP BY dept_id
+)
+SELECT e.name
+FROM employee e JOIN big ON big.dept_id = e.dept_id
+WHERE e.salary &gt; big.a;          <span class="cm"># above dept avg</span>
+
+SELECT name,
+  CASE WHEN salary &gt; 100 THEN 'high'
+       WHEN salary &gt; 50  THEN 'mid'
+       ELSE 'low' END AS band
+FROM employee;</pre></div>
+        </div>
+
+        <div class="card">
+          <h3>Set ops &amp; strings</h3>
+          <table class="ref">
+            <tr><td><code>UNION</code> / <code>UNION ALL</code></td><td class="desc">Stack rows; ALL keeps duplicates (faster).</td></tr>
+            <tr><td><code>INTERSECT / EXCEPT</code></td><td class="desc">Common / difference.</td></tr>
+            <tr><td><code>a || b</code></td><td class="desc">Concat (MySQL: <code>CONCAT(a,b)</code>).</td></tr>
+            <tr><td><code>LIKE '%x_'</code></td><td class="desc"><code>%</code>=any run, <code>_</code>=one char.</td></tr>
+            <tr><td><code>DISTINCT</code></td><td class="desc">Dedup the whole row.</td></tr>
+          </table>
+        </div>
+      </div>
+
+      <details class="extras">
+        <summary><span class="chev">▶</span> Deep cuts — good to know <span class="tl">no timer</span></summary>
+        <div class="extras-body">
+          <div class="grid">
+            <div class="card">
+              <h3>Recursive CTE (hierarchy / series)</h3>
+              <div class="cb"><pre>WITH RECURSIVE nums(n) AS (
+  SELECT 1
+  UNION ALL
+  SELECT n + 1 FROM nums WHERE n &lt; 10
+)
+SELECT n FROM nums;</pre></div>
+              <div class="note ok">Same shape walks a <b>manager → report</b> tree: seed with the root, recurse on <code>parent_id = n.id</code>.</div>
+            </div>
+            <div class="card">
+              <h3>Dialect differences</h3>
+              <table class="ref">
+                <tr><td>Limit</td><td class="desc"><code>LIMIT n</code> (PG/MySQL/SQLite); <code>TOP n</code> / <code>FETCH FIRST</code> (SQL Server/Oracle).</td></tr>
+                <tr><td>String concat</td><td class="desc"><code>||</code> standard; <code>CONCAT()</code> in MySQL (<code>||</code> = OR there).</td></tr>
+                <tr><td>Case-insensitive</td><td class="desc"><code>ILIKE</code> (PG); <code>LOWER()</code> both sides elsewhere.</td></tr>
+                <tr><td>Upsert</td><td class="desc"><code>ON CONFLICT DO UPDATE</code> (PG/SQLite); <code>ON DUPLICATE KEY UPDATE</code> (MySQL).</td></tr>
+                <tr><td>Now</td><td class="desc"><code>CURRENT_DATE</code>, <code>NOW()</code>, <code>EXTRACT(YEAR FROM d)</code>.</td></tr>
+                <tr><td>Agg filter</td><td class="desc"><code>COUNT(*) FILTER (WHERE …)</code> (PG) vs <code>SUM(CASE WHEN … THEN 1 ELSE 0 END)</code> (portable).</td></tr>
+              </table>
+            </div>
+          </div>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============================================================ PYTHON -->
+    <section class="sec" id="python">
+      <div class="sec-head"><span class="si">🐍</span><h2>Python Essentials</h2><span class="rt-pill">~9 min · the interview toolbox</span></div>
+      <div class="sec-sub">The built-ins and standard-library helpers that turn 20 lines into 3. If you reach for a manual loop, check here first.</div>
+
+      <div class="grid">
+        <div class="card">
+          <h3>Built-ins you'll actually use</h3>
+          <table class="ref">
+            <tr><td><code>ord(c)</code> <code>chr(n)</code></td><td class="desc"><code>ord('a')=97</code>, <code>ord('A')=65</code>, <code>ord('0')=48</code>.</td></tr>
+            <tr><td><code>sorted(it, key=…)</code></td><td class="desc"><code>reverse=True</code>; stable sort.</td></tr>
+            <tr><td><code>enumerate(it, 1)</code></td><td class="desc">Index + value; optional start.</td></tr>
+            <tr><td><code>zip(a, b)</code></td><td class="desc"><code>zip(*grid)</code> transposes rows↔cols.</td></tr>
+            <tr><td><code>any(…) all(…)</code></td><td class="desc">Short-circuit boolean over an iterable.</td></tr>
+            <tr><td><code>sum(it, start)</code></td><td class="desc"><code>min/max(it, key=, default=)</code>.</td></tr>
+            <tr><td><code>divmod(a, b)</code></td><td class="desc">Returns <code>(a//b, a%b)</code>.</td></tr>
+            <tr><td><code>pow(a, b, m)</code></td><td class="desc">Fast <code>(a**b) % m</code>.</td></tr>
+            <tr><td><code>int(s, base)</code></td><td class="desc"><code>int("ff",16)</code>; <code>bin/hex/oct</code>.</td></tr>
+          </table>
+        </div>
+
+        <div class="card">
+          <h3>Comprehensions &amp; slicing</h3>
+          <div class="cb"><pre>[x*x for x in xs if x &gt; 0]      <span class="cm"># list</span>
+{k: v for k, v in pairs}         <span class="cm"># dict</span>
+{x % 3 for x in xs}              <span class="cm"># set</span>
+(x for x in xs)                  <span class="cm"># lazy generator</span>
+
+s[::-1]        <span class="cm"># reverse</span>
+s[a:b:step]    <span class="cm"># slice with step</span>
+grid[r][c]     <span class="cm"># 2D index</span>
+a, *mid, b = xs <span class="cm"># unpack ends, keep middle</span></pre></div>
+        </div>
+
+        <div class="card">
+          <h3>Strings</h3>
+          <table class="ref">
+            <tr><td><code>s.split()</code></td><td class="desc">On any whitespace; <code>split(",")</code> exact.</td></tr>
+            <tr><td><code>"-".join(xs)</code></td><td class="desc">Build strings — never <code>+=</code> in a loop.</td></tr>
+            <tr><td><code>s.strip() .lstrip()</code></td><td class="desc">Trim whitespace / given chars.</td></tr>
+            <tr><td><code>s.replace(a, b)</code></td><td class="desc">All occurrences.</td></tr>
+            <tr><td><code>s.find(x)</code></td><td class="desc"><code>-1</code> if absent (<code>.index</code> raises).</td></tr>
+            <tr><td><code>s.isdigit() .isalpha()</code></td><td class="desc"><code>.isalnum() .islower()</code>.</td></tr>
+            <tr><td><code>s.count(x)</code></td><td class="desc">Non-overlapping occurrences.</td></tr>
+            <tr><td><code>f"{x:>6.2f}"</code></td><td class="desc">Pad/align/round; <code>{n:,}</code>, <code>{n:b}</code>.</td></tr>
+          </table>
+        </div>
+
+        <div class="card">
+          <h3><code>collections</code></h3>
+          <div class="cb"><pre>from collections import defaultdict, Counter, deque
+
+g = defaultdict(list); g[u].append(v)   <span class="cm"># adjacency</span>
+cnt = Counter(s)          <span class="cm"># freq map</span>
+cnt.most_common(2)        <span class="cm"># [(ch, n), …]</span>
+Counter(a) - Counter(b)   <span class="cm"># multiset diff</span>
+
+dq = deque(xs)
+dq.appendleft(x); dq.popleft()   <span class="cm"># O(1) both ends</span>
+deque(maxlen=k)                  <span class="cm"># sliding buffer</span></pre></div>
+        </div>
+
+        <div class="card">
+          <h3><code>heapq</code> &amp; <code>bisect</code></h3>
+          <div class="cb"><pre>import heapq
+heapq.heapify(a)                 <span class="cm"># min-heap in place</span>
+heapq.heappush(a, x); heapq.heappop(a)
+heapq.heappush(a, (prio, item))  <span class="cm"># heap of tuples</span>
+heapq.nlargest(k, a, key=…)
+<span class="cm"># max-heap: push -x, pop -(...)</span>
+
+import bisect
+i = bisect.bisect_left(a, x)     <span class="cm"># leftmost index to insert</span>
+bisect.insort(a, x)              <span class="cm"># insert keeping sorted</span></pre></div>
+        </div>
+
+        <div class="card">
+          <h3><code>itertools</code> &amp; <code>math</code></h3>
+          <div class="cb"><pre>from itertools import (permutations, combinations,
+    product, accumulate, chain, groupby)
+
+permutations(xs, 2); combinations(xs, 2)
+product(range(3), repeat=2)      <span class="cm"># nested loops</span>
+list(accumulate(xs))             <span class="cm"># running sum</span>
+chain(a, b)                      <span class="cm"># flatten</span>
+
+import math
+math.inf; math.gcd(a,b); math.lcm(a,b)
+math.isqrt(n); math.comb(n,k); math.factorial(n)</pre></div>
+          <div class="note"><b><code>groupby</code> needs sorted input</b> — sort by the same key first, or it splits on every change.</div>
+        </div>
+      </div>
+
+      <details class="extras">
+        <summary><span class="chev">▶</span> Deep cuts — good to know <span class="tl">no timer</span></summary>
+        <div class="extras-body">
+          <div class="grid">
+            <div class="card">
+              <h3><code>functools</code> &amp; friends</h3>
+              <div class="cb"><pre>from functools import lru_cache, cache, reduce
+
+@cache                    <span class="cm"># memoize recursion (3.9+)</span>
+def fib(n): return n if n&lt;2 else fib(n-1)+fib(n-2)
+
+reduce(lambda a,b: a*b, xs, 1)   <span class="cm"># fold</span>
+sorted(xs, key=functools.cmp_to_key(cmp))</pre></div>
+            </div>
+            <div class="card">
+              <h3>Char-frequency array trick</h3>
+              <div class="cb"><pre><span class="cm"># 26-slot count without a dict</span>
+f = [0]*26
+for c in s: f[ord(c) - ord('a')] += 1
+
+import string
+string.ascii_lowercase   <span class="cm"># 'abc…z'</span></pre></div>
+              <div class="note">Also handy: walrus <code>while (x := next(it)):</code>; <code>dict.get(k, 0)</code> / <code>setdefault</code>; <code>d1 | d2</code> merge (3.9+); <code>sys.setrecursionlimit(10**6)</code> for deep DFS.</div>
+            </div>
+          </div>
+        </div>
+      </details>
+    </section>
+
+    <!-- ========================================================== PATTERNS -->
+    <section class="sec" id="patterns">
+      <div class="sec-head"><span class="si">🧩</span><h2>Algorithm Templates</h2><span class="rt-pill">~8 min · copy, then adapt</span></div>
+      <div class="sec-sub">Skeletons you should be able to type without thinking. Read once so the shape is loaded; copy in the interview and fill the blanks.</div>
+
+      <div class="grid">
+        <div class="card">
+          <h3>Binary search (lower bound)</h3>
+          <div class="cb"><pre>lo, hi = 0, len(a)          <span class="cm"># [lo, hi)</span>
+while lo &lt; hi:
+    mid = (lo + hi) // 2
+    if a[mid] &lt; target:
+        lo = mid + 1
+    else:
+        hi = mid
+return lo   <span class="cm"># first index with a[i] &gt;= target</span></pre></div>
+          <div class="note">Same frame for "search on the answer": replace <code>a[mid] &lt; target</code> with a <code>feasible(mid)</code> predicate.</div>
+        </div>
+
+        <div class="card">
+          <h3>Sliding window (longest valid)</h3>
+          <div class="cb"><pre>from collections import Counter
+cnt = Counter(); L = 0; best = 0
+for R, c in enumerate(s):
+    cnt[c] += 1
+    while <span class="cm"># window invalid:</span> len(cnt) &gt; k:
+        cnt[s[L]] -= 1
+        if cnt[s[L]] == 0: del cnt[s[L]]
+        L += 1
+    best = max(best, R - L + 1)</pre></div>
+        </div>
+
+        <div class="card">
+          <h3>Two pointers</h3>
+          <div class="cb"><pre>i, j = 0, len(a) - 1
+while i &lt; j:
+    tot = a[i] + a[j]
+    if tot == target: return (i, j)
+    if tot &lt; target: i += 1
+    else: j -= 1</pre></div>
+        </div>
+
+        <div class="card">
+          <h3>BFS on a grid</h3>
+          <div class="cb"><pre>from collections import deque
+R, C = len(grid), len(grid[0])
+q = deque([(sr, sc)]); seen = {(sr, sc)}
+while q:
+    r, c = q.popleft()
+    for dr, dc in ((1,0),(-1,0),(0,1),(0,-1)):
+        nr, nc = r+dr, c+dc
+        if 0&lt;=nr&lt;R and 0&lt;=nc&lt;C and (nr,nc) not in seen \
+           and grid[nr][nc] != '#':
+            seen.add((nr,nc)); q.append((nr,nc))</pre></div>
+        </div>
+
+        <div class="card">
+          <h3>DFS &amp; backtracking</h3>
+          <div class="cb"><pre>res = []
+def backtrack(start, path):
+    res.append(path[:])              <span class="cm"># record</span>
+    for i in range(start, len(nums)):
+        path.append(nums[i])         <span class="cm"># choose</span>
+        backtrack(i + 1, path)       <span class="cm"># explore</span>
+        path.pop()                   <span class="cm"># un-choose</span>
+backtrack(0, [])</pre></div>
+        </div>
+
+        <div class="card">
+          <h3>Union-Find (DSU)</h3>
+          <div class="cb"><pre>par = list(range(n))
+def find(x):
+    while par[x] != x:
+        par[x] = par[par[x]]         <span class="cm"># path compress</span>
+        x = par[x]
+    return x
+def union(a, b):
+    par[find(a)] = find(b)</pre></div>
+        </div>
+
+        <div class="card">
+          <h3>Dijkstra (weighted shortest path)</h3>
+          <div class="cb"><pre>import heapq
+dist = {s: 0}; pq = [(0, s)]
+while pq:
+    d, u = heapq.heappop(pq)
+    if d &gt; dist.get(u, INF): continue
+    for v, w in graph[u]:
+        nd = d + w
+        if nd &lt; dist.get(v, INF):
+            dist[v] = nd
+            heapq.heappush(pq, (nd, v))</pre></div>
+        </div>
+
+        <div class="card">
+          <h3>Topological sort (Kahn)</h3>
+          <div class="cb"><pre>from collections import deque
+indeg = [0]*n
+for u in range(n):
+    for v in adj[u]: indeg[v] += 1
+q = deque(u for u in range(n) if indeg[u]==0)
+order = []
+while q:
+    u = q.popleft(); order.append(u)
+    for v in adj[u]:
+        indeg[v] -= 1
+        if indeg[v] == 0: q.append(v)
+<span class="cm"># len(order) &lt; n  ->  cycle exists</span></pre></div>
+        </div>
+
+        <div class="card">
+          <h3>DP — 1D (coin change)</h3>
+          <div class="cb"><pre>dp = [0] + [INF]*amount
+for a in range(1, amount+1):
+    for c in coins:
+        if c &lt;= a:
+            dp[a] = min(dp[a], dp[a-c] + 1)
+return dp[amount] if dp[amount] &lt; INF else -1</pre></div>
+        </div>
+
+        <div class="card">
+          <h3>Monotonic stack (next greater)</h3>
+          <div class="cb"><pre>res = [-1]*len(a); st = []          <span class="cm"># holds indices</span>
+for i, x in enumerate(a):
+    while st and a[st[-1]] &lt; x:
+        res[st.pop()] = x
+    st.append(i)</pre></div>
+        </div>
+      </div>
+
+      <details class="extras">
+        <summary><span class="chev">▶</span> Deep cuts — good to know <span class="tl">no timer</span></summary>
+        <div class="extras-body">
+          <div class="grid">
+            <div class="card">
+              <h3>Trie (prefix tree)</h3>
+              <div class="cb"><pre>root = {}
+def insert(w):
+    node = root
+    for c in w:
+        node = node.setdefault(c, {})
+    node['$'] = True                 <span class="cm"># end mark</span>
+def search(w):
+    node = root
+    for c in w:
+        if c not in node: return False
+        node = node[c]
+    return '$' in node</pre></div>
+            </div>
+            <div class="card">
+              <h3>Quickselect (k-th smallest, avg O(n))</h3>
+              <div class="cb"><pre>import random
+def qselect(a, k):                   <span class="cm"># k is 0-based</span>
+    p = random.choice(a)
+    lo = [x for x in a if x &lt; p]
+    hi = [x for x in a if x &gt; p]
+    eq = len(a) - len(lo) - len(hi)
+    if k &lt; len(lo):      return qselect(lo, k)
+    if k &lt; len(lo)+eq:   return p
+    return qselect(hi, k - len(lo) - eq)</pre></div>
+              <div class="note">Or just <code>heapq.nsmallest(k, a)[-1]</code> when clarity beats optimality.</div>
+            </div>
+          </div>
+        </div>
+      </details>
+    </section>
+
+    <!-- ======================================================== COMPLEXITY -->
+    <section class="sec" id="complexity">
+      <div class="sec-head"><span class="si">⏱️</span><h2>Complexity &amp; Gotchas</h2><span class="rt-pill">~4 min · state it out loud</span></div>
+      <div class="sec-sub">Interviewers grade whether you <b>name the complexity</b>. And these Python traps cost the most silent debugging time.</div>
+
+      <div class="grid">
+        <div class="card">
+          <h3>Cost of common operations</h3>
+          <table class="ref">
+            <tr><td><code>list[i]</code>, <code>.append</code></td><td class="desc">O(1) — append amortized.</td></tr>
+            <tr><td><code>list.insert(0)</code>, <code>.pop(0)</code></td><td class="desc"><b>O(n)</b> — use <code>deque</code>.</td></tr>
+            <tr><td><code>x in list</code></td><td class="desc"><b>O(n)</b> — use a <code>set</code>.</td></tr>
+            <tr><td><code>x in set/dict</code>, get/add</td><td class="desc">O(1) average.</td></tr>
+            <tr><td><code>deque</code> both ends</td><td class="desc">O(1).</td></tr>
+            <tr><td><code>heappush / heappop</code></td><td class="desc">O(log n).</td></tr>
+            <tr><td><code>sorted()</code></td><td class="desc">O(n log n).</td></tr>
+            <tr><td><code>bisect</code></td><td class="desc">O(log n) search, O(n) insert.</td></tr>
+          </table>
+        </div>
+
+        <div class="card">
+          <h3>Time budget (~10⁸ ops/sec)</h3>
+          <table class="ref">
+            <tr><td><code>n ≤ 10</code></td><td class="desc">O(n!) / O(2ⁿ) backtracking fine.</td></tr>
+            <tr><td><code>n ≤ 20</code></td><td class="desc">O(2ⁿ) bitmask DP.</td></tr>
+            <tr><td><code>n ≤ 500</code></td><td class="desc">O(n³) ok.</td></tr>
+            <tr><td><code>n ≤ 5,000</code></td><td class="desc">O(n²) ok.</td></tr>
+            <tr><td><code>n ≤ 10⁶</code></td><td class="desc">O(n log n) / O(n).</td></tr>
+            <tr><td><code>n &gt; 10⁷</code></td><td class="desc">O(n) or better, watch constants.</td></tr>
+          </table>
+          <div class="note ok">Reading the constraints first tells you the target complexity <em>before</em> you design.</div>
+        </div>
+
+        <div class="card wide">
+          <h3>Python traps that eat interview time</h3>
+          <div class="cb"><pre><span class="cm"># 1. Mutable default arg — shared across calls!</span>
+def f(acc=[]):     <span class="cm"># BUG: same list every call</span>
+def f(acc=None):   <span class="cm"># FIX</span>
+    if acc is None: acc = []
+
+<span class="cm"># 2. Integer division floors toward -inf</span>
+-7 // 2   ==  -4          7 / 2  == 3.5   <span class="cm"># / is float</span>
+
+<span class="cm"># 3. Copy vs reference</span>
+b = a[:]           <span class="cm"># shallow copy of a list</span>
+grid = [[0]*C for _ in range(R)]   <span class="cm"># NOT [[0]*C]*R</span>
+
+<span class="cm"># 4. String build in a loop is O(n^2)</span>
+"".join(parts)     <span class="cm"># not  s += piece</span>
+
+<span class="cm"># 5. Don't mutate a list while iterating it</span>
+xs = [x for x in xs if keep(x)]    <span class="cm"># rebuild instead</span></pre></div>
+          <div class="note"><b>Also:</b> <code>is</code> tests identity, <code>==</code> tests value — compare with <code>==</code> (except <code>is None</code>). Default recursion limit ≈ 1000; raise it for deep DFS or go iterative.</div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<button class="backtop" id="backtop" aria-label="Back to top">↑</button>
+
+<script>
+"use strict";
+/* ---------- prefs (theme / accent / motion) — synced via odoo_ prefix ---------- */
+const PREFS_KEY = "odoo_ref_prefs_v1";
+const body = document.body;
+let prefs = { theme: "dark", accent: "purple", motion: "full" };
+try { Object.assign(prefs, JSON.parse(localStorage.getItem(PREFS_KEY) || "{}")); } catch (e) {}
+if (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches && !localStorage.getItem(PREFS_KEY)) {
+  prefs.motion = "reduced";
+}
+function applyPrefs() {
+  body.dataset.theme = prefs.theme;
+  body.dataset.accent = prefs.accent;
+  body.dataset.motion = prefs.motion;
+  document.querySelectorAll("[data-theme-val]").forEach(b => b.classList.toggle("on", b.dataset.themeVal === prefs.theme));
+  document.querySelectorAll("[data-accent-val]").forEach(b => b.classList.toggle("on", b.dataset.accentVal === prefs.accent));
+}
+function savePrefs() { localStorage.setItem(PREFS_KEY, JSON.stringify(prefs)); }
+document.querySelectorAll("[data-theme-val]").forEach(b =>
+  b.addEventListener("click", () => { prefs.theme = b.dataset.themeVal; applyPrefs(); savePrefs(); }));
+document.querySelectorAll("[data-accent-val]").forEach(b =>
+  b.addEventListener("click", () => { prefs.accent = b.dataset.accentVal; applyPrefs(); savePrefs(); }));
+applyPrefs();
+
+/* ---------- mobile nav ---------- */
+const menuToggle = document.getElementById("menu-toggle");
+const scrim = document.getElementById("scrim");
+menuToggle.addEventListener("click", () => body.classList.toggle("nav-open"));
+scrim.addEventListener("click", () => body.classList.remove("nav-open"));
+
+/* ---------- copy buttons ---------- */
+document.querySelectorAll(".cb").forEach(cb => {
+  const btn = document.createElement("button");
+  btn.className = "copy-btn"; btn.type = "button"; btn.textContent = "Copy";
+  btn.addEventListener("click", async () => {
+    const text = cb.querySelector("pre").innerText;
+    try { await navigator.clipboard.writeText(text); }
+    catch (e) {
+      const t = document.createElement("textarea"); t.value = text;
+      document.body.appendChild(t); t.select();
+      try { document.execCommand("copy"); } catch (_) {}
+      t.remove();
+    }
+    btn.textContent = "Copied ✓"; btn.classList.add("done");
+    setTimeout(() => { btn.textContent = "Copy"; btn.classList.remove("done"); }, 1400);
+  });
+  cb.appendChild(btn);
+});
+
+/* ---------- scroll-spy nav highlight ---------- */
+const links = [...document.querySelectorAll(".nav-link[href^='#']")];
+const secById = {};
+links.forEach(l => { const id = l.getAttribute("href").slice(1); secById[id] = document.getElementById(id); });
+const spy = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      links.forEach(l => l.classList.toggle("active", l.getAttribute("href") === "#" + e.target.id));
+    }
+  });
+}, { rootMargin: "-40% 0px -55% 0px" });
+Object.values(secById).forEach(s => s && spy.observe(s));
+links.forEach(l => l.addEventListener("click", () => body.classList.remove("nav-open")));
+
+/* ---------- back to top ---------- */
+const backtop = document.getElementById("backtop");
+addEventListener("scroll", () => backtop.classList.toggle("show", scrollY > 600));
+backtop.addEventListener("click", () => scrollTo({ top: 0, behavior: "smooth" }));
+
+/* ---------- instant filter ---------- */
+const filter = document.getElementById("filter");
+const filterWrap = document.getElementById("filter-wrap");
+const filterClear = document.getElementById("filter-clear");
+const sections = [...document.querySelectorAll(".sec")];
+const cards = [...document.querySelectorAll(".card")];
+// pre-store each card's original HTML so we can strip highlight marks cleanly
+cards.forEach(c => c._orig = c.innerHTML);
+
+let noResults = document.createElement("div");
+noResults.id = "no-results";
+noResults.innerHTML = '<div class="big">🔍</div>No matches. <span class="mut">Try a shorter term — e.g. "join", "heap", "sub".</span>';
+document.getElementById("content").appendChild(noResults);
+
+function clearMarks(card) { if (card.innerHTML !== card._orig) card.innerHTML = card._orig; }
+
+function esc(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
+
+function highlight(card, term) {
+  // walk text nodes, wrap matches — avoids breaking tags/attributes
+  const rx = new RegExp("(" + esc(term) + ")", "ig");
+  const walker = document.createTreeWalker(card, NodeFilter.SHOW_TEXT, null);
+  const targets = [];
+  let n; while ((n = walker.nextNode())) { if (rx.test(n.nodeValue)) targets.push(n); }
+  targets.forEach(node => {
+    const span = document.createElement("span");
+    span.innerHTML = node.nodeValue.replace(rx, '<mark class="hit-mark">$1</mark>');
+    node.replaceWith(span);
+  });
+}
+
+function applyFilter() {
+  const q = filter.value.trim().toLowerCase();
+  filterWrap.classList.toggle("filtering", q.length > 0);
+  let anyVisible = false;
+
+  cards.forEach(clearMarks);
+
+  if (!q) {
+    cards.forEach(c => c.classList.remove("filtered-out"));
+    sections.forEach(s => s.classList.remove("filtered-out"));
+    noResults.classList.remove("show");
+    return;
+  }
+  // open all extras so hidden cards can match
+  document.querySelectorAll("details.extras").forEach(d => d.open = true);
+
+  sections.forEach(sec => {
+    let secHas = false;
+    sec.querySelectorAll(".card").forEach(card => {
+      const hit = card.textContent.toLowerCase().includes(q);
+      card.classList.toggle("filtered-out", !hit);
+      if (hit) { secHas = true; anyVisible = true; highlight(card, q); }
+    });
+    sec.classList.toggle("filtered-out", !secHas);
+  });
+  noResults.classList.toggle("show", !anyVisible);
+}
+
+filter.addEventListener("input", applyFilter);
+filterClear.addEventListener("click", () => { filter.value = ""; applyFilter(); filter.focus(); });
+
+/* keyboard: "/" focuses filter, Esc clears/blurs */
+addEventListener("keydown", e => {
+  if (e.key === "/" && document.activeElement !== filter) { e.preventDefault(); filter.focus(); }
+  else if (e.key === "Escape" && document.activeElement === filter) {
+    if (filter.value) { filter.value = ""; applyFilter(); } else filter.blur();
+  }
+});
+</script>
+</body>
+</html>

@@ -50,6 +50,7 @@ TUTORIAL_CHILDREN = [
     {"slug": "interview-final", "title": "Interview Final Stage"},
     {"slug": "logictest",       "title": "Logic Test"},
     {"slug": "roadmap",         "title": "Final Week Roadmap"},
+    {"slug": "quickref",        "title": "Syntax Quick-Ref"},
 ]
 TUTORIALS_DIR = "tutorials"
 

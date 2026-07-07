@@ -1,6 +1,24 @@
 {
-  "generated": "2026-07-07T03:59:17Z",
+  "generated": "2026-07-07T05:56:20Z",
   "folders": [
+    {
+      "name": "atoi",
+      "kind": "mixed",
+      "files": [
+        {
+          "name": "main.py",
+          "ext": "py",
+          "kind": "code",
+          "size": 700
+        },
+        {
+          "name": "question.md",
+          "ext": "md",
+          "kind": "markdown",
+          "size": 2494
+        }
+      ]
+    },
     {
       "name": "binary-search",
       "kind": "code",
@@ -449,6 +467,11 @@
           "slug": "roadmap",
           "title": "Final Week Roadmap",
           "entry": "tutorials/roadmap/index.html"
+        },
+        {
+          "slug": "quickref",
+          "title": "Syntax Quick-Ref",
+          "entry": "tutorials/quickref/index.html"
         }
       ]
     },

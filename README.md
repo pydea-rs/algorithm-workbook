@@ -45,7 +45,8 @@ sql.js, marked, highlight.js) are pulled from CDNs on demand.
 │   ├── odoo-framework/      # Standalone Odoo framework tutorial
 │   ├── interview-final/     # Final-stage (live interview) prep — same framework, harder content
 │   ├── logictest/           # 25-minute aptitude & logical-reasoning test simulator
-│   └── roadmap/             # Interactive final-week study plan (countdown + daily checklists)
+│   ├── roadmap/             # Interactive final-week study plan (countdown + daily checklists)
+│   └── quickref/            # Syntax cheat-sheets — regex, SQL, Python, algorithm templates
 │
 ├── interesting/             # Deep-dive notes written during study sessions
 │   ├── sql-joins.md
@@ -164,6 +165,21 @@ A single-file interactive study plan for the last week before the live interview
   rehearsal afternoons, review evenings, hard stop at night).
 - Progress persists in `localStorage` under `odoo_roadmap_v1`; today's card is
   auto-highlighted and past days fold away.
+
+### Syntax Quick-Ref — `tutorials/quickref/`
+
+A single-file, last-minute review sheet — meant to be skimmed in the hour before the
+interview. No explanations, just what to type and when:
+
+- **Five sections**, each a 5–10 minute read: **Regex** (Python `re`), **SQL**
+  (skeleton, joins, window functions, NULL logic, CTEs), **Python Essentials**
+  (built-ins, `collections`, `heapq`, `bisect`, `itertools`, `math`), **Algorithm
+  Templates** (copy-ready binary search, sliding window, BFS/DFS, backtracking,
+  union-find, Dijkstra, topo-sort, DP, monotonic stack), and **Complexity & Gotchas**.
+- Each section ends with an expandable **"Deep cuts"** block (less-used but good to know).
+- **Instant filter** (press `/`) highlights matches across every card; hover any code
+  block to **copy** it; dark / midnight / light themes with accent colors, all synced
+  to the shared journey backup (prefs under `odoo_ref_prefs_v1`).
 
 ## Long-form notes — `interesting/`
 
