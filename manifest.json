@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-07T05:56:20Z",
+  "generated": "2026-07-07T08:47:44Z",
   "folders": [
     {
       "name": "atoi",
@@ -274,6 +274,24 @@
           "ext": "py",
           "kind": "code",
           "size": 580
+        }
+      ]
+    },
+    {
+      "name": "merge-nodes",
+      "kind": "mixed",
+      "files": [
+        {
+          "name": "main.py",
+          "ext": "py",
+          "kind": "code",
+          "size": 1278
+        },
+        {
+          "name": "question.md",
+          "ext": "md",
+          "kind": "markdown",
+          "size": 561
         }
       ]
     },
