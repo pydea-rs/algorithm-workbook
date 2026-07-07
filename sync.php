@@ -15,6 +15,9 @@
  *                          Mirrors the snapshot into journey_kv (upsert + delete
  *                          missing keys) and archives logic-test results into
  *                          logic_attempts (append-only, never deleted).
+ *                          An EMPTY snapshot never overwrites a populated
+ *                          journey — it is stashed and rejected (see the hard
+ *                          guard below), so a cleared browser can't wipe the DB.
  *   POST ?action=stash  -> body { data, reason? }  Keeps a displaced snapshot
  *                          in journey_stash (safety copy, last 15 kept).
  *
@@ -181,14 +184,32 @@ switch ($action) {
         $pdo->exec("BEGIN IMMEDIATE");
         try {
             $existing = current_kv($pdo);
-            // Safety net: an empty snapshot overwriting a non-empty journey is
-            // almost always an accident (cleared site data in an open tab, a
-            // broken client) — keep a copy even when the client didn't ask.
-            $autoStash = !$snapshot && $existing && empty($body["stashFirst"]);
-            if ($existing && $existing != $snapshot && (!empty($body["stashFirst"]) || $autoStash)) {
-                insert_stash($pdo, $existing,
-                    $autoStash ? "auto-stash-empty-overwrite"
-                               : (string)($body["reason"] ?? "replaced-by-save"));
+
+            // HARD GUARD: an empty snapshot must NEVER destroy a populated
+            // journey. This is the classic accident — site data cleared while a
+            // tab was still open, so that tab's running auto-save or exit beacon
+            // ships an empty snapshot. Keep a safety copy and REFUSE the wipe;
+            // the client re-hydrates from the DB on its next load (empty local
+            // adopts the server). The client also declines to send empty
+            // snapshots, but the server is the last line of defense for any
+            // future or misbehaving client.
+            if (!$snapshot && $existing) {
+                insert_stash($pdo, $existing, "empty-overwrite-blocked");
+                $pdo->exec("COMMIT");
+                $savedAt = $pdo->query("SELECT value FROM journey_meta WHERE key = 'saved_at'")->fetchColumn();
+                echo json_encode([
+                    "ok"      => true,
+                    "skipped" => "empty-overwrite-protected",
+                    "savedAt" => $savedAt === false ? null : $savedAt,
+                    "keys"    => count($existing),
+                ]);
+                break; // leaves the switch — the trailing success echo is skipped
+            }
+
+            // A non-empty overwrite that displaces different data keeps a copy
+            // when the client asks for it (stashFirst) — e.g. conflict-local-wins.
+            if ($existing && $existing != $snapshot && !empty($body["stashFirst"])) {
+                insert_stash($pdo, $existing, (string)($body["reason"] ?? "replaced-by-save"));
             }
             $del = $pdo->prepare("DELETE FROM journey_kv WHERE key = ?");
             foreach (array_keys($existing) as $k) {

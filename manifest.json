@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-07T08:47:44Z",
+  "generated": "2026-07-07T09:46:41Z",
   "folders": [
     {
       "name": "atoi",
@@ -27,7 +27,7 @@
           "name": "main.py",
           "ext": "py",
           "kind": "code",
-          "size": 373
+          "size": 348
         }
       ]
     },
@@ -274,6 +274,18 @@
           "ext": "py",
           "kind": "code",
           "size": 580
+        }
+      ]
+    },
+    {
+      "name": "max_adj_sum",
+      "kind": "code",
+      "files": [
+        {
+          "name": "main.py",
+          "ext": "py",
+          "kind": "code",
+          "size": 248
         }
       ]
     },
@@ -543,7 +555,7 @@
           "name": "main.py",
           "ext": "py",
           "kind": "code",
-          "size": 326
+          "size": 503
         }
       ]
     },

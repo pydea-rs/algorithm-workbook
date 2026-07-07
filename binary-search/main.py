@@ -1,16 +1,15 @@
 def search_insert(nums, target):
-    start = 0; end = len(nums)
+    start = 0; end = len(nums) - 1
     mid = 0
-    while start < end:
-        mid = (end-start) // 2
-        if not mid:
-            return end
+    while start <= end:
+        mid = (end+start) // 2
+
         if nums[mid] < target:
-            start = mid
+            start = mid + 1
         elif nums[mid] > target:
-            end = mid
+            end = mid - 1
         else:
-            return mid
-    return mid
+            return start
+    return start
 
 print(search_insert([1, 3, 5, 6], 5))

@@ -18,7 +18,9 @@
  *   - both changed / never synced here -> keep what's on screen (push local),
  *                                         stashing the server copy first
  * Every overwrite direction keeps a safety copy in journey_stash, so nothing
- * is ever silently lost.
+ * is ever silently lost. An EMPTY snapshot is never pushed (and the server
+ * refuses it too): clearing your browser can never wipe the DB — the next load
+ * just re-hydrates localStorage from it.
  *
  * Afterwards: auto-save every 45s (only when something changed), on tab
  * hide/close via sendBeacon, and manually via the "Save journey" button this
@@ -123,6 +125,15 @@
     opts = opts || {};
     if (!active) { if (cb) cb(false, { error: "sync inactive" }); return; }
     var snap = snapshot();
+    // Never back up an empty snapshot. An empty localStorage means either a
+    // brand-new visitor (nothing to save) or — the dangerous case — site data
+    // cleared under a still-open tab, whose timer/beacon would otherwise try to
+    // wipe the server copy. Skip it: the DB stays intact and re-hydrates us on
+    // the next load. (The server also refuses empty overwrites, belt-and-braces.)
+    if (Object.keys(snap).length === 0) {
+      if (cb) cb(true, { skipped: "empty-snapshot" });
+      return;
+    }
     var ser = serialize(snap);
     if (!opts.force && hash(ser) === getBase()) {
       if (cb) cb(true, { unchanged: true, savedAt: lastSavedAt });
@@ -206,6 +217,7 @@
 
   function beaconSave() {
     var snap = snapshot();
+    if (Object.keys(snap).length === 0) return; // never beacon an empty wipe
     var ser = serialize(snap);
     if (hash(ser) === getBase()) return;
     try {
