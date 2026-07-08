@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-07T09:46:41Z",
+  "generated": "2026-07-08T02:47:00Z",
   "folders": [
     {
       "name": "atoi",
@@ -98,6 +98,18 @@
       ]
     },
     {
+      "name": "compress-str",
+      "kind": "code",
+      "files": [
+        {
+          "name": "main.py",
+          "ext": "py",
+          "kind": "code",
+          "size": 525
+        }
+      ]
+    },
+    {
       "name": "compress-string",
       "kind": "code",
       "files": [
@@ -172,6 +184,18 @@
           "ext": "py",
           "kind": "code",
           "size": 963
+        }
+      ]
+    },
+    {
+      "name": "floyd-cd",
+      "kind": "code",
+      "files": [
+        {
+          "name": "main.py",
+          "ext": "py",
+          "kind": "code",
+          "size": 1222
         }
       ]
     },
@@ -297,7 +321,7 @@
           "name": "main.py",
           "ext": "py",
           "kind": "code",
-          "size": 1278
+          "size": 2164
         },
         {
           "name": "question.md",
@@ -322,6 +346,54 @@
           "ext": "md",
           "kind": "markdown",
           "size": 69
+        }
+      ]
+    },
+    {
+      "name": "missing_num",
+      "kind": "mixed",
+      "files": [
+        {
+          "name": "main.c",
+          "ext": "c",
+          "kind": "code",
+          "size": 352
+        },
+        {
+          "name": "main.go",
+          "ext": "go",
+          "kind": "code",
+          "size": 280
+        },
+        {
+          "name": "main.py",
+          "ext": "py",
+          "kind": "code",
+          "size": 166
+        },
+        {
+          "name": "main.rs",
+          "ext": "rs",
+          "kind": "code",
+          "size": 327
+        },
+        {
+          "name": "question.md",
+          "ext": "md",
+          "kind": "markdown",
+          "size": 398
+        }
+      ]
+    },
+    {
+      "name": "nprimes",
+      "kind": "code",
+      "files": [
+        {
+          "name": "main.py",
+          "ext": "py",
+          "kind": "code",
+          "size": 469
         }
       ]
     },

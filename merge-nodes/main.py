@@ -36,3 +36,25 @@ class Solution:
                 merged_head = merged
             remaining_list = remaining_list.next 
         return merged_head
+    
+    def mergeTwoListsDummy(self, list1: Optional[ListNode], list2: Optional[ListNode]) -> Optional[ListNode]:
+        merged: Optional[ListNode] = ListNode() # dummy
+        merged_head = merged
+        while list1 is not None and list2 is not None:
+            merged.next = ListNode()
+            merged = merged.next
+            if list1.val <= list2.val:
+                merged.val = list1.val
+                list1 = list1.next
+            else:
+                merged.val = list2.val
+                list2 = list2.next
+        if not list1 and not list2:
+            return merged_head.next
+        remaining_list = list1 if list1 is not None else list2
+        
+        while remaining_list is not None:
+            merged.next = ListNode(remaining_list.val)
+            merged = merged.next
+            remaining_list = remaining_list.next 
+        return merged_head.next
