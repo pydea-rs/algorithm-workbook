@@ -477,6 +477,20 @@ body[data-motion="reduced"] .brand-mark::after { animation: none; }
   color: var(--bad);
   border-color: var(--bad);
 }
+.progress-actions { display: flex; align-items: center; gap: 6px; }
+.io-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  background: transparent;
+  color: var(--text-mute);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 3px 6px;
+  line-height: 0;
+  transition: all var(--t-fast);
+}
+.io-btn:hover { color: var(--accent); border-color: var(--accent); }
+/* Backup & sync row in the settings modal */
+.io-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
 
 /* ===================== TOPBAR ============================= */
 #topbar {

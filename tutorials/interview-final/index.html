@@ -28,7 +28,15 @@
       <div class="progress-bar"><div id="progress-fill"></div></div>
       <div class="progress-stats">
         <span id="progress-text">0 / 0</span>
-        <button id="reset-progress" title="Reset all progress">Reset</button>
+        <div class="progress-actions">
+          <button id="export-json-mini" class="io-btn" title="Export all progress to a JSON file" aria-label="Export all progress to a JSON file">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 21h16"/></svg>
+          </button>
+          <button id="import-json-mini" class="io-btn" title="Import progress from a JSON file" aria-label="Import progress from a JSON file">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21V9"/><path d="M7 14l5-5 5 5"/><path d="M4 3h16"/></svg>
+          </button>
+          <button id="reset-progress" title="Reset all progress">Reset</button>
+        </div>
       </div>
     </div>
   </aside>
@@ -160,6 +168,17 @@
           <div class="seg-group" role="radiogroup" aria-label="Animations">
             <button class="seg" data-pref="motion" data-value="full" role="radio">On</button>
             <button class="seg" data-pref="motion" data-value="reduced" role="radio">Off</button>
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-label">
+            <div class="setting-title">Backup &amp; sync</div>
+            <div class="setting-hint">Save everything — progress, timings, drafts, notes, settings — to a JSON file, or restore it here. Handy for backups and moving between devices.</div>
+          </div>
+          <div class="io-actions">
+            <button id="export-json" class="btn ghost small">Export to JSON</button>
+            <button id="import-json" class="btn ghost small">Import</button>
           </div>
         </div>
 

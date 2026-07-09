@@ -231,6 +231,95 @@
   }
 
   // ----------------------------------------------------------------
+  // Export / import — backup + manual sync of everything we persist.
+  // Portable across devices and usable to sync by hand where the PHP
+  // SQLite bridge (sync.js) isn't running.
+  // ----------------------------------------------------------------
+  const ALL_KEYS = [STORAGE_KEY, PREFS_KEY, TIMING_KEY, DRAFTS_KEY, EXAM_HISTORY_KEY, REMEMBER_KEY];
+  const BACKUP_FORMAT = "odoo_final_backup";
+
+  // Snapshot every app key straight from localStorage (already the source of
+  // truth — each mutation writes through immediately), parsed for readability.
+  function buildExport() {
+    const data = {};
+    ALL_KEYS.forEach((key) => {
+      const raw = localStorage.getItem(key);
+      if (raw == null) return;
+      try { data[key] = JSON.parse(raw); }
+      catch (_) { data[key] = raw; }
+    });
+    return {
+      app: "odoo-final-interview",
+      format: BACKUP_FORMAT,
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      data,
+    };
+  }
+
+  function exportState() {
+    let payload;
+    try { payload = JSON.stringify(buildExport(), null, 2); }
+    catch (_) { toast("Export failed.", "bad"); return; }
+    const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
+    const blob = new Blob([payload], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "odoo-final-progress-" + stamp + ".json";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    toast("Progress exported.", "good");
+  }
+
+  // Accept either the wrapped backup {format, data:{…}} or a bare key→value
+  // map, so a hand-edited or older file still loads.
+  function extractBackupData(payload) {
+    if (!payload || typeof payload !== "object" || Array.isArray(payload)) return null;
+    if (payload.format === BACKUP_FORMAT && payload.data && typeof payload.data === "object") {
+      return payload.data;
+    }
+    return payload;
+  }
+
+  function importStateFromFile(file) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      let parsed;
+      try { parsed = JSON.parse(reader.result); }
+      catch (_) { toast("That file isn't valid JSON.", "bad"); return; }
+      const data = extractBackupData(parsed);
+      const keys = data ? ALL_KEYS.filter((k) => Object.prototype.hasOwnProperty.call(data, k)) : [];
+      if (!keys.length) { toast("No recognizable progress data in that file.", "bad"); return; }
+      if (!confirm("Import " + keys.length + " saved section" + (keys.length > 1 ? "s" : "") +
+                   " and replace your current progress? This overwrites what's stored now.")) return;
+      keys.forEach((key) => {
+        try { localStorage.setItem(key, JSON.stringify(data[key])); } catch (_) {}
+      });
+      toast("Imported — reloading…", "good");
+      setTimeout(() => location.reload(), 700);
+    };
+    reader.onerror = () => toast("Couldn't read that file.", "bad");
+    reader.readAsText(file);
+  }
+
+  function pickImportFile() {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "application/json,.json";
+    input.style.display = "none";
+    input.addEventListener("change", () => {
+      importStateFromFile(input.files && input.files[0]);
+      input.remove();
+    });
+    document.body.appendChild(input);
+    input.click();
+  }
+
+  // ----------------------------------------------------------------
   // Timing model + rating
   // ----------------------------------------------------------------
   // q.time looks like "12-15 min", "20 min", or "5-8 min".
@@ -2601,6 +2690,16 @@ the goal for interview eve.</p>
       if (!confirm("Wipe all progress? This cannot be undone.")) return;
       resetProgress();
       toast("Progress reset.", "good");
+    });
+
+    // Export / import — settings modal + sidebar progress card share the logic.
+    ["#export-json", "#export-json-mini"].forEach((sel) => {
+      const el = $(sel);
+      if (el) el.addEventListener("click", exportState);
+    });
+    ["#import-json", "#import-json-mini"].forEach((sel) => {
+      const el = $(sel);
+      if (el) el.addEventListener("click", pickImportFile);
     });
 
     initCardSpotlight();
