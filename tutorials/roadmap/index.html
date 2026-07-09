@@ -89,8 +89,27 @@
     /* ---------- rules & rhythm ---------- */
     h2.section { margin: 36px 0 14px; font-size: 1.25rem; }
     h2.section small { color: var(--text-light); font-weight: 400; font-size: 0.85rem; margin-left: 8px; }
-    /* align-items:start — cards size to their own content instead of stretching to the tallest sibling */
-    .rules { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; align-items: start; }
+    /* Explicit placement: the tall "re-do list" card is pinned down column 3 so the
+       shorter cards pack into columns 1–2 with no dead space, and the long book-track
+       card is widened across the bottom to cut its height. align-items:start keeps each
+       card at its own content height. */
+    .rules { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; align-items: start; }
+    .rules .r-narrate { grid-column: 1; grid-row: 1; }
+    .rules .r-time    { grid-column: 2; grid-row: 1; }
+    .rules .r-redo    { grid-column: 3; grid-row: 1 / span 2; }
+    .rules .r-lang    { grid-column: 1; grid-row: 2; }
+    .rules .r-timers  { grid-column: 2; grid-row: 2; }
+    .rules .r-sleep   { grid-column: 1; grid-row: 3; }
+    .rules .r-book    { grid-column: 2 / span 2; grid-row: 3; }
+    @media (max-width: 780px) {
+        .rules { grid-template-columns: 1fr 1fr; }
+        .rules .rule { grid-column: auto !important; grid-row: auto !important; }
+        .rules .r-book { grid-column: 1 / span 2 !important; }
+    }
+    @media (max-width: 520px) {
+        .rules { grid-template-columns: 1fr; }
+        .rules .r-book { grid-column: 1 !important; }
+    }
     .rule {
         background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px;
         padding: 14px 16px; box-shadow: var(--shadow); font-size: 0.92rem;
@@ -195,6 +214,16 @@
         font-size: 0.64rem; letter-spacing: 0.5px;
     }
     .opt-head .opt-note { font-weight: 600; text-transform: none; letter-spacing: 0; font-size: 0.76rem; }
+    .opt-details { margin-top: 2px; }
+    .opt-details > summary { list-style: none; cursor: pointer; outline: none; }
+    .opt-details > summary::-webkit-details-marker { display: none; }
+    .opt-details > summary:hover { color: var(--text); }
+    .opt-count {
+        background: rgba(181,132,58,0.18); color: #b5843a; border-radius: 8px;
+        padding: 1px 8px; font-size: 0.7rem; font-weight: 800; margin-left: auto;
+    }
+    .opt-chev { font-size: 0.7rem; color: var(--text-light); transition: transform 0.2s; }
+    .opt-details[open] .opt-chev { transform: rotate(90deg); }
     .opt-group {
         border: 1px solid var(--border); border-radius: 11px; margin: 8px 0;
         background: rgba(181,132,58,0.045); overflow: hidden; transition: border-color 0.2s, background 0.2s;
@@ -255,28 +284,28 @@
 
     <h2 class="section">📌 Rules of the week <small>read once, obey daily</small></h2>
     <div class="rules">
-        <div class="rule"><b>🗣️ Narrate aloud, in English</b>
+        <div class="rule r-narrate"><b>🗣️ Narrate aloud, in English</b>
             Every practice question this week: say your plan out loud <em>before</em> typing.
             The live interview grades communication as much as code — make thinking-out-loud automatic.</div>
-        <div class="rule"><b>⏲️ The 25-minute rule</b>
+        <div class="rule r-time"><b>⏲️ The 25-minute rule</b>
             Stuck for 25 minutes? Read the hint, finish with it, and put the question on your re-do list.
             Grinding silently is exactly the habit that hurts you in a live interview — practice asking for a nudge instead.</div>
-        <div class="rule"><b>🔁 Keep a re-do list — it's built in now</b>
+        <div class="rule r-redo"><b>🔁 Keep a re-do list — it's built in now</b>
             Every miss (failed tests, needed the hint, blew the time budget): hit the <b>⚑ Mark missed</b>
             button on the question card. The course's <a href="../interview-final/index.html#re/missed">Remembrance
             section</a> collects them (module hidden), and the <b>Missed-Questions Exam</b> re-deals them cold —
             re-solve two days later; un-flag when easy. Pin hard module blocks with <b>★</b>, park brutal LeetCode
             problems in the <b>Link Box</b>, and write your own summaries in <b>My Notes</b>.</div>
-        <div class="rule"><b>🐍 One language, all week</b>
+        <div class="rule r-lang"><b>🐍 One language, all week</b>
             Pick your interview language now (the course leans Python) and use it for everything.
             Switching languages mid-week resets your muscle memory.</div>
-        <div class="rule"><b>⏱️ Timers always on</b>
+        <div class="rule r-timers"><b>⏱️ Timers always on</b>
             Use the per-question timer in the course for every drill. By Thursday, time pressure
             should feel like normal weather, not a storm.</div>
-        <div class="rule"><b>😴 Sleep beats cramming</b>
+        <div class="rule r-sleep"><b>😴 Sleep beats cramming</b>
             Memory consolidates during sleep. A tired brain narrating badly loses more points than
             one unread module ever will. Hard stop every evening.</div>
-        <div class="rule"><b>📗 Optional book track — bonus, never required</b>
+        <div class="rule r-book"><b>📗 Optional book track — bonus, never required</b>
             Each day below carries optional reads from the
             <a href="https://cses.fi/book/book.pdf" target="_blank" rel="noopener">Competitive Programmer's Handbook</a>.
             Most reinforce that day's theme; the ones tagged <span class="newtag">NEW</span> cover topics the course
@@ -524,9 +553,10 @@ const PLAN = [
 
 // ---------- state ----------
 const KEY = "odoo_roadmap_v1";
-let state = { tasks: {}, open: {}, optionals: {} };
+let state = { tasks: {}, open: {}, optionals: {}, optOpen: {} };
 try { state = Object.assign(state, JSON.parse(localStorage.getItem(KEY) || "{}")); } catch (e) {}
 if (!state.optionals || typeof state.optionals !== "object") state.optionals = {};
+if (!state.optOpen || typeof state.optOpen !== "object") state.optOpen = {};
 const save = () => localStorage.setItem(KEY, JSON.stringify(state));
 
 // The plan was rebalanced mid-week (2026-07-07): day-1 ticks are untouched, but any
@@ -617,11 +647,17 @@ function render() {
         });
 
         // ---- optional book track: full read + fallback, credited at most once ----
+        // Collapsed by default (state.optOpen[di] persists the toggle) so the day's
+        // required tasks stay the focus; the summary still shows the ★ bonus count.
         if (opts.length) {
-            const head = document.createElement("div");
-            head.className = "opt-head";
-            head.innerHTML = `<span class="opt-badge">Bonus</span> Optional — Competitive Programmer's Handbook <span class="opt-note">· counts past 100%, never required · full read <b>or</b> fallback = 1</span>`;
-            body.appendChild(head);
+            const details = document.createElement("details");
+            details.className = "opt-details";
+            details.open = !!state.optOpen[di];
+            const summary = document.createElement("summary");
+            summary.className = "opt-head";
+            summary.innerHTML = `<span class="opt-badge">Bonus</span> Optional — Competitive Programmer's Handbook <span class="opt-note">· counts past 100%, never required · full read <b>or</b> fallback = 1</span><span class="opt-count">★ ${optDone}/${opts.length}</span><span class="opt-chev">▶</span>`;
+            details.appendChild(summary);
+            details.addEventListener("toggle", () => { state.optOpen[di] = details.open; save(); });
             opts.forEach((o, oi) => {
                 const mainId = di + "-" + oi + "-main", altId = di + "-" + oi + "-alt";
                 const mainOn = !!state.optionals[mainId], altOn = !!state.optionals[altId];
@@ -656,8 +692,9 @@ function render() {
 
                 grp.appendChild(mrow);
                 grp.appendChild(arow);
-                body.appendChild(grp);
+                details.appendChild(grp);
             });
+            body.appendChild(details);
         }
 
         if (day.date === "2026-07-12") {
