@@ -213,6 +213,11 @@
     .opt-group.main-done .task.alt .t-label::after {
         content: " — covered by the full read"; color: var(--text-light); font-style: italic; font-size: 0.8rem;
     }
+    .newtag {
+        background: #2d7d5a; color: #fff; border-radius: 6px; padding: 1px 6px;
+        font-size: 0.66rem; font-weight: 800; letter-spacing: 0.5px; margin-right: 5px;
+        vertical-align: 1px;
+    }
     .overall .fill.full { background: linear-gradient(90deg, #ffd166, #ffb703); }
 
     footer { text-align: center; color: var(--text-light); font-size: 0.82rem; margin-top: 42px; }
@@ -272,11 +277,14 @@
             Memory consolidates during sleep. A tired brain narrating badly loses more points than
             one unread module ever will. Hard stop every evening.</div>
         <div class="rule"><b>📗 Optional book track — bonus, never required</b>
-            Each day below carries an optional read from the
-            <a href="https://cses.fi/book/book.pdf" target="_blank" rel="noopener">Competitive Programmer's Handbook</a>,
-            split to reinforce that day's theme. Ticking them pushes progress <em>past</em> 100% — they never gate it.
-            Short on time? Each has a <b>fallback</b> (≈⅓ the pages, the must-know core); doing the full read
-            <em>or</em> the fallback counts once.</div>
+            Each day below carries optional reads from the
+            <a href="https://cses.fi/book/book.pdf" target="_blank" rel="noopener">Competitive Programmer's Handbook</a>.
+            Most reinforce that day's theme; the ones tagged <span class="newtag">NEW</span> cover topics the course
+            <em>doesn't</em> teach (range queries / Fenwick, string matching, MST) plus fresh LeetCode drills for them.
+            Ticking any pushes progress <em>past</em> 100% — they never gate it. Short on time? Each has a
+            <b>fallback</b> (≈⅓ the pages, the must-know core); the full item <em>or</em> its fallback counts once.
+            <em>The handbook has no built-in exercises — its official problem companion is the
+            <a href="https://cses.fi/problemset/" target="_blank" rel="noopener">CSES Problem Set</a>, organized by the same chapters.</em></div>
     </div>
 
     <h2 class="section">🕐 How to shape a study day</h2>
@@ -369,6 +377,16 @@ const PLAN = [
             label: `<b>CPH · Ch 5 + §4.2–4.4</b> — <b>pp. 47–56 &amp; 37–41</b>. Generating subsets &amp; permutations, the <b>backtracking</b> skeleton, pruning the search, meet-in-the-middle; plus set vs map vs iterators — the counting/lookup toolbox behind today's hashing set.`,
             alt: { est: 15, label: `<b>pp. 47–51 &amp; 37–39</b> — subsets (§5.1) and the <b>backtracking</b> template (§5.3), and a one-page look at <b>set vs map</b> (§4.2–4.3). Skip pruning and meet-in-the-middle.` },
         },
+        {
+            cat: "book", est: 35,
+            label: `<span class="newtag">NEW</span><b>CPH · Ch 26 — String Algorithms</b> — <b>pp. 243–250</b>. The <b>trie</b>, <b>string hashing / polynomial (Rabin–Karp)</b> for O(1) substring compares, and the <b>Z-algorithm</b> for pattern matching. The course hashes for <em>counting</em> but never teaches string-pattern matching — this is the gap.`,
+            alt: { est: 14, label: `<b>pp. 244–247</b> — the <b>trie</b> (§26.2) and <b>string hashing</b> (§26.3), which solve most string questions; skim the O(n) pattern-matching idea on p. 246. Skip the Z-algorithm.` },
+        },
+        {
+            cat: "code", est: 45,
+            label: `<span class="newtag">NEW</span><b>String-matching drills</b> (no twin in your practice sets): ${lc("implement-trie-prefix-tree","Implement Trie")} (M), ${lc("find-the-index-of-the-first-occurrence-in-a-string","Find First Occurrence / strStr")} (E), ${lc("longest-happy-prefix","Longest Happy Prefix")} (H, Z/KMP).`,
+            alt: { est: 20, label: `Just ${lc("implement-trie-prefix-tree","Implement Trie")} and ${lc("find-the-index-of-the-first-occurrence-in-a-string","strStr")} — the two whose patterns recur most.` },
+        },
     ],
 },
 {
@@ -388,6 +406,16 @@ const PLAN = [
             cat: "book", est: 35,
             label: `<b>CPH · §3.3 + Ch 14</b> — <b>pp. 31–34 &amp; 133–140</b>. The <b>binary-search</b> patterns (incl. "find the largest value that still works"), then tree traversal, tree <b>diameter</b>, all-longest-paths and binary-tree traversals — the invariant + recursion-on-structure this day is about.`,
             alt: { est: 15, label: `<b>pp. 31–34 &amp; 139–140</b> — <b>binary search</b> (§3.3) and the three <b>binary-tree traversals</b> (§14.4); skim the tree-<b>diameter</b> trick on p. 135. The rest is competitive-only.` },
+        },
+        {
+            cat: "book", est: 35,
+            label: `<span class="newtag">NEW</span><b>CPH · Ch 9 — Range Queries</b> — <b>pp. 83–94</b>. Prefix sums (1-D and 2-D), a <b>sparse table</b> for range-min, then the <b>binary indexed / Fenwick tree</b> and <b>segment tree</b> for range sum/min/max <em>with updates</em> in O(log n). The course does prefix sums but neither tree structure.`,
+            alt: { est: 14, label: `<b>pp. 84–89</b> — prefix sums (§9.1) and the <b>Fenwick / binary indexed tree</b> (§9.2), the smaller structure that answers most "range sum with updates" tasks. Segment tree can wait.` },
+        },
+        {
+            cat: "code", est: 45,
+            label: `<span class="newtag">NEW</span><b>Range-query-with-updates drills</b> (no twin yet): ${lc("range-sum-query-mutable","Range Sum Query - Mutable")} (M, Fenwick/segtree), ${lc("range-sum-query-2d-immutable","Range Sum Query 2D - Immutable")} (M, 2-D prefix), then ${lc("count-of-smaller-numbers-after-self","Count of Smaller Numbers After Self")} (H, BIT).`,
+            alt: { est: 20, label: `Just ${lc("range-sum-query-mutable","Range Sum Query - Mutable")} — implementing one Fenwick tree end-to-end is the whole lesson.` },
         },
     ],
 },
@@ -412,6 +440,16 @@ const PLAN = [
             cat: "book", est: 40,
             label: `<b>CPH · Ch 7 — Dynamic Programming</b> — <b>pp. 65–76</b>. The coin problem (min-coins <em>and</em> count-ways), <b>longest increasing subsequence</b>, grid paths, <b>knapsack</b>, <b>edit distance</b> and counting tilings — the six DP shapes that cover most interview DP.`,
             alt: { est: 18, label: `<b>pp. 65–70</b> — the <b>coin problem</b> worked both directions (§7.1); it teaches the "state → transition → base case" template all the others reuse. Then just skim the <b>edit-distance</b> grid on p. 74.` },
+        },
+        {
+            cat: "book", est: 30,
+            label: `<span class="newtag">NEW</span><b>CPH · Ch 15 — Spanning Trees</b> — <b>pp. 141–148</b>. <b>Kruskal's</b> (sort edges + union-find) and <b>Prim's</b> (grow from a vertex with a heap) for the <b>minimum spanning tree</b>. The course uses union-find but never MST itself — the classic "connect all points as cheaply as possible" task.`,
+            alt: { est: 12, label: `<b>pp. 142–145</b> — <b>Kruskal's</b> algorithm and the <b>union-find</b> it rides on (§15.1–15.2). Skip Prim's; Kruskal alone answers most MST questions.` },
+        },
+        {
+            cat: "code", est: 40,
+            label: `<span class="newtag">NEW</span><b>MST drills</b> (no twin yet): ${lc("min-cost-to-connect-all-points","Min Cost to Connect All Points")} (M, Prim/Kruskal), ${lc("number-of-operations-to-make-network-connected","Number of Ops to Make Network Connected")} (M, union-find).`,
+            alt: { est: 18, label: `Just ${lc("min-cost-to-connect-all-points","Min Cost to Connect All Points")} — one clean MST implementation, start to finish.` },
         },
     ],
 },
