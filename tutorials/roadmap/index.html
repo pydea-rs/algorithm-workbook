@@ -47,11 +47,42 @@
 
     /* ---------- hero ---------- */
     .hero {
+        position: relative;
         background: linear-gradient(135deg, var(--primary-dark), var(--primary) 55%, #3d6b66);
         color: #fff;
         padding: 42px 18px 34px;
         text-align: center;
     }
+    .hero-actions {
+        position: absolute; top: 14px; right: 14px;
+        display: flex; gap: 8px;
+    }
+    .hero-io-btn {
+        display: inline-flex; align-items: center; justify-content: center;
+        width: 34px; height: 34px; padding: 0;
+        background: rgba(255,255,255,0.12);
+        border: 1px solid rgba(255,255,255,0.28);
+        border-radius: 9px; color: #fff; cursor: pointer;
+        backdrop-filter: blur(4px);
+        transition: background .15s, border-color .15s, transform .15s;
+    }
+    .hero-io-btn:hover {
+        background: rgba(255,255,255,0.24);
+        border-color: rgba(255,255,255,0.55);
+        transform: translateY(-1px);
+    }
+    #rmToast {
+        position: fixed; left: 50%; bottom: 26px;
+        transform: translateX(-50%) translateY(12px);
+        background: #1f2937; color: #fff;
+        padding: 10px 18px; border-radius: 10px;
+        font-size: 0.9rem; font-weight: 500;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.28);
+        opacity: 0; pointer-events: none; z-index: 9999;
+        transition: opacity .2s, transform .2s;
+    }
+    #rmToast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    #rmToast.bad { background: #b23b3b; }
     .hero h1 { font-size: 1.9rem; letter-spacing: -0.5px; }
     .hero .sub { opacity: 0.9; margin-top: 6px; font-size: 1.02rem; }
     .hero .sub strong { color: #ffe9a8; }
@@ -263,6 +294,14 @@
 <body>
 
 <div class="hero">
+    <div class="hero-actions">
+        <button id="exportBtn" class="hero-io-btn" title="Export all progress to a JSON file" aria-label="Export all progress to a JSON file">
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 21h16"/></svg>
+        </button>
+        <button id="importBtn" class="hero-io-btn" title="Import progress from a JSON file" aria-label="Import progress from a JSON file">
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21V9"/><path d="M7 14l5-5 5 5"/><path d="M4 3h16"/></svg>
+        </button>
+    </div>
     <h1>🗓️ Final Week Roadmap</h1>
     <div class="sub">Odoo final-stage interview — <strong>Monday, 13 July 2026, 13:30</strong> · Google Meet · 3 hours<br>
     plus the <strong>25-minute Coderbyte logic test</strong>, taken before the interview</div>
@@ -335,8 +374,9 @@
     <div id="days"></div>
 
     <footer>
-        Progress is stored locally in your browser (<code>odoo_logic</code>-style key: <code>odoo_roadmap_v1</code>).
-        · <a href="#" id="resetBtn">Reset all progress</a>
+        Progress is saved in your browser (<code>odoo_roadmap_v1</code>) — and on the PHP server it's also
+        backed up to SQLite and synced across your devices. Export or import a JSON backup with the
+        buttons at the top-right. · <a href="#" id="resetBtn">Reset all progress</a>
     </footer>
 </div>
 
@@ -754,6 +794,76 @@ document.getElementById("resetBtn").addEventListener("click", (e) => {
         save(); render();
     }
 });
+
+// ---------- backup / manual sync (export & import) ----------
+// Operates on the whole journey (every odoo_ key), so this page can snapshot or
+// restore the entire study state — the same set sync.js pushes to SQLite. Files
+// interchange with the interview course's backup (same wrapper format). Handy
+// for backups and for hand-syncing where the PHP SQLite bridge isn't running.
+const BACKUP_FORMAT = "odoo_final_backup";
+function journeyKeys() {
+    const out = [];
+    for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (/^odoo[-_]/.test(k)) out.push(k);
+    }
+    return out;
+}
+let rmToastTimer = null;
+function rmToast(msg, bad) {
+    let t = document.getElementById("rmToast");
+    if (!t) { t = document.createElement("div"); t.id = "rmToast"; document.body.appendChild(t); }
+    t.textContent = msg;
+    t.className = bad ? "bad show" : "show";
+    clearTimeout(rmToastTimer);
+    rmToastTimer = setTimeout(() => { t.className = t.className.replace("show", "").trim(); }, 2400);
+}
+function exportJourney() {
+    const data = {};
+    journeyKeys().forEach((k) => {
+        const raw = localStorage.getItem(k);
+        try { data[k] = JSON.parse(raw); } catch (_) { data[k] = raw; }
+    });
+    if (!Object.keys(data).length) { rmToast("Nothing saved yet to export.", true); return; }
+    const payload = JSON.stringify({ app: "odoo-final-interview", format: BACKUP_FORMAT, version: 1, exportedAt: new Date().toISOString(), data }, null, 2);
+    const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
+    const blob = new Blob([payload], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = "odoo-journey-" + stamp + ".json";
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    rmToast("Journey exported.");
+}
+function importJourneyFromFile(file) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+        let parsed;
+        try { parsed = JSON.parse(reader.result); } catch (_) { rmToast("That file isn't valid JSON.", true); return; }
+        let data = parsed;
+        if (parsed && parsed.format === BACKUP_FORMAT && parsed.data && typeof parsed.data === "object") data = parsed.data;
+        if (!data || typeof data !== "object" || Array.isArray(data)) { rmToast("No recognizable progress in that file.", true); return; }
+        const keys = Object.keys(data).filter((k) => /^odoo[-_]/.test(k));
+        if (!keys.length) { rmToast("No recognizable progress in that file.", true); return; }
+        if (!confirm("Import " + keys.length + " saved section" + (keys.length > 1 ? "s" : "") + " and replace your current progress? This overwrites what's stored now.")) return;
+        keys.forEach((k) => {
+            try { localStorage.setItem(k, typeof data[k] === "string" ? data[k] : JSON.stringify(data[k])); } catch (_) {}
+        });
+        rmToast("Imported — reloading…");
+        setTimeout(() => location.reload(), 700);
+    };
+    reader.onerror = () => rmToast("Couldn't read that file.", true);
+    reader.readAsText(file);
+}
+function pickImportJourney() {
+    const input = document.createElement("input");
+    input.type = "file"; input.accept = "application/json,.json"; input.style.display = "none";
+    input.addEventListener("change", () => { importJourneyFromFile(input.files && input.files[0]); input.remove(); });
+    document.body.appendChild(input); input.click();
+}
+document.getElementById("exportBtn").addEventListener("click", exportJourney);
+document.getElementById("importBtn").addEventListener("click", pickImportJourney);
 
 render();
 </script>

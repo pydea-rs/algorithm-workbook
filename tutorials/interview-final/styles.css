@@ -490,7 +490,8 @@ body[data-motion="reduced"] .brand-mark::after { animation: none; }
 }
 .io-btn:hover { color: var(--accent); border-color: var(--accent); }
 /* Backup & sync row in the settings modal */
-.io-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.io-actions { display: flex; gap: 8px; flex-wrap: nowrap; justify-content: flex-end; flex-shrink: 0; }
+.io-actions .io-btn { padding: 7px 11px; flex-shrink: 0; }
 
 /* ===================== TOPBAR ============================= */
 #topbar {
