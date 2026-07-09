@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-08T02:47:00Z",
+  "generated": "2026-07-09T00:14:20Z",
   "folders": [
     {
       "name": "atoi",
@@ -382,6 +382,24 @@
           "ext": "md",
           "kind": "markdown",
           "size": 398
+        }
+      ]
+    },
+    {
+      "name": "modulars",
+      "kind": "code",
+      "files": [
+        {
+          "name": "count_set_bits.py",
+          "ext": "py",
+          "kind": "code",
+          "size": 158
+        },
+        {
+          "name": "main.py",
+          "ext": "py",
+          "kind": "code",
+          "size": 720
         }
       ]
     },

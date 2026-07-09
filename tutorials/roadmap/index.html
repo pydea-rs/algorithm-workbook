@@ -177,10 +177,43 @@
     .cat-logic { background: var(--warning); }
     .cat-prep  { background: var(--success); }
     .cat-api   { background: #b45ad6; }
+    .cat-book  { background: #b5843a; }
+    .cat-alt   { background: #9a8c74; }
     .day-note {
         margin-top: 10px; padding: 10px 14px; border-left: 3px solid var(--warning);
         background: rgba(243,156,18,0.08); border-radius: 0 9px 9px 0; font-size: 0.87rem;
     }
+
+    /* ---------- optional (book) track ---------- */
+    .opt-head {
+        margin: 16px 0 4px; padding-top: 13px; border-top: 1px dashed var(--border);
+        font-size: 0.78rem; font-weight: 800; letter-spacing: 0.4px; text-transform: uppercase;
+        color: var(--text-light); display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    }
+    .opt-head .opt-badge {
+        background: #b5843a; color: #fff; border-radius: 8px; padding: 2px 9px;
+        font-size: 0.64rem; letter-spacing: 0.5px;
+    }
+    .opt-head .opt-note { font-weight: 600; text-transform: none; letter-spacing: 0; font-size: 0.76rem; }
+    .opt-group {
+        border: 1px solid var(--border); border-radius: 11px; margin: 8px 0;
+        background: rgba(181,132,58,0.045); overflow: hidden; transition: border-color 0.2s, background 0.2s;
+    }
+    .opt-group.credited { border-color: #b5843a; background: rgba(181,132,58,0.11); }
+    .opt-group .task { margin: 0; border-radius: 0; }
+    .opt-group .task:hover { background: rgba(181,132,58,0.10); }
+    .task.alt {
+        padding-left: 30px; border-top: 1px dashed var(--border);
+        background: rgba(0,0,0,0.015);
+    }
+    @media (prefers-color-scheme: dark) { .task.alt { background: rgba(255,255,255,0.02); } }
+    .task.alt .t-label { font-size: 0.87rem; color: var(--text-light); }
+    .task.alt .fallback-tag { font-weight: 800; color: #b5843a; }
+    .opt-group.main-done .task.alt { opacity: 0.5; }
+    .opt-group.main-done .task.alt .t-label::after {
+        content: " — covered by the full read"; color: var(--text-light); font-style: italic; font-size: 0.8rem;
+    }
+    .overall .fill.full { background: linear-gradient(90deg, #ffd166, #ffb703); }
 
     footer { text-align: center; color: var(--text-light); font-size: 0.82rem; margin-top: 42px; }
     footer a { color: var(--primary); }
@@ -238,6 +271,12 @@
         <div class="rule"><b>😴 Sleep beats cramming</b>
             Memory consolidates during sleep. A tired brain narrating badly loses more points than
             one unread module ever will. Hard stop every evening.</div>
+        <div class="rule"><b>📗 Optional book track — bonus, never required</b>
+            Each day below carries an optional read from the
+            <a href="https://cses.fi/book/book.pdf" target="_blank" rel="noopener">Competitive Programmer's Handbook</a>,
+            split to reinforce that day's theme. Ticking them pushes progress <em>past</em> 100% — they never gate it.
+            Short on time? Each has a <b>fallback</b> (≈⅓ the pages, the must-know core); doing the full read
+            <em>or</em> the fallback counts once.</div>
     </div>
 
     <h2 class="section">🕐 How to shape a study day</h2>
@@ -304,6 +343,13 @@ const PLAN = [
         { cat: "api",   est: 35,  label: `<b>FastAPI book</b>, finish Ch 2 — <b>pp. 29–43</b>: Pydantic validation &amp; errors, defaults/required, JSON parsing, custom responses, <code>HTTPException</code>. Type the HTTPException example yourself, don't just read it.` },
         { cat: "logic", est: 30,  label: `<a href="${LT}">Logic simulator, attempt 2</a> — end of the day, as planned. Check the new 📊 Records button after: compare per-category vs attempt 1.` },
     ],
+    optionals: [
+        {
+            cat: "book", est: 40,
+            label: `<b>CPH · Ch 2 + Ch 8</b> — <b>pp. 17–24 &amp; 77–82</b>. Big-O calculation rules, complexity classes, estimating efficiency and <b>maximum subarray sum (Kadane)</b>; then two-pointers, nearest smaller elements and sliding-window minimum — the exact array-scan patterns behind today's drills.`,
+            alt: { est: 18, label: `<b>pp. 21–24 &amp; 77–79</b> — just <b>maximum subarray sum</b> (§2.4) and the <b>two-pointers method</b> (§8.1), plus a glance at the complexity-class table on p. 20. The two patterns you'll actually type.` },
+        },
+    ],
 },
 {
     date: "2026-07-08", dow: "Wed", title: "Hashing & Backtracking",
@@ -316,6 +362,13 @@ const PLAN = [
         { cat: "code",  est: 70,  label: `LeetCode: ${lc("group-anagrams","Group Anagrams")} (M), ${lc("subarray-sum-equals-k","Subarray Sum Equals K")} (M), ${lc("permutations","Permutations")} (M).` },
         { cat: "api",   est: 40,  label: `<b>FastAPI book</b>, Ch 3 + §4.1 — <b>pp. 44–59</b>: async/await, <code>async def</code>, SQLAlchemy setup and the CRUD API. Code along with the CRUD example in a scratch venv.` },
         { cat: "prep",  est: 20,  label: `Evening: re-solve one miss from your ⚑ re-do list, from scratch.` },
+    ],
+    optionals: [
+        {
+            cat: "book", est: 40,
+            label: `<b>CPH · Ch 5 + §4.2–4.4</b> — <b>pp. 47–56 &amp; 37–41</b>. Generating subsets &amp; permutations, the <b>backtracking</b> skeleton, pruning the search, meet-in-the-middle; plus set vs map vs iterators — the counting/lookup toolbox behind today's hashing set.`,
+            alt: { est: 15, label: `<b>pp. 47–51 &amp; 37–39</b> — subsets (§5.1) and the <b>backtracking</b> template (§5.3), and a one-page look at <b>set vs map</b> (§4.2–4.3). Skip pruning and meet-in-the-middle.` },
+        },
     ],
 },
 {
@@ -330,6 +383,13 @@ const PLAN = [
         { cat: "api",   est: 45,  label: `<b>FastAPI book</b>, §4.2 + §5.1 — <b>pp. 60–74</b>: sessions, transactions, DB error handling, project structure. Then patch the book's gap: <a href="https://fastapi.tiangolo.com/tutorial/bigger-applications/" target="_blank" rel="noopener">APIRouter (Bigger Applications)</a> + <a href="https://fastapi.tiangolo.com/tutorial/response-model/" target="_blank" rel="noopener">response_model</a> — the book never mentions either (~20 min).` },
         { cat: "logic", est: 30,  label: `<a href="${LT}">Logic simulator, attempt 3</a>. Drill whatever category the 📊 Records trend shows weakest.` },
     ],
+    optionals: [
+        {
+            cat: "book", est: 35,
+            label: `<b>CPH · §3.3 + Ch 14</b> — <b>pp. 31–34 &amp; 133–140</b>. The <b>binary-search</b> patterns (incl. "find the largest value that still works"), then tree traversal, tree <b>diameter</b>, all-longest-paths and binary-tree traversals — the invariant + recursion-on-structure this day is about.`,
+            alt: { est: 15, label: `<b>pp. 31–34 &amp; 139–140</b> — <b>binary search</b> (§3.3) and the three <b>binary-tree traversals</b> (§14.4); skim the tree-<b>diameter</b> trick on p. 135. The rest is competitive-only.` },
+        },
+    ],
 },
 {
     date: "2026-07-10", dow: "Fri", title: "Graphs & Dynamic Programming",
@@ -341,6 +401,18 @@ const PLAN = [
         { cat: "drill", est: 100, label: `Practice Set 9 (6 drills).` },
         { cat: "code",  est: 45,  label: `LeetCode: ${lc("course-schedule","Course Schedule")} (M), ${lc("coin-change","Coin Change")} (M).` },
         { cat: "api",   est: 45,  label: `<b>FastAPI book</b>, §5.2 + §6.1 — <b>pp. 75–91</b>: security (OAuth2/JWT, CORS, middleware) and microservice principles. The auth flow is the likeliest "small backend task" topic — read it slowly.` },
+    ],
+    optionals: [
+        {
+            cat: "book", est: 40,
+            label: `<b>CPH · Ch 11 + Ch 12</b> — <b>pp. 109–122</b>. Graph terminology, <b>adjacency-list vs matrix</b> representation, then <b>DFS</b> and <b>BFS</b> with their applications (connectivity, cycle-finding, bipartite check). The foundation every graph drill today stands on.`,
+            alt: { est: 18, label: `<b>pp. 113–114 &amp; 117–121</b> — the <b>adjacency-list</b> representation (§11.2) plus <b>DFS</b> (§12.1) and <b>BFS</b> (§12.2). Skip the terminology tour and the applications section.` },
+        },
+        {
+            cat: "book", est: 40,
+            label: `<b>CPH · Ch 7 — Dynamic Programming</b> — <b>pp. 65–76</b>. The coin problem (min-coins <em>and</em> count-ways), <b>longest increasing subsequence</b>, grid paths, <b>knapsack</b>, <b>edit distance</b> and counting tilings — the six DP shapes that cover most interview DP.`,
+            alt: { est: 18, label: `<b>pp. 65–70</b> — the <b>coin problem</b> worked both directions (§7.1); it teaches the "state → transition → base case" template all the others reuse. Then just skim the <b>edit-distance</b> grid on p. 74.` },
+        },
     ],
 },
 {
@@ -355,6 +427,18 @@ const PLAN = [
         { cat: "drill", est: 110, label: `Practice Set 12 (8 runnable SQL drills — now includes LEFT-JOIN zero-counts and above-department-average).` },
         { cat: "api",   est: 55,  label: `<b>FastAPI book</b>, §6.2 + §7.1 — <b>pp. 92–107</b>: Redis/RabbitMQ, API gateway, Gunicorn vs Uvicorn, secure production setup. Then the two doc pages the book skips: <a href="https://fastapi.tiangolo.com/tutorial/dependencies/" target="_blank" rel="noopener">Dependencies (Depends)</a> + <a href="https://fastapi.tiangolo.com/tutorial/testing/" target="_blank" rel="noopener">Testing (TestClient)</a> (~25 min).` },
         { cat: "prep",  est: 30,  label: `Evening: <b>Missed-Questions Exam</b> in the course — your ⚑ re-do list, dealt cold. Un-flag what's easy now.` },
+    ],
+    optionals: [
+        {
+            cat: "book", est: 25,
+            label: `<b>CPH · Ch 6 — Greedy</b> — <b>pp. 57–64</b>. The coin problem (and when greedy <em>fails</em>), <b>scheduling</b> / activity-selection, tasks &amp; deadlines, minimizing sums, and Huffman coding — plus the habit of proving a greedy choice is safe.`,
+            alt: { est: 10, label: `<b>pp. 57–60</b> — the <b>coin problem</b> (§6.1) and <b>scheduling</b> (§6.2) with its exchange-argument proof. That proof style is the transferable part.` },
+        },
+        {
+            cat: "book", est: 35,
+            label: `<b>CPH · Ch 13 — Shortest Paths</b> — <b>pp. 123–132</b>. Bellman–Ford, <b>Dijkstra</b> (built on a <b>priority queue</b> — today's heap topic) and the Floyd–Warshall all-pairs triple loop; when each applies (negative edges vs single-source vs all-pairs).`,
+            alt: { est: 12, label: `<b>pp. 126–130</b> — <b>Dijkstra</b> with a heap (§13.2), the one you'll actually reach for; then just read the <b>Floyd–Warshall</b> triple-loop to recognise it (§13.3).` },
+        },
     ],
 },
 {
@@ -371,6 +455,18 @@ const PLAN = [
         { cat: "prep",  est: 20,  label: `Run Module 2's day-of checklist: mic + webcam via a real Meet test call, IDE font size up, quiet room booked, water, phone silent.` },
         { cat: "prep",  est: 5,   label: `<b>Disable Copilot / ChatGPT / all AI plugins tonight.</b> The recruiter said it plainly: they want to interview you, not a robot.` },
         { cat: "prep",  est: 0,   label: `Early night. Sleep ≥ 8 hours; nothing new after 21:00. The prep is done — trust it.` },
+    ],
+    optionals: [
+        {
+            cat: "book", est: 25,
+            label: `<b>CPH · §10.1–10.3 + §16.4</b> — <b>pp. 95–100 &amp; 155–156</b>. Bit representation, AND/OR/XOR &amp; shifts, <b>representing sets as bitmasks</b> (straight to your <code>count_set_bits</code> drill), and <b>Floyd's cycle detection</b> (your recent practice). Pure review — only if calm and ahead.`,
+            alt: { est: 12, label: `<b>pp. 96–100</b> — <b>bit operations</b> (§10.2) and <b>representing sets</b> as bitmasks (§10.3). Skip Floyd's — you already drilled it in <code>modulars/</code>.` },
+        },
+        {
+            cat: "book", est: 22,
+            label: `<b>CPH · §21.1–21.2 — Number Theory</b> — <b>pp. 197–204</b>. Primes &amp; factors, the <b>sieve of Eratosthenes</b>, and <b>modular arithmetic</b> — the theory behind your <code>modulars/</code> prime-detection work. Bonus only; skip guilt-free on taper day.`,
+            alt: { est: 10, label: `<b>pp. 197–200</b> — primes, factorization and the <b>sieve of Eratosthenes</b> (§21.1). That's the interview-relevant core; modular arithmetic can wait.` },
+        },
     ],
 },
 {
@@ -390,8 +486,9 @@ const PLAN = [
 
 // ---------- state ----------
 const KEY = "odoo_roadmap_v1";
-let state = { tasks: {}, open: {} };
+let state = { tasks: {}, open: {}, optionals: {} };
 try { state = Object.assign(state, JSON.parse(localStorage.getItem(KEY) || "{}")); } catch (e) {}
+if (!state.optionals || typeof state.optionals !== "object") state.optionals = {};
 const save = () => localStorage.setItem(KEY, JSON.stringify(state));
 
 // The plan was rebalanced mid-week (2026-07-07): day-1 ticks are untouched, but any
@@ -402,6 +499,13 @@ const save = () => localStorage.setItem(KEY, JSON.stringify(state));
     for (const k of Object.keys(state.tasks)) {
         const [di, ti] = k.split("-").map(Number);
         if (!PLAN[di] || !PLAN[di].tasks[ti]) { delete state.tasks[k]; pruned = true; }
+    }
+    // Optional (book) ticks live in their own namespace keyed "di-oi-main|alt"
+    // so the required-task pruner never touches them; drop any that no longer
+    // point at an existing optional (keeps the bonus count honest).
+    for (const k of Object.keys(state.optionals)) {
+        const m = /^(\d+)-(\d+)-(main|alt)$/.exec(k);
+        if (!m || !PLAN[+m[1]] || !(PLAN[+m[1]].optionals || [])[+m[2]]) { delete state.optionals[k]; pruned = true; }
     }
     if (pruned) save();
 }
@@ -433,6 +537,9 @@ function render() {
         const done = day.tasks.filter((_, ti) => state.tasks[di + "-" + ti]).length;
         const pct = total ? Math.round((done / total) * 100) : 0;
         const est = day.tasks.reduce((s, t) => s + (t.est || 0), 0);
+        const opts = day.optionals || [];
+        // A bonus is "credited" when EITHER the full read OR its fallback is ticked (never double-counts).
+        const optDone = opts.filter((_, oi) => state.optionals[di + "-" + oi + "-main"] || state.optionals[di + "-" + oi + "-alt"]).length;
 
         const card = document.createElement("div");
         card.className = "day" + (isToday ? " today" : "") + (isPast ? " past" : "") +
@@ -446,7 +553,7 @@ function render() {
                 </div>
                 <div class="day-meta">
                     <div class="pct">${total ? pct + "%" : "✔"}</div>
-                    <div class="est">${total ? `${done}/${total} · ~${fmtEst(est)}` : "moved forward"}</div>
+                    <div class="est">${total ? `${done}/${total}${opts.length ? ` · ★${optDone}/${opts.length}` : ""} · ~${fmtEst(est)}` : "moved forward"}</div>
                 </div>
                 <div class="chev">▶</div>
             </div>
@@ -470,6 +577,51 @@ function render() {
             });
             body.appendChild(row);
         });
+
+        // ---- optional book track: full read + fallback, credited at most once ----
+        if (opts.length) {
+            const head = document.createElement("div");
+            head.className = "opt-head";
+            head.innerHTML = `<span class="opt-badge">Bonus</span> Optional — Competitive Programmer's Handbook <span class="opt-note">· counts past 100%, never required · full read <b>or</b> fallback = 1</span>`;
+            body.appendChild(head);
+            opts.forEach((o, oi) => {
+                const mainId = di + "-" + oi + "-main", altId = di + "-" + oi + "-alt";
+                const mainOn = !!state.optionals[mainId], altOn = !!state.optionals[altId];
+                const grp = document.createElement("div");
+                grp.className = "opt-group" + (mainOn || altOn ? " credited" : "") + (mainOn ? " main-done" : "");
+
+                const mrow = document.createElement("label");
+                mrow.className = "task" + (mainOn ? " done" : "");
+                mrow.innerHTML = `
+                    <input type="checkbox" ${mainOn ? "checked" : ""}>
+                    <span class="cat cat-book">Book</span>
+                    <span class="t-label">${o.label}</span>
+                    <span class="t-est">${fmtEst(o.est)}</span>
+                `;
+                mrow.querySelector("input").addEventListener("change", (e) => {
+                    if (e.target.checked) state.optionals[mainId] = true; else delete state.optionals[mainId];
+                    save(); render();
+                });
+
+                const arow = document.createElement("label");
+                arow.className = "task alt" + (altOn ? " done" : "");
+                arow.innerHTML = `
+                    <input type="checkbox" ${altOn ? "checked" : ""}>
+                    <span class="cat cat-alt">Alt</span>
+                    <span class="t-label"><span class="fallback-tag">↳ Fallback:</span> ${o.alt.label}</span>
+                    <span class="t-est">${fmtEst(o.alt.est)}</span>
+                `;
+                arow.querySelector("input").addEventListener("change", (e) => {
+                    if (e.target.checked) state.optionals[altId] = true; else delete state.optionals[altId];
+                    save(); render();
+                });
+
+                grp.appendChild(mrow);
+                grp.appendChild(arow);
+                body.appendChild(grp);
+            });
+        }
+
         if (day.date === "2026-07-12") {
             const note = document.createElement("div");
             note.className = "day-note";
@@ -484,12 +636,21 @@ function render() {
         daysEl.appendChild(card);
     });
 
-    // overall
-    const all = PLAN.reduce((s, d) => s + d.tasks.length, 0);
-    const doneAll = Object.keys(state.tasks).length;
-    const pct = Math.round((doneAll / all) * 100);
-    document.getElementById("overallFill").style.width = pct + "%";
-    document.getElementById("overallLbl").textContent = `${doneAll} of ${all} tasks done — ${pct}%`;
+    // overall — denominator is REQUIRED tasks only; optional book credits stack
+    // on top, so finishing everything can read above 100% (that's intentional).
+    const requiredTotal = PLAN.reduce((s, d) => s + d.tasks.length, 0);
+    const requiredDone = Object.keys(state.tasks).length;
+    let optCredits = 0;
+    PLAN.forEach((d, di) => (d.optionals || []).forEach((_, oi) => {
+        if (state.optionals[di + "-" + oi + "-main"] || state.optionals[di + "-" + oi + "-alt"]) optCredits++;
+    }));
+    const numer = requiredDone + optCredits;
+    const pct = Math.round((numer / requiredTotal) * 100);
+    const fill = document.getElementById("overallFill");
+    fill.style.width = Math.min(100, pct) + "%";
+    fill.classList.toggle("full", pct >= 100);
+    document.getElementById("overallLbl").textContent =
+        `${requiredDone} of ${requiredTotal} required${optCredits ? ` · +${optCredits} bonus` : ""} — ${pct}%${pct > 100 ? " 🎉" : ""}`;
 }
 
 // ---------- countdown ----------
