@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign in — Odoo Workbook</title>
+  <style>
+    :root {
+      --bg: #0f172a; --card: #1e293b; --card-border: #334155;
+      --text: #e2e8f0; --muted: #94a3b8; --accent: #6366f1; --accent-hi: #818cf8;
+      --danger: #f87171; --danger-bg: rgba(248,113,113,0.12);
+      --field: #0f172a; --field-border: #475569;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: radial-gradient(1200px 600px at 50% -10%, #1e293b 0%, var(--bg) 60%);
+      color: var(--text);
+      display: flex; align-items: center; justify-content: center;
+      padding: 24px;
+    }
+    .card {
+      width: 100%; max-width: 380px;
+      background: var(--card); border: 1px solid var(--card-border);
+      border-radius: 16px; padding: 30px 28px 26px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+    }
+    .lock {
+      width: 46px; height: 46px; border-radius: 12px; margin: 0 auto 16px;
+      display: flex; align-items: center; justify-content: center;
+      background: linear-gradient(135deg, var(--accent), #8b5cf6); color: #fff;
+    }
+    h1 { font-size: 1.25rem; margin: 0 0 6px; text-align: center; font-weight: 650; }
+    .sub { margin: 0 0 22px; text-align: center; color: var(--muted); font-size: 0.9rem; line-height: 1.4; }
+    label { display: block; font-size: 0.8rem; color: var(--muted); margin: 0 0 7px; font-weight: 500; }
+    .field { position: relative; }
+    input[type="password"], input[type="text"] {
+      width: 100%; padding: 12px 42px 12px 14px;
+      background: var(--field); border: 1px solid var(--field-border);
+      border-radius: 10px; color: var(--text); font-size: 1rem;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    input:focus {
+      outline: none; border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(99,102,241,0.25);
+    }
+    input:disabled { opacity: 0.55; cursor: not-allowed; }
+    .toggle {
+      position: absolute; top: 50%; right: 8px; transform: translateY(-50%);
+      background: none; border: none; color: var(--muted); cursor: pointer;
+      padding: 6px; border-radius: 6px; display: flex;
+    }
+    .toggle:hover { color: var(--text); }
+    button.primary {
+      width: 100%; margin-top: 16px; padding: 12px;
+      background: var(--accent); color: #fff; border: none; border-radius: 10px;
+      font-size: 0.95rem; font-weight: 600; cursor: pointer;
+      transition: background .15s, transform .1s;
+    }
+    button.primary:hover:not(:disabled) { background: var(--accent-hi); }
+    button.primary:active:not(:disabled) { transform: translateY(1px); }
+    button.primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .msg {
+      margin-top: 14px; padding: 10px 12px; border-radius: 9px;
+      font-size: 0.85rem; line-height: 1.4; display: none;
+    }
+    .msg.error { display: block; background: var(--danger-bg); color: var(--danger); border: 1px solid rgba(248,113,113,0.3); }
+    .attempts { margin-top: 10px; text-align: center; font-size: 0.78rem; color: var(--muted); min-height: 1em; }
+    .local-box { display: none; margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--card-border); text-align: center; }
+    .local-box p { margin: 0 0 12px; font-size: 0.84rem; color: var(--muted); line-height: 1.45; }
+    button.ghost {
+      width: 100%; padding: 11px; background: transparent; color: var(--text);
+      border: 1px solid var(--field-border); border-radius: 10px;
+      font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: border-color .15s, background .15s;
+    }
+    button.ghost:hover { border-color: var(--accent); background: rgba(99,102,241,0.08); }
+    .foot { margin-top: 20px; text-align: center; font-size: 0.72rem; color: #64748b; line-height: 1.5; }
+  </style>
+</head>
+<body>
+  <form class="card" id="loginForm" autocomplete="off">
+    <div class="lock" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    </div>
+    <h1>Sign in to your journey</h1>
+    <p class="sub">This workbook syncs its progress to the server. Enter the password to unlock editing and backup.</p>
+
+    <label for="pw">Password</label>
+    <div class="field">
+      <input type="password" id="pw" name="pw" autocomplete="current-password" autofocus />
+      <button type="button" class="toggle" id="toggle" aria-label="Show password" title="Show password">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+      </button>
+    </div>
+
+    <button type="submit" class="primary" id="submitBtn">Unlock</button>
+    <div class="msg error" id="msg" role="alert"></div>
+    <div class="attempts" id="attempts"></div>
+
+    <div class="local-box" id="localBox">
+      <p>Too many attempts. You can still browse the workbook in <strong>local-only</strong> mode — your progress stays in this browser and never touches the server.</p>
+      <button type="button" class="ghost" id="localBtn">Continue with the local version</button>
+    </div>
+
+    <div class="foot">Successful sign-in is remembered on this device.</div>
+  </form>
+
+  <script>
+    (function () {
+      "use strict";
+      var MAX_ATTEMPTS = 5;
+      var LOCAL_MODE_KEY = "journey_local_mode_v1"; // deliberately NOT odoo_-prefixed: never synced/exported
+      var attempts = 0;
+
+      var form = document.getElementById("loginForm");
+      var pw = document.getElementById("pw");
+      var submitBtn = document.getElementById("submitBtn");
+      var msg = document.getElementById("msg");
+      var attemptsEl = document.getElementById("attempts");
+      var localBox = document.getElementById("localBox");
+      var localBtn = document.getElementById("localBtn");
+      var toggle = document.getElementById("toggle");
+
+      // A real session always wins over a previously-chosen local-only mode.
+      function enterAuthed() {
+        try { localStorage.removeItem(LOCAL_MODE_KEY); } catch (e) {}
+        location.replace("/");
+      }
+
+      // Already signed in on this device? Skip straight to the workbook.
+      // (Also confirms we're really on the PHP server; on a static host the
+      // status call returns non-JSON and we simply show the form.)
+      try {
+        var probe = new XMLHttpRequest();
+        probe.open("GET", "sync.php?action=status", false);
+        probe.send(null);
+        var st = JSON.parse(probe.responseText);
+        if (st && st.ok === true && st.authed === true) { enterAuthed(); return; }
+      } catch (e) { /* static host or offline — just show the form */ }
+
+      function showError(text) {
+        msg.textContent = text;
+        msg.classList.add("error");
+      }
+      function clearError() {
+        msg.textContent = "";
+        msg.classList.remove("error");
+      }
+      function lockOut() {
+        pw.disabled = true;
+        submitBtn.disabled = true;
+        toggle.disabled = true;
+        localBox.style.display = "block";
+      }
+
+      toggle.addEventListener("click", function () {
+        var showing = pw.type === "text";
+        pw.type = showing ? "password" : "text";
+        toggle.setAttribute("aria-label", showing ? "Show password" : "Hide password");
+        toggle.setAttribute("title", showing ? "Show password" : "Hide password");
+        pw.focus();
+      });
+
+      localBtn.addEventListener("click", function () {
+        try { localStorage.setItem(LOCAL_MODE_KEY, "1"); } catch (e) {}
+        location.replace("/");
+      });
+
+      form.addEventListener("submit", function (ev) {
+        ev.preventDefault();
+        if (submitBtn.disabled) return;
+        var value = pw.value;
+        if (!value) { showError("Enter your password."); return; }
+
+        clearError();
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Checking…";
+
+        var x = new XMLHttpRequest();
+        x.open("POST", "sync.php?action=login", true);
+        x.setRequestHeader("Content-Type", "application/json");
+        x.onreadystatechange = function () {
+          if (x.readyState !== 4) return;
+          var r = null;
+          try { r = JSON.parse(x.responseText); } catch (e) {}
+          if (x.status === 200 && r && r.ok === true) {
+            submitBtn.textContent = "Unlocked ✓";
+            enterAuthed();
+            return;
+          }
+          // Wrong password (or server refused). Count it — client-side only.
+          attempts++;
+          pw.value = "";
+          submitBtn.disabled = false;
+          submitBtn.textContent = "Unlock";
+          if (attempts >= MAX_ATTEMPTS) {
+            showError("Incorrect password.");
+            attemptsEl.textContent = "";
+            lockOut();
+          } else {
+            var left = MAX_ATTEMPTS - attempts;
+            showError(r && r.error === "server has no password configured"
+              ? "No password is configured on the server."
+              : "Incorrect password.");
+            attemptsEl.textContent = left + " attempt" + (left === 1 ? "" : "s") + " remaining.";
+            pw.focus();
+          }
+        };
+        x.send(JSON.stringify({ password: value }));
+      });
+    })();
+  </script>
+</body>
+</html>

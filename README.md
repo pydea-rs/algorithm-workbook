@@ -70,7 +70,11 @@ The workbook is designed to work in two environments and auto-detects which one 
 |-------------------|--------------------------------------|----------------------------------------|
 | GitHub Pages      | Static `manifest.json`               | Just visit the demo URL                |
 | Local Python HTTP | Static `manifest.json`               | `python3 -m http.server` then localhost |
-| Local PHP server  | Dynamic `list.php` (live filesystem) | `php -S localhost:8000`                |
+| Local PHP server  | Dynamic `list.php` (live filesystem) | `php -S localhost:8000 router.php`     |
+
+> **PHP launch note:** always pass `router.php` as shown. It 404s `.env`, the SQLite
+> database and other dotfiles that the bare built-in server would otherwise hand out as
+> plain downloads. Without it those files leak.
 
 The front-end tries `list.php` first; if the response isn't JSON, it falls back to the static
 manifest. That means one codebase supports both modes without any config switch.
@@ -91,6 +95,27 @@ browser and device switches:
 
 On GitHub Pages or the Python server, `sync.js` detects that `sync.php` isn't executed and
 stays dormant — both static modes behave exactly as before.
+
+### Login — PHP mode only
+
+The synced journey belongs to one owner, so on the PHP server the site is gated:
+
+- Opening any page redirects to **`login.html`** until you sign in. The password is checked
+  server-side against a **bcrypt hash in `.env`** (`JOURNEY_PASSWORD_HASH`); copy
+  `.env.example` to `.env` and drop your own hash in — generate one with
+  `php -r 'echo password_hash("your-password", PASSWORD_DEFAULT), "\n";'`.
+- A successful sign-in sets an `HttpOnly` session cookie that lasts
+  `SESSION_EXPIRY_DAYS` (default **7**) — no re-typing the password every few hours.
+- `sync.php`'s `load` / `save` / `stash` all **require that session** and answer `401`
+  without it, so no visitor can read the owner's journey or write to the database — this is
+  the real security boundary, independent of the UI.
+- After **5** wrong tries the login form offers **"continue with the local version"**: that
+  browser is flagged local-only (a non-synced `journey_local_mode_v1` key) and from then on
+  behaves exactly like the static site — isolated localStorage, no hydration, no autosave,
+  zero database access. The 5-try count is client-side only, by design.
+
+The static / Python versions never execute `sync.php`, so there's no login there at all —
+every visitor just gets their own isolated localStorage journey.
 
 ## Interactive tutorials
 
@@ -212,8 +237,8 @@ The build script respects `.gitignore` and skips the workbook's own files.
 python3 -m http.server 8000
 # → http://localhost:8000
 
-# Or with PHP if you want live folder listing
-php -S localhost:8000
+# Or with PHP for live folder listing + the synced, password-gated journey
+php -S localhost:8000 router.php
 ```
 
 To modify the algorithms tutorial specifically, edit files under `tutorials/algorithms/`

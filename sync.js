@@ -7,6 +7,13 @@
  * static/GitHub-Pages or python -m http.server versions, sync.php comes back
  * as plain text, JSON.parse fails, and this file does nothing at all.
  *
+ * AUTH: on the PHP server sync.php requires a login session. Without one the
+ * load call returns HTTP 401 and this script either (a) redirects to login.html
+ * to sign in, or (b) — if the owner previously chose "continue with the local
+ * version" (LOCAL_MODE_KEY set) — stays fully dormant, giving that browser the
+ * same isolated, server-untouched experience as the static site. Only a
+ * signed-in session ever hydrates from or writes to the database.
+ *
  * Sync model (per browser, keyed by a "base" fingerprint of the last snapshot
  * this browser confirmed with the server):
  *   - server empty                     -> seed it from localStorage (protects
@@ -33,9 +40,15 @@
   var script = document.currentScript;
   if (!script || !script.src) return;
   var ENDPOINT = script.src.replace(/sync\.js([?#].*)?$/, "sync.php");
+  var LOGIN_URL = script.src.replace(/sync\.js([?#].*)?$/, "login.html");
   var PREFIX = /^odoo[-_]/;
   var BASE_KEY = "workbook_sync_base_v1"; // deliberately outside the odoo_ prefix: never synced itself
+  var LOCAL_MODE_KEY = "journey_local_mode_v1"; // owner-approved "browse without the server" flag; NOT odoo_-prefixed, so never synced/exported
   var INTERVAL_MS = 45000;
+
+  function localModeChosen() {
+    try { return localStorage.getItem(LOCAL_MODE_KEY) === "1"; } catch (e) { return false; }
+  }
 
   var active = false;
   var lastSavedAt = null;
@@ -161,6 +174,24 @@
     loadStatus = xhr.status;
     if (xhr.status === 200) server = JSON.parse(xhr.responseText);
   } catch (e) { server = null; }
+
+  // PHP server, but no valid login session. A 401 only ever comes from the real
+  // (executed) sync.php, so this uniquely identifies "PHP host, not signed in".
+  if (loadStatus === 401) {
+    if (localModeChosen()) {
+      // Owner chose to browse without the server: behave exactly like the
+      // static site — no hydration, no autosave, isolated localStorage.
+      window.OdooJourney = { active: false, reason: "local-mode" };
+      return;
+    }
+    // Send the visitor to the sign-in form. (login.html never loads this
+    // script, so there is no redirect loop; the basename guard is belt-and-braces.)
+    if (location.pathname.replace(/^.*\//, "") !== "login.html") {
+      location.replace(LOGIN_URL);
+    }
+    window.OdooJourney = { active: false, reason: "auth-required" };
+    return;
+  }
 
   if (!server || server.ok !== true) {
     // 200-with-non-JSON is the normal static-server case — stay quiet.
