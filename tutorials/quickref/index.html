@@ -268,7 +268,8 @@ td.desc code { white-space: normal; }
 }
 .examples > h3 { color: var(--text); font-size: 0.95rem; text-transform: none; letter-spacing: 0; }
 .examples > h3::before { background: var(--accent-2); }
-.ex-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 14px; margin-top: 4px; }
+.ex-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 14px; margin-top: 4px; }
+.ex.wide { grid-column: 1 / -1; }
 .ex { background: var(--bg-2); border: 1px solid var(--border-soft); border-radius: var(--radius-sm); padding: 12px 13px; }
 .ex-q { display: flex; gap: 9px; font-size: 0.86rem; font-weight: 600; margin-bottom: 8px; align-items: baseline; }
 .ex-q .ex-n {
@@ -520,23 +521,26 @@ words = re.findall(r"[A-Za-z']+", text.lower())</pre></div>
             <div class="ex">
               <div class="ex-q"><span class="ex-n">1</span> Validate an identifier: a letter or <code>_</code>, then letters/digits/<code>_</code>.</div>
               <div class="cb"><pre>def is_ident(s):
-    return re.fullmatch(r"[A-Za-z_]\w*", s) is not None</pre></div>
+    return bool(re.fullmatch(r"[A-Za-z_]\w*", s))</pre></div>
               <div class="ex-note"><b>Why:</b> <code>fullmatch</code> anchors both ends for you — no <code>^…$</code> needed.</div>
             </div>
             <div class="ex">
               <div class="ex-q"><span class="ex-n">2</span> Password rule: ≥ 8 chars with at least one lower, upper and digit.</div>
-              <div class="cb"><pre>rx = re.compile(r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$")
-bool(rx.match("Abcd1234"))      <span class="cm"># True</span></pre></div>
+              <div class="cb"><pre>rx = re.compile(r"^(?=.*[a-z])"
+                r"(?=.*[A-Z])(?=.*\d).{8,}$")
+bool(rx.match("Abcd1234"))  <span class="cm"># True</span></pre></div>
               <div class="ex-note"><b>Why:</b> each <code>(?=…)</code> re-scans from the start; order is irrelevant, and nothing is consumed until <code>.{8,}</code>.</div>
             </div>
             <div class="ex">
               <div class="ex-q"><span class="ex-n">3</span> Reformat <code>"John Doe"</code> → <code>"Doe, John"</code>.</div>
-              <div class="cb"><pre>re.sub(r"(\w+)\s+(\w+)", r"\2, \1", "John Doe")   <span class="cm"># 'Doe, John'</span></pre></div>
+              <div class="cb"><pre>re.sub(r"(\w+)\s+(\w+)", r"\2, \1", "John Doe")
+<span class="cm"># -&gt; 'Doe, John'</span></pre></div>
               <div class="ex-note"><b>Why:</b> <code>\1 \2</code> in the replacement re-emit the captured groups, swapped.</div>
             </div>
             <div class="ex">
               <div class="ex-q"><span class="ex-n">4</span> Find an accidentally doubled word (<code>"the the"</code>).</div>
-              <div class="cb"><pre>re.findall(r"\b(\w+)\s+\1\b", "the the cat", re.I)   <span class="cm"># ['the']</span></pre></div>
+              <div class="cb"><pre>re.findall(r"\b(\w+)\s+\1\b", "the the cat", re.I)
+<span class="cm"># -&gt; ['the']</span></pre></div>
               <div class="ex-note"><b>Why:</b> the backreference <code>\1</code> forces the second word to equal the first.</div>
             </div>
           </div>
@@ -656,7 +660,8 @@ FROM sales;</pre></div>
 )
 SELECT e.name
 FROM employee e JOIN big ON big.dept_id = e.dept_id
-WHERE e.salary &gt; big.a;          <span class="cm"># paid above their dept average</span>
+<span class="cm"># paid above their dept average</span>
+WHERE e.salary &gt; big.a;
 
 SELECT name,
   CASE WHEN salary &gt; 100 THEN 'high'
@@ -686,7 +691,7 @@ FROM employee;</pre></div>
               <div class="ex-q"><span class="ex-n">1</span> Second-highest salary (generalises to the N-th).</div>
               <div class="cb"><pre>SELECT DISTINCT salary FROM (
   SELECT salary,
-         DENSE_RANK() OVER (ORDER BY salary DESC) AS r
+    DENSE_RANK() OVER (ORDER BY salary DESC) AS r
   FROM employee
 ) t
 WHERE r = 2;</pre></div>
@@ -702,8 +707,8 @@ WHERE e.salary &gt; m.salary;</pre></div>
             </div>
             <div class="ex">
               <div class="ex-q"><span class="ex-n">3</span> Month-over-month change, no self-join.</div>
-              <div class="cb"><pre>SELECT month,
-       revenue - LAG(revenue) OVER (ORDER BY month) AS delta
+              <div class="cb"><pre>SELECT month, revenue
+    - LAG(revenue) OVER (ORDER BY month) AS delta
 FROM monthly;</pre></div>
               <div class="ex-note"><b>Why:</b> <code>LAG</code> reaches back one row; the first row's <code>delta</code> is NULL.</div>
             </div>
@@ -726,9 +731,9 @@ WHERE id NOT IN (
             <div class="card">
               <h3>Recursive CTE (series / hierarchy)</h3>
               <div class="cb"><pre>WITH RECURSIVE nums(n) AS (
-  SELECT 1                       <span class="cm"># anchor: the seed row</span>
+  SELECT 1  <span class="cm"># anchor: the seed row</span>
   UNION ALL
-  SELECT n + 1 FROM nums WHERE n &lt; 10   <span class="cm"># recurse</span>
+  SELECT n + 1 FROM nums WHERE n &lt; 10  <span class="cm"># recurse</span>
 )
 SELECT n FROM nums;</pre></div>
               <div class="note ok">The same shape walks a <b>manager → report</b> tree: seed with the root, then recurse on <code>parent_id = n.id</code>.</div>
@@ -771,13 +776,13 @@ SELECT n FROM nums;</pre></div>
 
         <div class="card">
           <h3>Comprehensions &amp; slicing</h3>
-          <div class="cb"><pre>[x*x for x in xs if x &gt; 0]        <span class="cm"># filtered list</span>
-{k: v for k, v in pairs}          <span class="cm"># dict</span>
-{x % 3 for x in xs}               <span class="cm"># set (dedups)</span>
-(x for x in xs)                   <span class="cm"># lazy generator, no list built</span>
+          <div class="cb"><pre>[x*x for x in xs if x &gt; 0]  <span class="cm"># filtered list</span>
+{k: v for k, v in pairs}  <span class="cm"># dict</span>
+{x % 3 for x in xs}  <span class="cm"># set (dedups)</span>
+(x for x in xs)  <span class="cm"># lazy generator, no list built</span>
 
-s[::-1]         <span class="cm"># reversed copy</span>
-s[a:b:step]     <span class="cm"># slice with a stride</span>
+s[::-1]  <span class="cm"># reversed copy</span>
+s[a:b:step]  <span class="cm"># slice with a stride</span>
 a, *mid, b = xs <span class="cm"># first, middle-as-list, last</span></pre></div>
         </div>
 
@@ -798,28 +803,30 @@ a, *mid, b = xs <span class="cm"># first, middle-as-list, last</span></pre></div
           <h3><code>collections</code></h3>
           <div class="cb"><pre>from collections import defaultdict, Counter, deque
 
-g = defaultdict(list); g[u].append(v)   <span class="cm"># missing key -&gt; new []</span>
-cnt = Counter(s)          <span class="cm"># {char: frequency}</span>
-cnt.most_common(2)        <span class="cm"># the 2 highest: [(ch, n), …]</span>
-Counter(a) - Counter(b)   <span class="cm"># multiset difference</span>
+<span class="cm"># missing key -&gt; a fresh []</span>
+g = defaultdict(list); g[u].append(v)
+cnt = Counter(s)  <span class="cm"># {char: frequency}</span>
+cnt.most_common(2)  <span class="cm"># the 2 highest: [(ch, n), …]</span>
+Counter(a) - Counter(b)  <span class="cm"># multiset difference</span>
 
 dq = deque(xs)
-dq.appendleft(x); dq.popleft()   <span class="cm"># O(1) at both ends</span>
-deque(maxlen=k)                  <span class="cm"># auto-drops old items</span></pre></div>
+dq.appendleft(x); dq.popleft()  <span class="cm"># O(1) at both ends</span>
+deque(maxlen=k)  <span class="cm"># auto-drops old items</span></pre></div>
         </div>
 
         <div class="card">
           <h3><code>heapq</code> &amp; <code>bisect</code></h3>
           <div class="cb"><pre>import heapq
-heapq.heapify(a)                 <span class="cm"># O(n), min-heap in place</span>
-heapq.heappush(a, x); heapq.heappop(a)   <span class="cm"># smallest first</span>
-heapq.heappush(a, (prio, item))  <span class="cm"># sorts by prio (tuple)</span>
+heapq.heapify(a)  <span class="cm"># O(n), min-heap in place</span>
+<span class="cm"># heappush/heappop keep the smallest on top</span>
+heapq.heappush(a, x); heapq.heappop(a)
+heapq.heappush(a, (prio, item))  <span class="cm"># sort by prio</span>
 heapq.nlargest(k, a, key=…)
 <span class="cm"># max-heap? push -x, and negate again on pop</span>
 
 import bisect
-i = bisect.bisect_left(a, x)     <span class="cm"># leftmost insert index</span>
-bisect.insort(a, x)              <span class="cm"># insert, keeping a sorted</span></pre></div>
+i = bisect.bisect_left(a, x)  <span class="cm"># leftmost insert index</span>
+bisect.insort(a, x)  <span class="cm"># insert, keeping a sorted</span></pre></div>
         </div>
 
         <div class="card">
@@ -828,9 +835,9 @@ bisect.insort(a, x)              <span class="cm"># insert, keeping a sorted</sp
     product, accumulate, chain, groupby)
 
 permutations(xs, 2); combinations(xs, 2)
-product(range(3), repeat=2)      <span class="cm"># nested loops as pairs</span>
-list(accumulate(xs))             <span class="cm"># running sums</span>
-list(chain(a, b))                <span class="cm"># concatenate iterables</span>
+product(range(3), repeat=2)  <span class="cm"># nested loops as pairs</span>
+list(accumulate(xs))  <span class="cm"># running sums</span>
+list(chain(a, b))  <span class="cm"># concatenate iterables</span>
 
 import math
 math.inf; math.gcd(a, b); math.lcm(a, b)
@@ -848,23 +855,25 @@ math.isqrt(n); math.comb(n, k); math.factorial(n)</pre></div>
               <div class="cb"><pre>from collections import defaultdict
 g = defaultdict(list)
 for w in words:
-    g[tuple(sorted(w))].append(w)   <span class="cm"># sorted letters = shared key</span>
+    <span class="cm"># sorted letters = shared key</span>
+    g[tuple(sorted(w))].append(w)
 groups = list(g.values())</pre></div>
               <div class="ex-note"><b>Why:</b> anagrams collapse to the same sorted-letter key — no pairwise comparison.</div>
             </div>
             <div class="ex">
               <div class="ex-q"><span class="ex-n">2</span> The <code>k</code> most frequent elements.</div>
               <div class="cb"><pre>from collections import Counter
-Counter(nums).most_common(k)        <span class="cm"># [(val, freq), …]</span>
-<span class="cm"># tie-agnostic / big data: heapq.nlargest(k, cnt, key=cnt.get)</span></pre></div>
+Counter(nums).most_common(k)  <span class="cm"># [(val, freq), …]</span>
+<span class="cm"># or, tie-agnostic on big data:</span>
+<span class="cm"># heapq.nlargest(k, cnt, key=cnt.get)</span></pre></div>
               <div class="ex-note"><b>Why:</b> <code>Counter</code> does the tally; <code>most_common</code> does the partial sort.</div>
             </div>
             <div class="ex">
               <div class="ex-q"><span class="ex-n">3</span> Merge overlapping intervals.</div>
-              <div class="cb"><pre>intervals.sort()                    <span class="cm"># by start</span>
+              <div class="cb"><pre>intervals.sort()  <span class="cm"># by start</span>
 out = [intervals[0]]
 for s, e in intervals[1:]:
-    if s &lt;= out[-1][1]:             <span class="cm"># overlaps the last kept</span>
+    if s &lt;= out[-1][1]:  <span class="cm"># overlaps the last kept</span>
         out[-1][1] = max(out[-1][1], e)
     else:
         out.append([s, e])</pre></div>
@@ -882,21 +891,22 @@ for s, e in intervals[1:]:
               <h3><code>functools</code> &amp; friends</h3>
               <div class="cb"><pre>from functools import lru_cache, cache, reduce
 
-@cache                    <span class="cm"># memoize recursion (3.9+)</span>
+@cache  <span class="cm"># memoize recursion (3.9+)</span>
 def fib(n):
     return n if n &lt; 2 else fib(n-1) + fib(n-2)
 
-reduce(lambda a, b: a*b, xs, 1)   <span class="cm"># fold to a single value</span></pre></div>
+<span class="cm"># fold to a single value</span>
+reduce(lambda a, b: a*b, xs, 1)</pre></div>
             </div>
             <div class="card">
               <h3>Char-frequency array trick</h3>
-              <div class="cb"><pre><span class="cm"># 26-slot counts without a dict — great for anagram checks</span>
+              <div class="cb"><pre><span class="cm"># 26 slots, no dict — perfect for anagrams</span>
 f = [0]*26
 for c in s:
     f[ord(c) - ord('a')] += 1
 
 import string
-string.ascii_lowercase   <span class="cm"># 'abcdefghijklmnopqrstuvwxyz'</span></pre></div>
+string.ascii_lowercase  <span class="cm"># 'abcdefghijklmnopqrstuvwxyz'</span></pre></div>
               <div class="note">Also worth knowing: the walrus <code>while (line := f.readline()):</code>; <code>dict.get(k, 0)</code> / <code>setdefault</code>; <code>d1 | d2</code> merge (3.9+); <code>sys.setrecursionlimit(10**6)</code> for deep DFS.</div>
             </div>
           </div>
@@ -912,14 +922,15 @@ string.ascii_lowercase   <span class="cm"># 'abcdefghijklmnopqrstuvwxyz'</span><
       <div class="grid">
         <div class="card">
           <h3>Binary search (lower bound)</h3>
-          <div class="cb"><pre>lo, hi = 0, len(a)          <span class="cm"># search the half-open range [lo, hi)</span>
+          <div class="cb"><pre><span class="cm"># search the half-open range [lo, hi)</span>
+lo, hi = 0, len(a)
 while lo &lt; hi:
     mid = (lo + hi) // 2
     if a[mid] &lt; target:
         lo = mid + 1
     else:
         hi = mid
-return lo   <span class="cm"># first index with a[i] &gt;= target</span></pre></div>
+return lo  <span class="cm"># first index with a[i] &gt;= target</span></pre></div>
           <div class="note">Same frame solves "search on the answer": swap <code>a[mid] &lt; target</code> for a <code>feasible(mid)</code> predicate and binary-search the smallest feasible value.</div>
         </div>
 
@@ -929,7 +940,8 @@ return lo   <span class="cm"># first index with a[i] &gt;= target</span></pre></
 cnt = Counter(); L = 0; best = 0
 for R, c in enumerate(s):
     cnt[c] += 1
-    while len(cnt) &gt; k:              <span class="cm"># shrink while the window is invalid</span>
+    <span class="cm"># shrink while the window is invalid</span>
+    while len(cnt) &gt; k:
         cnt[s[L]] -= 1
         if cnt[s[L]] == 0:
             del cnt[s[L]]
@@ -940,13 +952,13 @@ for R, c in enumerate(s):
 
         <div class="card">
           <h3>Two pointers</h3>
-          <div class="cb"><pre>i, j = 0, len(a) - 1        <span class="cm"># a is sorted</span>
+          <div class="cb"><pre>i, j = 0, len(a) - 1  <span class="cm"># a is sorted</span>
 while i &lt; j:
     tot = a[i] + a[j]
     if tot == target:
         return (i, j)
     if tot &lt; target:
-        i += 1              <span class="cm"># need bigger -&gt; move left up</span>
+        i += 1  <span class="cm"># need bigger -&gt; move left up</span>
     else:
         j -= 1</pre></div>
         </div>
@@ -961,7 +973,8 @@ while q:
     for dr, dc in ((1,0),(-1,0),(0,1),(0,-1)):
         nr, nc = r + dr, c + dc
         if 0 &lt;= nr &lt; R and 0 &lt;= nc &lt; C \
-           and (nr, nc) not in seen and grid[nr][nc] != '#':
+           and (nr, nc) not in seen \
+           and grid[nr][nc] != '#':
             seen.add((nr, nc)); q.append((nr, nc))</pre></div>
         </div>
 
@@ -969,11 +982,11 @@ while q:
           <h3>DFS &amp; backtracking</h3>
           <div class="cb"><pre>res = []
 def backtrack(start, path):
-    res.append(path[:])              <span class="cm"># record a copy of this state</span>
+    res.append(path[:])  <span class="cm"># record a copy of this state</span>
     for i in range(start, len(nums)):
-        path.append(nums[i])         <span class="cm"># choose</span>
-        backtrack(i + 1, path)       <span class="cm"># explore</span>
-        path.pop()                   <span class="cm"># un-choose (backtrack)</span>
+        path.append(nums[i])  <span class="cm"># choose</span>
+        backtrack(i + 1, path)  <span class="cm"># explore</span>
+        path.pop()  <span class="cm"># un-choose (backtrack)</span>
 backtrack(0, [])</pre></div>
         </div>
 
@@ -982,22 +995,22 @@ backtrack(0, [])</pre></div>
           <div class="cb"><pre>par = list(range(n))
 def find(x):
     while par[x] != x:
-        par[x] = par[par[x]]         <span class="cm"># path compression</span>
+        par[x] = par[par[x]]  <span class="cm"># path compression</span>
         x = par[x]
     return x
 def union(a, b):
-    par[find(a)] = find(b)           <span class="cm"># merge the two sets</span></pre></div>
+    par[find(a)] = find(b)  <span class="cm"># merge the two sets</span></pre></div>
         </div>
 
         <div class="card">
           <h3>Dijkstra (weighted shortest path)</h3>
           <div class="cb"><pre>import heapq
 INF = float('inf')
-dist = {s: 0}; pq = [(0, s)]         <span class="cm"># (distance, node)</span>
+dist = {s: 0}; pq = [(0, s)]  <span class="cm"># (distance, node)</span>
 while pq:
     d, u = heapq.heappop(pq)
     if d &gt; dist.get(u, INF):
-        continue                     <span class="cm"># stale entry, skip</span>
+        continue  <span class="cm"># stale entry, skip</span>
     for v, w in graph[u]:
         nd = d + w
         if nd &lt; dist.get(v, INF):
@@ -1026,7 +1039,7 @@ while q:
         <div class="card">
           <h3>DP — 1D (coin change)</h3>
           <div class="cb"><pre>INF = float('inf')
-dp = [0] + [INF]*amount              <span class="cm"># dp[a] = fewest coins for a</span>
+dp = [0] + [INF]*amount  <span class="cm"># dp[a] = fewest coins for a</span>
 for a in range(1, amount + 1):
     for c in coins:
         if c &lt;= a:
@@ -1036,10 +1049,12 @@ return dp[amount] if dp[amount] &lt; INF else -1</pre></div>
 
         <div class="card">
           <h3>Monotonic stack (next greater)</h3>
-          <div class="cb"><pre>res = [-1]*len(a); st = []           <span class="cm"># st holds indices, values decreasing</span>
+          <div class="cb"><pre><span class="cm"># st holds indices, values decreasing</span>
+res = [-1]*len(a); st = []
 for i, x in enumerate(a):
     while st and a[st[-1]] &lt; x:
-        res[st.pop()] = x            <span class="cm"># x is the next-greater for that index</span>
+        <span class="cm"># x is the next-greater for that index</span>
+        res[st.pop()] = x
     st.append(i)</pre></div>
         </div>
       </div>
@@ -1048,7 +1063,7 @@ for i, x in enumerate(a):
         <div class="card wide examples">
           <h3>🧪 Worked examples <span class="mut" style="font-weight:400;font-size:0.78rem">— templates plugged into real problems</span></h3>
           <div class="ex-list">
-            <div class="ex">
+            <div class="ex wide">
               <div class="ex-q"><span class="ex-n">1</span> Number of islands (flood-fill with the grid template).</div>
               <div class="cb"><pre>def num_islands(grid):
     R, C = len(grid), len(grid[0]); seen = set(); n = 0
@@ -1056,7 +1071,7 @@ for i, x in enumerate(a):
         for j in range(C):
             if grid[i][j] == '1' and (i, j) not in seen:
                 n += 1; st = [(i, j)]; seen.add((i, j))
-                while st:                       <span class="cm"># flood this island</span>
+                while st:  <span class="cm"># flood this island</span>
                     r, c = st.pop()
                     for dr, dc in ((1,0),(-1,0),(0,1),(0,-1)):
                         nr, nc = r + dr, c + dc
@@ -1066,7 +1081,7 @@ for i, x in enumerate(a):
     return n</pre></div>
               <div class="ex-note"><b>Why:</b> each unvisited <code>'1'</code> starts one flood fill; the number of fills is the answer.</div>
             </div>
-            <div class="ex">
+            <div class="ex wide">
               <div class="ex-q"><span class="ex-n">2</span> Detect a cycle in a directed graph (Kahn's template).</div>
               <div class="cb"><pre>from collections import deque
 def has_cycle(n, adj):
@@ -1082,7 +1097,7 @@ def has_cycle(n, adj):
             indeg[v] -= 1
             if indeg[v] == 0:
                 q.append(v)
-    return seen != n                <span class="cm"># couldn't order every node -&gt; cycle</span></pre></div>
+    return seen != n  <span class="cm"># couldn't order every node -&gt; cycle</span></pre></div>
               <div class="ex-note"><b>Why:</b> a topological order exists iff the graph is acyclic — this is "course schedule" in disguise.</div>
             </div>
           </div>
@@ -1100,7 +1115,7 @@ def insert(w):
     node = root
     for c in w:
         node = node.setdefault(c, {})
-    node['$'] = True                 <span class="cm"># mark a complete word</span>
+    node['$'] = True  <span class="cm"># mark a complete word</span>
 def search(w):
     node = root
     for c in w:
@@ -1171,7 +1186,8 @@ full = (1 &lt;&lt; n) - 1        <span class="cm"># the "all items" set</span></
             <div class="ex">
               <div class="ex-q"><span class="ex-n">1</span> The one number that appears once (all others appear twice).</div>
               <div class="cb"><pre>from functools import reduce
-reduce(lambda a, b: a ^ b, nums)    <span class="cm"># XOR cancels the pairs</span></pre></div>
+<span class="cm"># XOR cancels the pairs</span>
+reduce(lambda a, b: a ^ b, nums)</pre></div>
               <div class="ex-note"><b>Why:</b> equal values XOR to 0, so only the lonely one survives — O(1) memory.</div>
             </div>
             <div class="ex">
@@ -1185,7 +1201,7 @@ reduce(lambda a, b: a ^ b, nums)    <span class="cm"># XOR cancels the pairs</sp
               <div class="cb"><pre>sub = mask
 while sub:
     use(sub)
-    sub = (sub - 1) &amp; mask          <span class="cm"># next smaller submask</span>
+    sub = (sub - 1) &amp; mask  <span class="cm"># next smaller submask</span>
 <span class="cm"># the empty submask (0) is handled after the loop</span></pre></div>
               <div class="ex-note"><b>Why:</b> <code>(sub - 1) &amp; mask</code> walks submasks in descending order without repeats.</div>
             </div>
@@ -1258,7 +1274,8 @@ xs = [x for x in xs if keep(x)]    <span class="cm"># rebuild instead</span></pr
           <div class="ex-list">
             <div class="ex">
               <div class="ex-q"><span class="ex-n">1</span> <code>n ≤ 1e5</code>: does any pair sum to <code>target</code>?</div>
-              <div class="cb"><pre><span class="cm"># O(n^2) = 1e10 -&gt; too slow. A hash set makes it one pass:</span>
+              <div class="cb"><pre><span class="cm"># O(n^2) = 1e10 -&gt; too slow.</span>
+<span class="cm"># A hash set makes it one pass:</span>
 seen = set()
 for x in nums:
     if target - x in seen:
@@ -1269,9 +1286,10 @@ return False</pre></div>
             </div>
             <div class="ex">
               <div class="ex-q"><span class="ex-n">2</span> <code>n ≤ 20</code>: the small bound is the hint — try every subset.</div>
-              <div class="cb"><pre><span class="cm"># 2^20 is about 1e6 subsets — exponential is intended here</span>
+              <div class="cb"><pre><span class="cm"># ~1e6 subsets — exponential is fine here</span>
 for mask in range(1 &lt;&lt; n):
-    subset = [a[i] for i in range(n) if mask &gt;&gt; i &amp; 1]
+    subset = [a[i] for i in range(n)
+              if mask &gt;&gt; i &amp; 1]
     consider(subset)</pre></div>
               <div class="ex-note"><b>Why:</b> when <code>n</code> is tiny, an "impossible" O(2ⁿ) is often exactly what's expected.</div>
             </div>

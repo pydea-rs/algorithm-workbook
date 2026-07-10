@@ -1,6 +1,42 @@
 {
-  "generated": "2026-07-09T23:44:57Z",
+  "generated": "2026-07-10T15:05:13Z",
   "folders": [
+    {
+      "name": "anagrams",
+      "kind": "mixed",
+      "files": [
+        {
+          "name": "best.cpp",
+          "ext": "cpp",
+          "kind": "code",
+          "size": 941
+        },
+        {
+          "name": "best.py",
+          "ext": "py",
+          "kind": "code",
+          "size": 686
+        },
+        {
+          "name": "better.py",
+          "ext": "py",
+          "kind": "code",
+          "size": 457
+        },
+        {
+          "name": "question.md",
+          "ext": "md",
+          "kind": "markdown",
+          "size": 757
+        },
+        {
+          "name": "worst.py",
+          "ext": "py",
+          "kind": "code",
+          "size": 842
+        }
+      ]
+    },
     {
       "name": "atoi",
       "kind": "mixed",
