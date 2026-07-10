@@ -243,11 +243,14 @@ switch ($action) {
         if ($PW_HASH === "") fail(500, "server has no password configured");
         $body = read_body();
         $pw = isset($body["password"]) && is_string($body["password"]) ? $body["password"] : "";
-        session_boot(true, $SESSION_LIFETIME);
+        // Verify BEFORE starting a session: a failed attempt must not create a
+        // server-side session file, so a scripted brute-force can't flood
+        // .sessions/ with junk (disk-fill). Only a correct password gets a session.
         if ($pw === "" || !password_verify($pw, $PW_HASH)) {
             usleep(300000); // small, constant-ish delay to blunt online guessing
             fail(401, "incorrect password");
         }
+        session_boot(true, $SESSION_LIFETIME);
         session_regenerate_id(true); // fresh id on privilege change (anti-fixation)
         $_SESSION["authed"] = true;
         $_SESSION["expires"] = time() + $SESSION_LIFETIME;
