@@ -1,0 +1,31 @@
+#include <string>
+#include <vector>
+#include <unordered_map>
+#include <algorithm>
+
+using namespace std;
+
+// The interesting part is that although the approach below is worse than the `best.cpp` in time and space complexity; 
+// But in real runtime this one runs faster than the latter,
+
+class Solution {
+public:
+    vector<vector<string>> groupAnagrams(vector<string>& strs) {
+        unordered_map<string, vector<string>> groups;
+
+        for (const string& word : strs) {
+            string key = word;
+            sort(key.begin(), key.end());
+            groups[key].push_back(word);
+        }
+
+        vector<vector<string>> result;
+        result.reserve(groups.size());
+
+        for (auto& [key, group] : groups) {
+            result.push_back(move(group));
+        }
+
+        return result;
+    }
+};

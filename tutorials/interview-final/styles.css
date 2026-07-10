@@ -489,9 +489,24 @@ body[data-motion="reduced"] .brand-mark::after { animation: none; }
   transition: all var(--t-fast);
 }
 .io-btn:hover { color: var(--accent); border-color: var(--accent); }
-/* Backup & sync row in the settings modal */
+/* Backup & sync row in the settings modal — filled square buttons
+   matching the Final Week Roadmap's hero backup buttons. */
 .io-actions { display: flex; gap: 8px; flex-wrap: nowrap; justify-content: flex-end; flex-shrink: 0; }
-.io-actions .io-btn { padding: 7px 11px; flex-shrink: 0; }
+.io-actions .io-btn {
+  width: 34px; height: 34px; padding: 0;
+  flex-shrink: 0;
+  background: var(--accent-soft);
+  color: var(--accent);
+  border: 1px solid var(--accent-glow);
+  border-radius: 9px;
+  transition: background var(--t-fast), border-color var(--t-fast), transform var(--t-fast);
+}
+.io-actions .io-btn:hover {
+  background: var(--accent-glow);
+  color: var(--accent);
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
 
 /* ===================== TOPBAR ============================= */
 #topbar {

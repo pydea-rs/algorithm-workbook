@@ -400,7 +400,7 @@
     for (const [k, v] of Object.entries(attrs)) {
       if (v == null || v === false) continue;
       if (k === "class") node.className = v;
-      else if (k === "html") node.innerHTML = v;
+      else if (k === "html") { node.innerHTML = v; highlightWithin(node); }
       else if (k === "text") node.textContent = v;
       else if (k.startsWith("on") && typeof v === "function") {
         node.addEventListener(k.slice(2), v);
@@ -438,6 +438,170 @@
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;")
       .replace(/'/g, "&#039;");
+  }
+
+  // ----------------------------------------------------------------
+  // Lightweight syntax highlighting for <pre><code> blocks.
+  // Deliberately restrained — colours keywords, strings, comments and
+  // def/function names only (numbers & operators stay plain) — to match
+  // the hand-annotated blocks already in content.js and the algorithms
+  // workbook. Emits the same .tok-* classes those blocks use.
+  // ----------------------------------------------------------------
+  const PY_KEYWORDS = new Set([
+    "def", "class", "return", "if", "elif", "else", "for", "while", "break",
+    "continue", "pass", "import", "from", "as", "with", "try", "except",
+    "finally", "raise", "yield", "lambda", "and", "or", "not", "in", "is",
+    "None", "True", "False", "global", "nonlocal", "del", "assert", "await",
+    "async",
+  ]);
+  const JS_KEYWORDS = new Set([
+    "function", "return", "if", "else", "for", "while", "do", "switch", "case",
+    "break", "continue", "const", "let", "var", "new", "class", "extends",
+    "super", "this", "import", "export", "from", "default", "try", "catch",
+    "finally", "throw", "typeof", "instanceof", "in", "of", "delete", "void",
+    "await", "async", "yield", "null", "undefined", "true", "false",
+  ]);
+  const SQL_KEYWORDS = new Set([
+    "SELECT", "FROM", "WHERE", "GROUP", "BY", "HAVING", "ORDER", "LIMIT",
+    "OFFSET", "JOIN", "INNER", "LEFT", "RIGHT", "FULL", "OUTER", "CROSS", "ON",
+    "USING", "AS", "AND", "OR", "NOT", "NULL", "IS", "IN", "LIKE", "ILIKE",
+    "BETWEEN", "EXISTS", "UNION", "ALL", "DISTINCT", "CASE", "WHEN", "THEN",
+    "ELSE", "END", "WITH", "INSERT", "INTO", "VALUES", "UPDATE", "SET",
+    "DELETE", "CREATE", "TABLE", "PRIMARY", "KEY", "FOREIGN", "REFERENCES",
+    "DEFAULT", "UNIQUE", "CHECK", "CONSTRAINT", "INDEX", "VIEW", "OVER",
+    "PARTITION", "ROW", "ROWS", "RANGE", "DESC", "ASC", "GENERATED", "ALWAYS",
+    "IDENTITY", "CASCADE", "INT", "INTEGER", "BIGINT", "SMALLINT", "SERIAL",
+    "TEXT", "VARCHAR", "CHAR", "BOOLEAN", "BOOL", "DATE", "TIMESTAMP",
+    "TIMESTAMPTZ", "NUMERIC", "DECIMAL", "FLOAT", "REAL", "JSON", "JSONB",
+  ]);
+
+  // Guess a language from the source so plain content blocks and design
+  // solutions get the right lexer. Returns "none" for prose / ASCII diagrams
+  // so those are left untouched.
+  function detectLang(text) {
+    if (
+      (/\bSELECT\b[\s\S]*\bFROM\b/i.test(text)) ||
+      /\bCREATE\s+TABLE\b/i.test(text) ||
+      /\bINSERT\s+INTO\b/i.test(text) ||
+      (/\bUPDATE\b[\s\S]*\bSET\b/i.test(text)) ||
+      (/\bWITH\b[\s\S]*\bAS\s*\(/i.test(text))
+    ) return "sql";
+    if (
+      /(^|\n)\s*(def |class )/.test(text) ||
+      /(^|\n)\s*(from |import )\S/.test(text) ||
+      /(^|\n)\s*(if|for|while|elif|else|return|try|except|with)\b/.test(text)
+    ) return "python";
+    if (/(^|\n)\s*(function |const |let |var )/.test(text)) return "js";
+    return "none";
+  }
+
+  function highlightCode(text, lang) {
+    lang = lang || detectLang(text);
+    if (lang === "none") return escapeHtml(text);
+    const isSql = lang === "sql";
+    const isJs = lang === "js" || lang === "javascript";
+    const keywords = isSql ? SQL_KEYWORDS : isJs ? JS_KEYWORDS : PY_KEYWORDS;
+    const isKeyword = isSql
+      ? (w) => keywords.has(w.toUpperCase())
+      : (w) => keywords.has(w);
+
+    function span(cls, raw) {
+      return '<span class="' + cls + '">' + escapeHtml(raw) + "</span>";
+    }
+
+    let out = "";
+    let i = 0;
+    const n = text.length;
+    let prevKw = ""; // the previous keyword on this line (to spot def/class names)
+
+    while (i < n) {
+      const c = text[i];
+      const rest = text.slice(i);
+
+      // Comments
+      if (!isSql && c === "#") {
+        const m = rest.match(/^#[^\n]*/);
+        out += span("tok-cmt", m[0]); i += m[0].length; continue;
+      }
+      // SQL line comment — but not part of a "---" ER-diagram arrow (a real
+      // comment is an exact "--" pair, never inside a longer run of dashes).
+      if (isSql && c === "-" && text[i + 1] === "-" && text[i - 1] !== "-" && text[i + 2] !== "-") {
+        const m = rest.match(/^--[^\n]*/);
+        out += span("tok-cmt", m[0]); i += m[0].length; continue;
+      }
+      if (isJs && c === "/" && text[i + 1] === "/") {
+        const m = rest.match(/^\/\/[^\n]*/);
+        out += span("tok-cmt", m[0]); i += m[0].length; continue;
+      }
+      if ((isJs || isSql) && c === "/" && text[i + 1] === "*") {
+        const m = rest.match(/^\/\*[\s\S]*?\*\//);
+        const t = m ? m[0] : rest;
+        out += span("tok-cmt", t); i += t.length; continue;
+      }
+
+      // Triple-quoted strings (Python)
+      if (!isSql && (rest.startsWith('"""') || rest.startsWith("'''"))) {
+        const q = rest.slice(0, 3);
+        const end = text.indexOf(q, i + 3);
+        const t = end === -1 ? rest : text.slice(i, end + 3);
+        out += span("tok-str", t); i += t.length; prevKw = ""; continue;
+      }
+      // Single/double (and JS template) strings
+      if (c === '"' || c === "'" || (isJs && c === "`")) {
+        let j = i + 1;
+        while (j < n) {
+          if (!isSql && text[j] === "\\") { j += 2; continue; }
+          if (text[j] === c) {
+            if (isSql && c === "'" && text[j + 1] === "'") { j += 2; continue; }
+            j++; break;
+          }
+          j++;
+        }
+        const t = text.slice(i, j);
+        out += span("tok-str", t); i += t.length; prevKw = ""; continue;
+      }
+
+      // Identifiers / keywords
+      if (/[A-Za-z_$]/.test(c)) {
+        const word = rest.match(/^[A-Za-z_$][\w$]*/)[0];
+        // A real call has the paren adjacent (AVG(, count() — never "name (1)").
+        const callSite = text[i + word.length] === "(";
+        if (isKeyword(word)) {
+          out += span("tok-kw", word);
+          prevKw = word.toLowerCase();
+        } else if (prevKw === "def" || prevKw === "class" || prevKw === "function") {
+          out += span("tok-fn", word); // the name in a definition
+          prevKw = "";
+        } else if (isSql && callSite) {
+          out += span("tok-fn", word); // SQL function call, e.g. AVG(, COUNT(
+          prevKw = "";
+        } else {
+          out += escapeHtml(word);
+          prevKw = "";
+        }
+        i += word.length; continue;
+      }
+
+      // Everything else passes through escaped; newline clears line state.
+      out += escapeHtml(c);
+      if (c === "\n") prevKw = "";
+      i += 1;
+    }
+    return out;
+  }
+
+  // Colour every not-yet-highlighted <pre><code> inside a freshly rendered
+  // root. Blocks that already carry .tok-* spans (hand-annotated in
+  // content.js) are left exactly as they are.
+  function highlightWithin(root) {
+    if (!root || !root.querySelectorAll) return;
+    root.querySelectorAll("pre > code").forEach((code) => {
+      if (code.querySelector("span")) return; // already highlighted
+      const text = code.textContent;
+      if (!text.trim()) return;
+      const html = highlightCode(text);
+      if (html !== escapeHtml(text)) code.innerHTML = html; // skip if nothing to colour
+    });
   }
 
   function toast(msg, kind = "info", ms = 2400) {
@@ -787,6 +951,7 @@ all of it and start fresh.</p>
       if (block.kind === "html") {
         const div = el("div");
         div.innerHTML = block.html;
+        highlightWithin(div); // colour any plain <pre><code> in the content
         // Attach the ★ Must-Remember pin to every tagged block.
         div.querySelectorAll("[data-mr]").forEach(decorateMustBlock);
         wrap.appendChild(div);
@@ -824,6 +989,7 @@ all of it and start fresh.</p>
     let answered = false;
     const explainNode = el("div", { class: "mcq-explain hidden" });
     explainNode.innerHTML = mcq.explain || "";
+    highlightWithin(explainNode);
 
     for (const opt of mcq.options) {
       const b = el("button", {
@@ -1389,6 +1555,7 @@ the goal for interview eve.</p>
       body.innerHTML = entry
         ? entry.html
         : `<p class="note-soft">This pinned block no longer exists in the module content.</p>`;
+      highlightWithin(body);
       item.appendChild(body);
       wrap.appendChild(item);
     });
@@ -2526,7 +2693,8 @@ the goal for interview eve.</p>
   // Answer modal
   // ----------------------------------------------------------------
   // Code block with a hover-revealed copy button.
-  function codeBlock(source) {
+  // `lang` is optional — when omitted the language is auto-detected.
+  function codeBlock(source, lang) {
     const wrap = el("div", { class: "pre-wrap" });
     const copyBtn = el("button", { class: "copy-btn", text: "Copy" });
     copyBtn.addEventListener("click", async () => {
@@ -2555,7 +2723,9 @@ the goal for interview eve.</p>
       }
     });
     const pre = el("pre");
-    pre.appendChild(el("code", { text: source }));
+    const code = el("code");
+    code.innerHTML = highlightCode(source, lang); // copy button still uses raw `source`
+    pre.appendChild(code);
     wrap.appendChild(copyBtn);
     wrap.appendChild(pre);
     return wrap;
@@ -2571,7 +2741,10 @@ the goal for interview eve.</p>
     body.appendChild(el("p", { html: q.hint }));
 
     body.appendChild(el("h4", { text: q.type === "sql" ? "SQL Solution" : "Reference Solution" }));
-    body.appendChild(codeBlock(q.solution));
+    // Design solutions are mixed prose/DDL — let the detector pick; code
+    // questions know their language up front.
+    const solLang = q.type === "sql" ? "sql" : q.type === "python" ? "python" : undefined;
+    body.appendChild(codeBlock(q.solution, solLang));
 
     if (q.explanation) {
       body.appendChild(el("h4", { text: "Why this works" }));
@@ -2692,15 +2865,11 @@ the goal for interview eve.</p>
       toast("Progress reset.", "good");
     });
 
-    // Export / import — settings modal + sidebar progress card share the logic.
-    ["#export-json", "#export-json-mini"].forEach((sel) => {
-      const el = $(sel);
-      if (el) el.addEventListener("click", exportState);
-    });
-    ["#import-json", "#import-json-mini"].forEach((sel) => {
-      const el = $(sel);
-      if (el) el.addEventListener("click", pickImportFile);
-    });
+    // Export / import — lives in the settings modal's Backup & sync row.
+    const exportBtn = $("#export-json");
+    if (exportBtn) exportBtn.addEventListener("click", exportState);
+    const importBtn = $("#import-json");
+    if (importBtn) importBtn.addEventListener("click", pickImportFile);
 
     initCardSpotlight();
     initCursorRing();
