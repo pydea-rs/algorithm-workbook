@@ -16,11 +16,12 @@ A focused, step-by-step consolidation app for the hours before the Odoo live tec
 
 ```
 tutorials/last-review/
-├── index.html   # Shell
-├── styles.css   # Theme and layout
-├── content.js   # Review content for both 1.5 h and 3 h modes
-├── app.js       # Navigation, progress, timer, settings
-└── README.md    # This file
+├── index.html      # Shell
+├── styles.css      # Theme and layout
+├── content.js      # Review content for both 1.5 h and 3 h modes
+├── highlighter.js  # Dependency-free syntax highlighter for code blocks
+├── app.js          # Navigation, progress, timer, settings
+└── README.md       # This file
 ```
 
 ## How to open
@@ -62,7 +63,9 @@ This app uses its own exclusive "pre-interview cockpit" design — it does **not
 - Circular progress ring and a circular session timer.
 - Gradient accent system; default accent is **cyan**.
 - Custom display font (`Space Grotesk`) and UI font (`Inter`) loaded from Google Fonts, with system fallbacks if offline.
-- Staggered nav-item entrance, card hover lift, and glowing active states.
+- Staggered nav-item entrance, card hover lift, glowing active states, and floating background particles.
+- Section progress mini-bars in the sidebar and a top scroll-progress line.
+- Dependency-free syntax highlighting for Python, SQL and JavaScript code blocks.
 - Choose **Reduced** motion in Settings to disable animations.
 
 ## LocalStorage keys

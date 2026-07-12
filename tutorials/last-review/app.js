@@ -141,7 +141,8 @@
       const num = el("span", { class: "nav-num", text: String(idx + 1) });
       const title = el("span", { class: "nav-title", text: sec.title });
       const time = el("span", { class: "nav-time", text: sec.minutes + " min" });
-      const item = el("button", { class: "nav-item", "data-index": String(idx), style: "--i:" + idx }, [num, title, time]);
+      const progress = el("span", { class: "nav-progress" }, [el("span", { class: "nav-progress-bar" })]);
+      const item = el("button", { class: "nav-item", "data-index": String(idx), style: "--i:" + idx }, [num, title, time, progress]);
       item.addEventListener("click", () => { goToSection(idx); closeMobileMenu(); });
       nav.appendChild(item);
     });
@@ -157,8 +158,13 @@
     $$(".nav-item").forEach((item, idx) => {
       const sec = content.sections[idx];
       const checks = sec.blocks.filter((b) => b.kind === "check").map((b) => b.id);
-      const done = checks.length > 0 && checks.every((id) => s.has(id));
+      const total = checks.length;
+      const checked = total ? checks.filter((id) => s.has(id)).length : 0;
+      const pct = total ? Math.round((checked / total) * 100) : 0;
+      const done = total > 0 && checked === total;
       item.classList.toggle("done", done);
+      const bar = item.querySelector(".nav-progress-bar");
+      if (bar) bar.style.width = pct + "%";
     });
   }
 
@@ -191,7 +197,11 @@
     sec.blocks.forEach((b, bi) => {
       try {
         const node = renderBlock(b);
-        if (node) wrap.appendChild(node);
+        if (node) {
+          node.style.setProperty("--bi", String(bi));
+          node.classList.add("block-enter");
+          wrap.appendChild(node);
+        }
       } catch (err) {
         console.error("renderBlock error", sec.id, bi, b.kind, err.stack || err);
         wrap.appendChild(el("div", { class: "callout warn", html: `<b>Render error</b> ${sec.id}/${bi} (${b.kind}): ${err.message}` }));
@@ -217,7 +227,13 @@
         el("span", { class: "code-lang", text: b.lang }),
         el("button", { class: "copy-btn", text: "Copy" }),
       ]);
-      const pre = el("pre", null, [el("code", { text: b.code })]);
+      const codeEl = el("code", { class: "language-" + b.lang });
+      if (window.LastReviewHighlighter && b.lang !== "text" && b.lang !== "plaintext") {
+        codeEl.innerHTML = window.LastReviewHighlighter.highlight(b.code, b.lang);
+      } else {
+        codeEl.textContent = b.code;
+      }
+      const pre = el("pre", null, [codeEl]);
       return el("div", { class: "code-block" }, [head, pre]);
     }
     if (b.kind === "callout") {
@@ -345,7 +361,11 @@
   }
   function onMainScroll() {
     const main = $("#main");
-    mainWasAtBottom = main.scrollHeight - main.clientHeight - main.scrollTop < 2;
+    const max = main.scrollHeight - main.clientHeight;
+    const pct = max > 0 ? main.scrollTop / max : 0;
+    mainWasAtBottom = max - main.scrollTop < 2;
+    const line = $("#scroll-line");
+    if (line) line.style.transform = "scaleX(" + pct + ")";
   }
   function onMainWheel(e) {
     if (e.deltaY <= 0) return;
@@ -402,6 +422,24 @@
   function openMobileMenu() { document.body.classList.add("nav-open"); }
   function closeMobileMenu() { document.body.classList.remove("nav-open"); }
 
+  function initParticles() {
+    const container = $("#particles");
+    if (!container || container.children.length) return;
+    const count = 28;
+    for (let i = 0; i < count; i++) {
+      const p = document.createElement("span");
+      p.className = "particle";
+      p.style.left = Math.random() * 100 + "%";
+      p.style.top = Math.random() * 100 + "%";
+      p.style.setProperty("--d", (Math.random() * 20 + 14) + "s");
+      p.style.setProperty("--dx", (Math.random() * 60 - 30) + "px");
+      p.style.setProperty("--dy", (Math.random() * -100 - 20) + "px");
+      p.style.setProperty("--s", (Math.random() * 0.6 + 0.4));
+      p.style.animationDelay = (Math.random() * -30) + "s";
+      container.appendChild(p);
+    }
+  }
+
   // ---------- Event bindings ----------
   function init() {
     state.progress.short = loadProgressFor("short");
@@ -410,6 +448,7 @@
     applyPrefs();
     buildNav();
     updateProgressUI();
+    initParticles();
 
     // Welcome start buttons
     $("#start-short").addEventListener("click", () => { setMode("short"); startTimer(); nextSectionFromWelcome(); });

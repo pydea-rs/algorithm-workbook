@@ -778,6 +778,135 @@ tr:last-child td { border-bottom: none; }
 /* SVG gradient fallbacks for Firefox when no defs present */
 
 
+/* ---------- Syntax highlighting ---------- */
+.code-block .sh-keyword { color: var(--accent); font-weight: 600; }
+.code-block .sh-string { color: var(--good); }
+.code-block .sh-number { color: var(--warn); }
+.code-block .sh-comment { color: var(--text-mute); font-style: italic; }
+.code-block .sh-function { color: var(--accent-2); }
+.code-block .sh-class { color: var(--warn); }
+.code-block .sh-builtin { color: color-mix(in srgb, var(--accent-2) 80%, var(--text)); }
+.code-block .sh-type { color: var(--warn); }
+
+/* ---------- Code-block premium finish ---------- */
+.code-block {
+  transition: border-color 220ms, box-shadow 220ms, transform 220ms;
+}
+.code-block:hover {
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--code-border));
+  box-shadow: 0 0 34px -10px var(--accent-glow);
+  transform: translateY(-1px);
+}
+.code-block::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+/* ---------- Nav section progress ---------- */
+.nav-item {
+  position: relative;
+  overflow: hidden;
+}
+.nav-progress {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--bg-3);
+  opacity: 0.35;
+  pointer-events: none;
+}
+.nav-progress-bar {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  transition: width 320ms var(--ease-out);
+}
+.nav-item.done .nav-progress-bar { background: var(--good); }
+
+/* ---------- Section block entrances ---------- */
+.block-enter {
+  opacity: 0;
+  transform: translateY(12px);
+  animation: blockEnter 420ms var(--ease-out) forwards;
+  animation-delay: calc(var(--bi, 0) * 55ms);
+}
+@keyframes blockEnter {
+  to { opacity: 1; transform: none; }
+}
+
+/* ---------- Checkbox pop ---------- */
+.check-row input:checked { animation: checkPop 260ms var(--ease-spring); }
+@keyframes checkPop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.18); }
+  100% { transform: scale(1); }
+}
+
+/* ---------- Scroll progress line ---------- */
+#scroll-line {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  transform: scaleX(0);
+  transform-origin: left;
+  z-index: 20;
+  opacity: 0.85;
+  pointer-events: none;
+  transition: transform 80ms linear;
+}
+
+/* ---------- Floating particles ---------- */
+#particles {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+}
+.particle {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--accent);
+  opacity: 0;
+  filter: blur(1px);
+  animation: floatUp var(--d, 20s) linear infinite;
+  transform: scale(var(--s, 1));
+}
+@keyframes floatUp {
+  0% { transform: translate(0, 0) scale(var(--s, 1)); opacity: 0; }
+  8% { opacity: 0.22; }
+  92% { opacity: 0.16; }
+  100% { transform: translate(var(--dx, 20px), var(--dy, -80px)) scale(var(--s, 1)); opacity: 0; }
+}
+
+/* ---------- Focus states ---------- */
+*:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+button:focus-visible,
+.nav-item:focus-visible,
+.check-row:focus-within,
+.mode-btn:focus-visible,
+.seg:focus-visible,
+.swatch:focus-visible {
+  outline-offset: -2px;
+}
+.check-row:focus-within { border-color: var(--accent); }
+
+/* ---------- Section-card hover lift ---------- */
+.section-card {
+  transition: transform 220ms var(--ease-spring), box-shadow 220ms, border-color 220ms;
+}
+
 /* ---------- Responsive ---------- */
 @media (max-width: 900px) {
   #app { grid-template-columns: 1fr; }
@@ -809,4 +938,8 @@ body[data-motion="reduced"] *::before,
 body[data-motion="reduced"] *::after {
   animation: none !important;
   transition: none !important;
+}
+body[data-motion="reduced"] .block-enter {
+  opacity: 1;
+  transform: none;
 }

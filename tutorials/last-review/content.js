@@ -64,13 +64,13 @@
       html(`
         <p>Read the input size first. It tells you the target complexity before you write a line.</p>
       `),
-      code("py", `n <= 20      -> O(2^n) / bitmask DP is fine
+      code("text", `n <= 20      -> O(2^n) / bitmask DP is fine
 n <= 500     -> O(n^3) is okay
 n <= 5_000   -> O(n^2) is okay
 n <= 1e6     -> O(n log n) or O(n)
 n > 1e7      -> O(n) or better, mind constants`),
       html(`<h4>Operation costs in Python</h4>`),
-      code("py", `list[i], .append          -> amortised O(1)
+      code("text", `list[i], .append          -> amortised O(1)
 list.insert(0), .pop(0)   -> O(n)  (use collections.deque)
 x in list                  -> O(n)
 x in set/dict              -> O(1) average
@@ -478,7 +478,7 @@ def deserialize(data):
     sections.push(section("graphs", "Graphs", long ? 14 : 7, [
       html(`<p>Pick the algorithm by the question smell, then say the decision out loud.</p>`),
       html(`<h4>Decision table</h4>`),
-      code("py", `shortest path, unweighted        -> BFS         O(V+E)
+      code("text", `shortest path, unweighted        -> BFS         O(V+E)
 shortest path, weighted, no neg  -> Dijkstra    O(E log V)
 negative edges                   -> Bellman-Ford O(VE)
 dependency order / DAG cycle     -> Kahn        O(V+E)
@@ -537,7 +537,7 @@ def union(a, b):
     sections.push(section("dp", "Dynamic programming", long ? 14 : 8, [
       html(`<p>DP is recursion plus a notebook. If brute-force recursion repeats subproblems, cache them.</p>`),
       html(`<h4>Four-step recipe</h4>`),
-      code("py", `1. Write the brute-force recursion.
+      code("text", `1. Write the brute-force recursion.
 2. Name the state (the changing arguments).
 3. Memoize — @functools.cache or a dict.
 4. Convert to bottom-up only if asked / recursion depth is risky.`),
@@ -606,7 +606,7 @@ def word_break(s, word_dict):
     sections.push(section("greedy", "Greedy & intervals", long ? 10 : 5, [
       html(`<p>Greedy code is short; the interview value is in the justification. Use an exchange argument or "stays ahead" proof.</p>`),
       html(`<h4>Interval toolkit</h4>`),
-      code("py", `merge overlapping intervals      -> sort by START
+      code("text", `merge overlapping intervals      -> sort by START
 max non-overlapping / min removal -> sort by END
 min meeting rooms / max overlap   -> sweep line +1/-1
 can attend all?                   -> sort by start, detect overlap`),
@@ -789,17 +789,17 @@ FROM (
     sections.push(section("design", "DB design, OOP & system design", long ? 14 : 7, [
       html(`<p>This is where live interviews pivot from "write code" to "design something real".</p>`),
       html(`<h4>Schema design in 5 steps</h4>`),
-      code("py", `1. Nouns -> entities
+      code("text", `1. Nouns -> entities
 2. Verbs -> relationships (state 1:1, 1:N, N:M out loud)
 3. Tables + surrogate PKs + FKs + junction tables for N:M
 4. Constraints as documentation (UNIQUE, CHECK, NOT NULL)
 5. Indexes from the workload, not speculation`),
       html(`<h4>Normalisation ladder</h4>`),
-      code("py", `1NF: atomic columns
+      code("text", `1NF: atomic columns
 2NF: no partial dependency on a composite key
 3NF: every non-key column depends on the key, the whole key, and nothing but the key`),
       html(`<h4>SOLID one-liners</h4>`),
-      code("py", `S — one reason to change (no god classes)
+      code("text", `S — one reason to change (no god classes)
 O — extend behaviour without editing source (avoid if-type chains)
 L — subclasses keep parent promises
 I — small, focused interfaces
@@ -822,7 +822,7 @@ D — depend on abstractions, not concrete classes`),
         </ol>
         <p><strong>Golden rule:</strong> every scaling decision gets a "because" with a number.</p>
       `) : null,
-      long ? code("py", `# Building blocks
+      long ? code("text", `# Building blocks
 stateless app servers + load balancer
 cache-aside (read -> miss -> fill; write -> update DB, DELETE cache)
 read replicas for read-heavy workloads

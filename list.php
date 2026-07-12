@@ -44,6 +44,7 @@ $TUTORIAL_CHILDREN = [
     ["slug" => "logictest",       "title" => "Logic Test"],
     ["slug" => "roadmap",         "title" => "Final Week Roadmap"],
     ["slug" => "quickref",        "title" => "Syntax Quick-Ref"],
+    ["slug" => "last-review",     "title" => "Last Review"],
     ["slug" => "clast-review",    "title" => "Last Review [Claude]"],
 ];
 
