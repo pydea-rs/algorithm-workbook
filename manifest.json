@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-10T15:05:13Z",
+  "generated": "2026-07-12T04:07:32Z",
   "folders": [
     {
       "name": "anagrams",
@@ -334,6 +334,12 @@
           "ext": "py",
           "kind": "code",
           "size": 580
+        },
+        {
+          "name": "withset.py",
+          "ext": "py",
+          "kind": "code",
+          "size": 409
         }
       ]
     },
@@ -345,7 +351,13 @@
           "name": "main.py",
           "ext": "py",
           "kind": "code",
-          "size": 248
+          "size": 292
+        },
+        {
+          "name": "min.py",
+          "ext": "py",
+          "kind": "code",
+          "size": 372
         }
       ]
     },
@@ -382,6 +394,30 @@
           "ext": "md",
           "kind": "markdown",
           "size": 69
+        }
+      ]
+    },
+    {
+      "name": "min_of_windows",
+      "kind": "code",
+      "files": [
+        {
+          "name": "count.py",
+          "ext": "py",
+          "kind": "code",
+          "size": 339
+        },
+        {
+          "name": "main.py",
+          "ext": "py",
+          "kind": "code",
+          "size": 631
+        },
+        {
+          "name": "maxwin.py",
+          "ext": "py",
+          "kind": "code",
+          "size": 736
         }
       ]
     },
@@ -440,6 +476,18 @@
       ]
     },
     {
+      "name": "most-water",
+      "kind": "code",
+      "files": [
+        {
+          "name": "main.py",
+          "ext": "py",
+          "kind": "code",
+          "size": 843
+        }
+      ]
+    },
+    {
       "name": "nprimes",
       "kind": "code",
       "files": [
@@ -460,6 +508,30 @@
           "ext": "py",
           "kind": "code",
           "size": 299
+        }
+      ]
+    },
+    {
+      "name": "products",
+      "kind": "code",
+      "files": [
+        {
+          "name": "efficient.py",
+          "ext": "py",
+          "kind": "code",
+          "size": 458
+        },
+        {
+          "name": "main.py",
+          "ext": "py",
+          "kind": "code",
+          "size": 550
+        },
+        {
+          "name": "product_but_self.py",
+          "ext": "py",
+          "kind": "code",
+          "size": 642
         }
       ]
     },
@@ -554,6 +626,18 @@
       ]
     },
     {
+      "name": "spiral-order",
+      "kind": "code",
+      "files": [
+        {
+          "name": "main.py",
+          "ext": "py",
+          "kind": "code",
+          "size": 1109
+        }
+      ]
+    },
+    {
       "name": "taling-zeros",
       "kind": "code",
       "files": [
@@ -640,6 +724,11 @@
           "slug": "quickref",
           "title": "Syntax Quick-Ref",
           "entry": "tutorials/quickref/index.html"
+        },
+        {
+          "slug": "last-review",
+          "title": "Last Review",
+          "entry": "tutorials/last-review/index.html"
         }
       ]
     },
@@ -718,6 +807,18 @@
           "ext": "py",
           "kind": "code",
           "size": 736
+        }
+      ]
+    },
+    {
+      "name": "var_size_window",
+      "kind": "code",
+      "files": [
+        {
+          "name": "min_len.py",
+          "ext": "py",
+          "kind": "code",
+          "size": 620
         }
       ]
     },

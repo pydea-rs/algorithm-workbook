@@ -46,7 +46,8 @@ sql.js, marked, highlight.js) are pulled from CDNs on demand.
 │   ├── interview-final/     # Final-stage (live interview) prep — same framework, harder content
 │   ├── logictest/           # 25-minute aptitude & logical-reasoning test simulator
 │   ├── roadmap/             # Interactive final-week study plan (countdown + daily checklists)
-│   └── quickref/            # Syntax cheat-sheets — regex, SQL, Python, algorithm templates
+│   ├── quickref/            # Syntax cheat-sheets — regex, SQL, Python, algorithm templates
+│   └── last-review/         # Final 1.5 h / 3 h pre-interview consolidation review
 │
 ├── interesting/             # Deep-dive notes written during study sessions
 │   ├── sql-joins.md
@@ -205,6 +206,20 @@ interview. No explanations, just what to type and when:
 - **Instant filter** (press `/`) highlights matches across every card; hover any code
   block to **copy** it; dark / midnight / light themes with accent colors, all synced
   to the shared journey backup (prefs under `odoo_ref_prefs_v1`).
+
+### Last Review — `tutorials/last-review/`
+
+A step-by-step consolidation app for the hours before the live technical interview.
+It distils the final-interview modules, quickref, roadmap, and selected extra
+material into two lengths:
+
+- **1.5 h** — condensed notes, key code patterns, SQL idioms, and the highest-yield
+  questions.
+- **3 h** — fuller explanations, more edge cases, and a larger important-questions
+  recap.
+
+Features per-section checkboxes, progress tracking, a session countdown timer,
+export/import, and the same theme/accent preferences as the other tutorials.
 
 ## Long-form notes — `interesting/`
 

@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Last Review — Odoo Final Interview</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body data-theme="dark" data-accent="purple">
+  <div id="app">
+    <aside id="sidebar">
+      <div class="brand">
+        <span class="brand-icon">🎯</span>
+        <div>
+          <div class="brand-title">Last Review</div>
+          <div class="brand-sub">Final interview consolidation</div>
+        </div>
+      </div>
+      <div class="progress-wrap">
+        <div class="progress-bar"><div id="top-progress" class="progress-fill"></div></div>
+        <div id="progress-text" class="progress-text">0%</div>
+      </div>
+      <nav id="nav" class="nav"></nav>
+      <div class="sidebar-footer">
+        <button id="open-settings" class="btn ghost small">⚙ Settings</button>
+      </div>
+    </aside>
+
+    <div id="main-wrap">
+      <header id="topbar">
+        <button id="menu-toggle" class="icon-btn" aria-label="Open menu">☰</button>
+        <div class="mode-switch" role="group" aria-label="Review length">
+          <button class="mode-btn" data-mode="short">1.5 h</button>
+          <button class="mode-btn" data-mode="long">3 h</button>
+        </div>
+        <div class="timer">
+          <span id="timer-label">Ready</span>
+          <span id="timer-display">00:00</span>
+          <button id="timer-action" class="btn primary small">Start</button>
+        </div>
+      </header>
+
+      <main id="main">
+        <div id="welcome" class="view">
+          <div class="hero">
+            <h1>Last Review</h1>
+            <p>A step-by-step consolidation of everything that matters for the live Odoo technical interview.</p>
+            <p class="lead">Pick a length, press <strong>Start</strong>, and walk through the sections. Check items off as you go; the timer keeps you honest.</p>
+            <div class="hero-actions">
+              <button id="start-short" class="btn primary" data-mode="short">Start 1.5 h review</button>
+              <button id="start-long" class="btn" data-mode="long">Start 3 h review</button>
+            </div>
+          </div>
+        </div>
+        <div id="section-view" class="view hidden"></div>
+      </main>
+
+      <footer id="footer">
+        <button id="prev-section" class="btn ghost small">← Previous</button>
+        <span id="section-counter">—</span>
+        <button id="next-section" class="btn ghost small">Next →</button>
+      </footer>
+    </div>
+  </div>
+
+  <div id="timeup-overlay" class="overlay hidden">
+    <div class="overlay-panel">
+      <h2>⏰ Time is up</h2>
+      <p>Finish the current section, then stop. A rushed brain underperforms — trust what you’ve already reviewed.</p>
+      <button id="dismiss-timeup" class="btn primary">Keep reading</button>
+    </div>
+  </div>
+
+  <div id="settings-modal" class="modal hidden">
+    <div class="modal-backdrop" data-close-modal></div>
+    <div class="modal-panel">
+      <div class="modal-header">
+        <h3>Settings</h3>
+        <button class="modal-close" data-close-modal aria-label="Close">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="setting-row">
+          <div class="setting-label">
+            <div class="setting-title">Review length</div>
+            <div class="setting-hint">1.5 h is condensed; 3 h is the full version.</div>
+          </div>
+          <div class="mode-switch" role="group">
+            <button class="mode-btn" data-mode="short">1.5 h</button>
+            <button class="mode-btn" data-mode="long">3 h</button>
+          </div>
+        </div>
+        <div class="setting-row">
+          <div class="setting-label">
+            <div class="setting-title">Theme</div>
+          </div>
+          <div class="seg-group" id="theme-group">
+            <button class="seg" data-theme="dark">Dark</button>
+            <button class="seg" data-theme="midnight">Midnight</button>
+            <button class="seg" data-theme="light">Light</button>
+          </div>
+        </div>
+        <div class="setting-row">
+          <div class="setting-label">
+            <div class="setting-title">Accent</div>
+          </div>
+          <div class="swatch-group" id="accent-group">
+            <button class="swatch" data-accent="purple" style="--sw:#7c5cff"></button>
+            <button class="swatch" data-accent="blue" style="--sw:#3b82f6"></button>
+            <button class="swatch" data-accent="green" style="--sw:#22c55e"></button>
+            <button class="swatch" data-accent="orange" style="--sw:#f97316"></button>
+            <button class="swatch" data-accent="pink" style="--sw:#ec4899"></button>
+          </div>
+        </div>
+        <div class="setting-row">
+          <div class="setting-label">
+            <div class="setting-title">Motion</div>
+          </div>
+          <div class="seg-group" id="motion-group">
+            <button class="seg" data-motion="full">Full</button>
+            <button class="seg" data-motion="reduced">Reduced</button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="reset-progress" class="btn bad small">Reset progress</button>
+        <button id="export-data" class="btn ghost small">Export</button>
+        <button id="import-data" class="btn ghost small">Import</button>
+        <input type="file" id="import-file" class="hidden" accept="application/json" />
+        <div class="spacer"></div>
+        <button class="btn primary" data-close-modal>Done</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../sync.js"></script>
+  <script src="content.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
