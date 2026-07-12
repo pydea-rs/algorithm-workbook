@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-12T11:35:13Z",
+  "generated": "2026-07-12T12:56:43Z",
   "folders": [
     {
       "name": "anagrams",
@@ -60,10 +60,10 @@
       "kind": "code",
       "files": [
         {
-          "name": "main.py",
+          "name": "noregex.py",
           "ext": "py",
           "kind": "code",
-          "size": 846
+          "size": 1333
         }
       ]
     },
@@ -669,13 +669,19 @@
           "name": "another.py",
           "ext": "py",
           "kind": "code",
-          "size": 0
+          "size": 792
         },
         {
           "name": "main.py",
           "ext": "py",
           "kind": "code",
           "size": 1109
+        },
+        {
+          "name": "other1.py",
+          "ext": "py",
+          "kind": "code",
+          "size": 751
         }
       ]
     },

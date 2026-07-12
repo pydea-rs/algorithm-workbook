@@ -19,6 +19,9 @@
     },
   };
 
+  let lastMainScrollTop = 0;
+  let bottomScrollCooldown = 0;
+
   // ---------- Helpers ----------
   function $(sel) { return document.querySelector(sel); }
   function $$(sel) { return [...document.querySelectorAll(sel)]; }
@@ -200,6 +203,7 @@
     view.appendChild(wrap);
     view.scrollTop = 0;
     $("#main").scrollTop = 0;
+    lastMainScrollTop = 0;
   }
 
   function renderBlock(b) {
@@ -328,6 +332,34 @@
     }
   }
 
+  function canAutoAdvance() {
+    if (state.currentIndex < 0 || state.currentIndex >= currentContent().sections.length - 1) return false;
+    const now = Date.now();
+    if (now - bottomScrollCooldown < 800) return false;
+    bottomScrollCooldown = now;
+    return true;
+  }
+  function tryAdvanceFromBottom() {
+    if (!canAutoAdvance()) return;
+    nextSection();
+  }
+  function onMainScroll() {
+    const main = $("#main");
+    const scrollTop = main.scrollTop;
+    const atBottom = main.scrollHeight - main.clientHeight - scrollTop < 40;
+    const scrollingDown = scrollTop > lastMainScrollTop;
+    lastMainScrollTop = scrollTop;
+    if (!atBottom || !scrollingDown) return;
+    tryAdvanceFromBottom();
+  }
+  function onMainWheel(e) {
+    if (e.deltaY <= 0) return;
+    const main = $("#main");
+    const atBottom = main.scrollHeight - main.clientHeight - main.scrollTop < 40;
+    if (!atBottom) return;
+    tryAdvanceFromBottom();
+  }
+
   // ---------- Settings modal ----------
   function openSettings() {
     $("#settings-modal").classList.remove("hidden");
@@ -428,6 +460,10 @@
     // Mobile
     $("#menu-toggle").addEventListener("click", openMobileMenu);
     $("#sidebar").addEventListener("click", (e) => { if (e.target.closest(".nav-item")) closeMobileMenu(); });
+
+    // Auto-advance when scrolling past the bottom of a section
+    $("#main").addEventListener("scroll", onMainScroll, { passive: true });
+    $("#main").addEventListener("wheel", onMainWheel, { passive: true });
 
     // Copy buttons
     $("#main").addEventListener("click", (e) => {
