@@ -1,6 +1,24 @@
 {
-  "generated": "2026-07-12T13:19:28Z",
+  "generated": "2026-07-12T18:44:31Z",
   "folders": [
+    {
+      "name": "1st_missing",
+      "kind": "code",
+      "files": [
+        {
+          "name": "main.py",
+          "ext": "py",
+          "kind": "code",
+          "size": 382
+        },
+        {
+          "name": "s.py",
+          "ext": "py",
+          "kind": "code",
+          "size": 631
+        }
+      ]
+    },
     {
       "name": "anagrams",
       "kind": "mixed",
@@ -66,10 +84,16 @@
           "size": 1333
         },
         {
+          "name": "regex.py",
+          "ext": "py",
+          "kind": "code",
+          "size": 516
+        },
+        {
           "name": "slow.py",
           "ext": "py",
           "kind": "code",
-          "size": 157
+          "size": 796
         }
       ]
     },
@@ -344,6 +368,18 @@
       ]
     },
     {
+      "name": "longest_consecutive",
+      "kind": "code",
+      "files": [
+        {
+          "name": "main.py",
+          "ext": "py",
+          "kind": "code",
+          "size": 368
+        }
+      ]
+    },
+    {
       "name": "longestsub",
       "kind": "code",
       "files": [
@@ -518,6 +554,30 @@
       ]
     },
     {
+      "name": "most_freq",
+      "kind": "code",
+      "files": [
+        {
+          "name": "hp.py",
+          "ext": "py",
+          "kind": "code",
+          "size": 361
+        },
+        {
+          "name": "main.py",
+          "ext": "py",
+          "kind": "code",
+          "size": 433
+        },
+        {
+          "name": "slow.py",
+          "ext": "py",
+          "kind": "code",
+          "size": 447
+        }
+      ]
+    },
+    {
       "name": "nprimes",
       "kind": "code",
       "files": [
@@ -538,6 +598,24 @@
           "ext": "py",
           "kind": "code",
           "size": 299
+        }
+      ]
+    },
+    {
+      "name": "permutions",
+      "kind": "mixed",
+      "files": [
+        {
+          "name": "main.py",
+          "ext": "py",
+          "kind": "code",
+          "size": 522
+        },
+        {
+          "name": "question.md",
+          "ext": "md",
+          "kind": "markdown",
+          "size": 176
         }
       ]
     },

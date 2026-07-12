@@ -374,6 +374,10 @@
     var y = window.scrollY != null ? window.scrollY : window.pageYOffset;
     return (doc.scrollHeight - window.innerHeight - y) <= 2;   // px precision
   }
+  function isAtTop() {
+    var y = window.scrollY != null ? window.scrollY : window.pageYOffset;
+    return y <= 2;   // px precision
+  }
   function updateScrollHint() {
     var hint = $("#scroll-hint");
     if (!hint) return;
@@ -520,40 +524,51 @@
     window.addEventListener("resize", updateScrollHint);
 
     var lastAutoNav = 0;
-    function autonavActive() {
+    function autonavOn() {
       return S.autonav &&
         !$("#app").classList.contains("hidden") &&
-        $("#settings").classList.contains("hidden") &&
-        S.idx < STAGES.length - 1;
+        $("#settings").classList.contains("hidden");
     }
-    // wheel / trackpad: a gesture "begins" after a >200ms quiet gap; capture the
-    // scroll position at that instant, and only advance if it started at the bottom.
-    var wLast = 0, gStartBottom = false, gDelta = 0, gFired = false;
+    // wheel / trackpad: a gesture "begins" after a >200ms quiet gap; we snapshot the
+    // scroll position at that instant and only cross a boundary if the gesture STARTED
+    // pinned against that edge — otherwise the user is just scrolling through content.
+    // Forward = started at the bottom + kept pushing down; reverse = mirror at the top.
+    var wLast = 0, gStartBottom = false, gStartTop = false, gDown = 0, gUp = 0, gFired = false;
     window.addEventListener("wheel", function (e) {
-      if (!autonavActive()) return;
+      if (!autonavOn()) return;
       var now = Date.now();
-      if (now - wLast > 200) { gStartBottom = isAtBottom(); gDelta = 0; gFired = false; }
+      if (now - wLast > 200) {                        // new gesture — snapshot the start edge
+        gStartBottom = isAtBottom(); gStartTop = isAtTop();
+        gDown = 0; gUp = 0; gFired = false;
+      }
       wLast = now;
       var d = e.deltaY || 0;
-      if (e.deltaMode === 1) d *= 16;            // lines -> px
+      if (e.deltaMode === 1) d *= 16;                 // lines -> px
       else if (e.deltaMode === 2) d *= window.innerHeight; // pages -> px
-      if (d > 0) gDelta += d;
-      else if (d < 0) { gStartBottom = false; gDelta = 0; }   // scrolling up cancels intent
-      if (gStartBottom && !gFired && gDelta >= 45 && isAtBottom() && now - lastAutoNav > 600) {
+      if (d > 0) { gDown += d; gUp = 0; gStartTop = false; }        // any down cancels an up-intent
+      else if (d < 0) { gUp += -d; gDown = 0; gStartBottom = false; } // any up cancels a down-intent
+      if (gFired || now - lastAutoNav <= 600) return;
+      if (gStartBottom && gDown >= 45 && isAtBottom() && S.idx < STAGES.length - 1) {
         gFired = true; lastAutoNav = now; go(S.idx + 1);
+      } else if (gStartTop && gUp >= 45 && isAtTop() && S.idx > 0) {
+        gFired = true; lastAutoNav = now; go(S.idx - 1);
       }
     }, { passive: true });
-    // touch: touchstart is the gesture start — capture whether we're at the bottom.
-    var tY = 0, tStartBottom = false, tFired = false;
+    // touch: touchstart is the gesture start — snapshot which edge (if any) we're on.
+    var tY = 0, tStartBottom = false, tStartTop = false, tFired = false;
     window.addEventListener("touchstart", function (e) {
       if (!e.touches || !e.touches[0]) return;
-      tY = e.touches[0].clientY; tStartBottom = isAtBottom(); tFired = false;
+      tY = e.touches[0].clientY;
+      tStartBottom = isAtBottom(); tStartTop = isAtTop(); tFired = false;
     }, { passive: true });
     window.addEventListener("touchmove", function (e) {
-      if (!autonavActive() || tFired || !e.touches || !e.touches[0]) return;
-      var dy = tY - e.touches[0].clientY;   // finger moving up => wants content below
-      if (tStartBottom && dy >= 60 && isAtBottom() && Date.now() - lastAutoNav > 600) {
+      if (!autonavOn() || tFired || !e.touches || !e.touches[0]) return;
+      if (Date.now() - lastAutoNav <= 600) return;
+      var dy = tY - e.touches[0].clientY;             // +dy = finger up (wants content below)
+      if (tStartBottom && dy >= 60 && isAtBottom() && S.idx < STAGES.length - 1) {
         tFired = true; lastAutoNav = Date.now(); go(S.idx + 1);
+      } else if (tStartTop && dy <= -60 && isAtTop() && S.idx > 0) {
+        tFired = true; lastAutoNav = Date.now(); go(S.idx - 1);
       }
     }, { passive: true });
 
