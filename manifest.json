@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-12T04:07:32Z",
+  "generated": "2026-07-12T04:41:07Z",
   "folders": [
     {
       "name": "anagrams",
@@ -638,6 +638,18 @@
       ]
     },
     {
+      "name": "substring-of-all-chars",
+      "kind": "code",
+      "files": [
+        {
+          "name": "main.py",
+          "ext": "py",
+          "kind": "code",
+          "size": 334
+        }
+      ]
+    },
+    {
       "name": "taling-zeros",
       "kind": "code",
       "files": [
@@ -729,6 +741,11 @@
           "slug": "last-review",
           "title": "Last Review",
           "entry": "tutorials/last-review/index.html"
+        },
+        {
+          "slug": "clast-review",
+          "title": "Last Review [Claude]",
+          "entry": "tutorials/clast-review/index.html"
         }
       ]
     },

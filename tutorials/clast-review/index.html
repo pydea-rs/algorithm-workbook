@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Final Approach — Last Review [Claude]</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body data-theme="blueprint" data-mode="short" data-motion="full">
+
+  <!-- Boot / pre-flight overlay -->
+  <div id="boot" class="boot">
+    <div class="boot-inner">
+      <div class="boot-badge">FINAL APPROACH</div>
+      <h1 class="boot-title">Last Review</h1>
+      <p class="boot-sub">One clean pass over everything you know — notes, patterns, code, SQL, and the questions that teach the most. Walk the track top to bottom; at the end you are cleared for the interview.</p>
+
+      <div class="boot-mode">
+        <span class="boot-mode-label">Choose your run</span>
+        <div class="mode-cards">
+          <button class="mode-card" data-mode="short">
+            <span class="mc-time">1.5<em>h</em></span>
+            <span class="mc-name">Focused pass</span>
+            <span class="mc-desc">Core only. The essentials, tightened — medium detail trimmed, the vault curated to the highest-yield problems.</span>
+          </button>
+          <button class="mode-card" data-mode="long">
+            <span class="mc-time">3<em>h</em></span>
+            <span class="mc-name">Full pass</span>
+            <span class="mc-desc">Everything in the focused pass plus the advanced notes, the deeper gotchas, and the complete problem vault.</span>
+          </button>
+        </div>
+      </div>
+
+      <button id="boot-start" class="boot-start">Begin the descent →</button>
+      <div class="boot-foot">
+        <span id="boot-resume" class="boot-resume hidden"></span>
+        <span class="boot-meta">Monday · 13 Jul · 13:30 · Google Meet · 3&nbsp;hours</span>
+      </div>
+    </div>
+    <div class="boot-grid" aria-hidden="true"></div>
+  </div>
+
+  <!-- App shell -->
+  <div id="app" class="app hidden">
+
+    <!-- Left: the track spine -->
+    <aside id="spine" class="spine">
+      <div class="spine-head">
+        <div class="spine-badge">FINAL&nbsp;APPROACH</div>
+        <div class="spine-title">Last Review</div>
+        <div class="spine-sub" id="spine-mode">1.5&nbsp;h · focused</div>
+      </div>
+      <nav id="track" class="track" aria-label="Review stages"></nav>
+      <button id="to-boot" class="spine-reset" title="Back to start screen">↺ Start screen</button>
+    </aside>
+
+    <!-- Center: content -->
+    <main id="main" class="main">
+      <header id="hud" class="hud">
+        <button id="menu-toggle" class="hud-btn only-mobile" aria-label="Toggle track">☰</button>
+        <div class="hud-crumb" id="crumb">Pre-flight</div>
+        <div class="hud-spacer"></div>
+
+        <div class="ready" title="Readiness — fills as you mark sections solid">
+          <svg viewBox="0 0 44 44" class="ready-ring" aria-hidden="true">
+            <circle class="ready-bg" cx="22" cy="22" r="19"></circle>
+            <circle id="ready-arc" class="ready-arc" cx="22" cy="22" r="19"></circle>
+          </svg>
+          <div class="ready-num"><span id="ready-pct">0</span><em>%</em></div>
+        </div>
+
+        <div class="seg mode-seg" role="group" aria-label="Review length">
+          <button class="seg-btn" data-set-mode="short">1.5h</button>
+          <button class="seg-btn" data-set-mode="long">3h</button>
+        </div>
+
+        <button id="timer-btn" class="hud-btn timer" title="Optional review timer">
+          <span id="timer-txt">Timer</span>
+        </button>
+
+        <button id="settings-btn" class="hud-btn" aria-label="Settings" title="Settings">⚙</button>
+      </header>
+
+      <section id="view" class="view"></section>
+
+      <footer class="foot">
+        <button id="prev-btn" class="foot-btn ghost">← Prev</button>
+        <div id="foot-dots" class="foot-dots"></div>
+        <button id="next-btn" class="foot-btn primary">Next →</button>
+      </footer>
+    </main>
+  </div>
+
+  <!-- Settings -->
+  <div id="settings" class="modal hidden" role="dialog" aria-modal="true">
+    <div class="modal-bg" data-close></div>
+    <div class="modal-card">
+      <div class="modal-top">
+        <h3>Settings</h3>
+        <button class="modal-x" data-close aria-label="Close">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="set-row">
+          <div><div class="set-t">Review length</div><div class="set-h">1.5h trims advanced material; 3h shows all.</div></div>
+          <div class="seg" role="group">
+            <button class="seg-btn" data-set-mode="short">1.5h</button>
+            <button class="seg-btn" data-set-mode="long">3h</button>
+          </div>
+        </div>
+        <div class="set-row">
+          <div><div class="set-t">Theme</div><div class="set-h">Visual palette.</div></div>
+          <div class="seg" role="group">
+            <button class="seg-btn" data-set-theme="blueprint">Blueprint</button>
+            <button class="seg-btn" data-set-theme="carbon">Carbon</button>
+            <button class="seg-btn" data-set-theme="paper">Paper</button>
+          </div>
+        </div>
+        <div class="set-row">
+          <div><div class="set-t">Motion</div><div class="set-h">Disable for reduced motion.</div></div>
+          <div class="seg" role="group">
+            <button class="seg-btn" data-set-motion="full">On</button>
+            <button class="seg-btn" data-set-motion="reduced">Off</button>
+          </div>
+        </div>
+        <div class="set-row">
+          <div><div class="set-t">Data</div><div class="set-h">Progress &amp; confidence are stored in this browser.</div></div>
+          <div class="io">
+            <button id="export-btn" class="mini">Export</button>
+            <button id="import-btn" class="mini">Import</button>
+            <input id="import-file" type="file" accept="application/json" class="hidden" />
+          </div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button id="reset-btn" class="mini danger">Reset progress</button>
+        <button class="mini primary" data-close>Done</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="../../sync.js"></script>
+  <script src="content.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

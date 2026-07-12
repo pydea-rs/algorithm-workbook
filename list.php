@@ -44,6 +44,7 @@ $TUTORIAL_CHILDREN = [
     ["slug" => "logictest",       "title" => "Logic Test"],
     ["slug" => "roadmap",         "title" => "Final Week Roadmap"],
     ["slug" => "quickref",        "title" => "Syntax Quick-Ref"],
+    ["slug" => "clast-review",    "title" => "Last Review [Claude]"],
 ];
 
 function parse_gitignore_php($root) {
