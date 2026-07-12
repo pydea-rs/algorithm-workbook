@@ -40,7 +40,7 @@
   }
 
   function loadPrefs() {
-    const defaults = { mode: "short", theme: "dark", accent: "purple", motion: "full" };
+    const defaults = { mode: "short", theme: "dark", accent: "cyan", motion: "full" };
     try {
       const raw = localStorage.getItem(PREFS_KEY);
       if (raw) Object.assign(defaults, JSON.parse(raw));
@@ -138,7 +138,7 @@
       const num = el("span", { class: "nav-num", text: String(idx + 1) });
       const title = el("span", { class: "nav-title", text: sec.title });
       const time = el("span", { class: "nav-time", text: sec.minutes + " min" });
-      const item = el("button", { class: "nav-item", "data-index": String(idx) }, [num, title, time]);
+      const item = el("button", { class: "nav-item", "data-index": String(idx), style: "--i:" + idx }, [num, title, time]);
       item.addEventListener("click", () => { goToSection(idx); closeMobileMenu(); });
       nav.appendChild(item);
     });
@@ -260,7 +260,8 @@
     const total = totalChecks();
     const done = checkedCount();
     const pct = total ? Math.round((done / total) * 100) : 0;
-    $("#top-progress").style.width = pct + "%";
+    const circumference = 100.53;
+    $("#top-progress").style.strokeDashoffset = circumference * (1 - pct / 100);
     $("#progress-text").textContent = pct + "%";
   }
 
@@ -275,6 +276,20 @@
     $("#timer-display").textContent = formatMMSS(t.remainingSec);
     $("#timer-label").textContent = t.running ? "Remaining" : (t.remainingSec < t.totalSec && t.remainingSec > 0 ? "Paused" : "Ready");
     $("#timer-action").textContent = t.running ? "Pause" : (t.remainingSec > 0 && t.remainingSec < t.totalSec ? "Resume" : "Start");
+    updateTimerRing();
+    updateTimerClasses();
+  }
+  function updateTimerRing() {
+    const t = state.timer;
+    const circumference = 125.66;
+    const pct = t.totalSec ? t.remainingSec / t.totalSec : 0;
+    $("#timer-ring").style.strokeDashoffset = circumference * (1 - pct);
+  }
+  function updateTimerClasses() {
+    const wrap = $(".timer");
+    const t = state.timer;
+    wrap.classList.toggle("running", t.running);
+    wrap.classList.toggle("low", t.totalSec > 0 && t.remainingSec <= 600 && t.remainingSec > 0);
   }
   function startTimer() {
     const content = currentContent();

@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-12T04:41:07Z",
+  "generated": "2026-07-12T11:35:13Z",
   "folders": [
     {
       "name": "anagrams",
@@ -52,6 +52,18 @@
           "ext": "md",
           "kind": "markdown",
           "size": 2494
+        }
+      ]
+    },
+    {
+      "name": "basic-calc",
+      "kind": "code",
+      "files": [
+        {
+          "name": "main.py",
+          "ext": "py",
+          "kind": "code",
+          "size": 846
         }
       ]
     },
@@ -344,6 +356,18 @@
       ]
     },
     {
+      "name": "matrix-transpose",
+      "kind": "code",
+      "files": [
+        {
+          "name": "main.py",
+          "ext": "py",
+          "kind": "code",
+          "size": 725
+        }
+      ]
+    },
+    {
       "name": "max_adj_sum",
       "kind": "code",
       "files": [
@@ -560,6 +584,18 @@
       ]
     },
     {
+      "name": "rev-inplace",
+      "kind": "code",
+      "files": [
+        {
+          "name": "main.py",
+          "ext": "py",
+          "kind": "code",
+          "size": 219
+        }
+      ]
+    },
+    {
       "name": "rev_sum",
       "kind": "mixed",
       "files": [
@@ -630,6 +666,12 @@
       "kind": "code",
       "files": [
         {
+          "name": "another.py",
+          "ext": "py",
+          "kind": "code",
+          "size": 0
+        },
+        {
           "name": "main.py",
           "ext": "py",
           "kind": "code",
@@ -645,7 +687,7 @@
           "name": "main.py",
           "ext": "py",
           "kind": "code",
-          "size": 334
+          "size": 1063
         }
       ]
     },

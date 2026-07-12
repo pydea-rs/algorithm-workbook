@@ -54,6 +54,17 @@ All review text lives in `content.js`. Each section is an object with:
 
 The two globals `window.REVIEW_SHORT` and `window.REVIEW_LONG` contain the sections for each mode. The `buildContent(mode)` function uses `if (long)` to include extended blocks only in the 3 h version.
 
+## Look and feel
+
+This app uses its own exclusive "pre-interview cockpit" design — it does **not** follow the generic workbook look:
+
+- Animated gradient-mesh background and glass-morphism panels.
+- Circular progress ring and a circular session timer.
+- Gradient accent system; default accent is **cyan**.
+- Custom display font (`Space Grotesk`) and UI font (`Inter`) loaded from Google Fonts, with system fallbacks if offline.
+- Staggered nav-item entrance, card hover lift, and glowing active states.
+- Choose **Reduced** motion in Settings to disable animations.
+
 ## LocalStorage keys
 
 - `odoo_lastreview_prefs_v1` — mode, theme, accent, motion.
