@@ -19,7 +19,7 @@
     },
   };
 
-  let lastMainScrollTop = 0;
+  let mainWasAtBottom = false;
   let bottomScrollCooldown = 0;
 
   // ---------- Helpers ----------
@@ -203,7 +203,7 @@
     view.appendChild(wrap);
     view.scrollTop = 0;
     $("#main").scrollTop = 0;
-    lastMainScrollTop = 0;
+    mainWasAtBottom = false;
   }
 
   function renderBlock(b) {
@@ -345,18 +345,11 @@
   }
   function onMainScroll() {
     const main = $("#main");
-    const scrollTop = main.scrollTop;
-    const atBottom = main.scrollHeight - main.clientHeight - scrollTop < 40;
-    const scrollingDown = scrollTop > lastMainScrollTop;
-    lastMainScrollTop = scrollTop;
-    if (!atBottom || !scrollingDown) return;
-    tryAdvanceFromBottom();
+    mainWasAtBottom = main.scrollHeight - main.clientHeight - main.scrollTop < 2;
   }
   function onMainWheel(e) {
     if (e.deltaY <= 0) return;
-    const main = $("#main");
-    const atBottom = main.scrollHeight - main.clientHeight - main.scrollTop < 40;
-    if (!atBottom) return;
+    if (!mainWasAtBottom) return;
     tryAdvanceFromBottom();
   }
 
