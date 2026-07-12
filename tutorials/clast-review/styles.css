@@ -200,7 +200,8 @@ body[data-motion="reduced"] * { animation: none !important; transition: none !im
 .stage[data-conf="solid"] .stage-node { background: var(--good); border-color: var(--good); color: #05130a; }
 .stage[data-conf="ok"]    .stage-node { background: var(--warn); border-color: var(--warn); color: #1a1206; }
 .stage[data-conf="shaky"] .stage-node { background: var(--bad);  border-color: var(--bad);  color: #1a0608; }
-.stage[data-conf] .stage-node::after { content: "✓"; }
+.stage[data-conf] .stage-node { font-size: 0; }   /* hide the number once rated */
+.stage[data-conf] .stage-node::after { content: "✓"; font-size: 12px; line-height: 1; }
 .stage[data-conf="shaky"] .stage-node::after { content: "!"; }
 .stage.active { color: var(--ink); }
 .stage.active .stage-node {

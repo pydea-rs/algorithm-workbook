@@ -246,7 +246,7 @@
     if (nodes.length) {
       var frac = STAGES.length > 1 ? S.idx / (STAGES.length - 1) : 0;
       var fill = $(".track-fill");
-      if (fill) fill.style.height = (frac * (100)) + "%";
+      if (fill) fill.style.height = "calc((100% - 24px) * " + frac + ")";
     }
   }
 
@@ -293,7 +293,7 @@
   }
 
   function afterRender(s) {
-    $("#crumb").textContent = s.noGrade ? "Pre-flight" : s.name;
+    $("#crumb").textContent = (s.noGrade && !s.cleared) ? "Pre-flight" : s.name;
     $("#view").parentElement.scrollTop = 0;
     window.scrollTo(0, 0);
     $("#prev-btn").disabled = S.idx === 0;
@@ -471,10 +471,10 @@
     });
     $("#boot-start").addEventListener("click", enterApp);
     var resume = $("#boot-resume");
+    resume.addEventListener("click", enterApp);   // bind once; visibility is gated below
     if (S.started || touchedCount() > 0) {
       resume.classList.remove("hidden");
       resume.textContent = "↩ Resume where you left off (" + STAGES[Math.min(S.idx, STAGES.length - 1)].name + ")";
-      resume.addEventListener("click", enterApp);
     }
 
     // mode + theme + motion setters (delegate)
@@ -517,6 +517,7 @@
 
   // ---------- init ----------
   load();
+  S.idx = Math.max(0, Math.min(S.idx, STAGES.length - 1));   // clamp a stale/out-of-range index
   applyPrefs();
   bind();
   if (S.seconds) $("#timer-txt").textContent = fmt(S.seconds);

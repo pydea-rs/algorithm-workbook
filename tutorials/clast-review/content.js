@@ -120,7 +120,7 @@ window.REVIEW = {
       { t: "note", tone: "key", flag: "LONGEST vs MINIMUM",
         html: "<p>For a <strong>longest</strong> window: shrink while broken, record when it holds. For <strong>Minimum Window Substring</strong>: expand until valid, then shrink <em>while still valid</em>, recording at each step — the smallest valid window appears right before a shrink breaks it. Same two pointers, opposite recording moment.</p>" },
       { t: "note", tone: "trap", flag: "MONOTONICITY",
-        html: "<p>Windows need <strong>monotonicity</strong>. \"Subarray sum ≤ k\" works on positives; add a negative and extending the window no longer increases the sum, so shrink-on-violation can skip valid answers. The fix is <strong>prefix sum + hash map</strong>, which assumes no monotonicity.</p>" },
+        html: "<p>Windows need <strong>monotonicity</strong>. A window that assumes \"extending only grows the sum\" breaks the moment a negative appears — shrink-on-violation can then skip valid answers. For <strong>counting subarrays that sum to exactly k</strong>, the fix is <strong>prefix sum + hash map</strong> (below), which needs no monotonicity. (A range version like sum ≤ k with negatives instead needs a sorted / BIT structure — O(n log n).)</p>" },
       { t: "code", lang: "python", title: "Prefix sum + hash map — count subarrays summing to k (negatives OK)",
         code: "def subarray_sum(nums, k):\n    seen = {0: 1}                   # empty prefix seen once\n    run = total = 0\n    for x in nums:\n        run += x\n        total += seen.get(run - k, 0)\n        seen[run] = seen.get(run, 0) + 1\n    return total",
         note: "P[j+1] − P[i] = sum(i..j). The <code>{0:1}</code> seed covers subarrays that start at index 0. This is the go-to when a window would fail on negatives." },
@@ -509,7 +509,7 @@ window.REVIEW = {
         code: "def coin_change(coins, amount):\n    INF = amount + 1\n    dp = [0] + [INF]*amount\n    for a in range(1, amount + 1):\n        for c in coins:\n            if c <= a: dp[a] = min(dp[a], dp[a-c] + 1)\n    return dp[amount] if dp[amount] <= amount else -1",
         gotcha: "Use INF = amount+1 as a safe \"impossible\" marker so <code>+1</code> never overflows a real answer." },
 
-      { t: "prob", diff: "med", name: "Word Ladder", pat: "BFS on implicit graph · LC 127", adv: true,
+      { t: "prob", diff: "hard", name: "Word Ladder", pat: "BFS on implicit graph · LC 127", adv: true,
         idea: "Words are nodes, one-letter diffs are edges. BFS trying all 26 letters at each position; mark visited by removing from the set on enqueue.",
         lang: "python",
         code: "from collections import deque\nimport string\ndef ladder_length(begin, end, word_list):\n    words = set(word_list)\n    if end not in words: return 0\n    q = deque([(begin, 1)]); words.discard(begin)\n    while q:\n        word, steps = q.popleft()\n        if word == end: return steps\n        for i in range(len(word)):\n            for ch in string.ascii_lowercase:\n                nxt = word[:i] + ch + word[i+1:]\n                if nxt in words:\n                    words.discard(nxt); q.append((nxt, steps + 1))\n    return 0",
@@ -539,7 +539,7 @@ window.REVIEW = {
         code: "def product_except_self(nums):\n    n = len(nums); out = [1]*n\n    for i in range(1, n): out[i] = out[i-1] * nums[i-1]\n    suf = 1\n    for i in range(n-1, -1, -1):\n        out[i] *= suf; suf *= nums[i]\n    return out",
         gotcha: "Division is banned because of zeros; the two-pass method handles them naturally." },
 
-      { t: "prob", diff: "med", name: "Customers Who Never Order", pat: "anti-join · SQL · LC 183", adv: true,
+      { t: "prob", diff: "easy", name: "Customers Who Never Order", pat: "anti-join · SQL · LC 183", adv: true,
         idea: "LEFT JOIN + <code>o.id IS NULL</code>, or NOT EXISTS. Both are NULL-safe.",
         lang: "sql",
         code: "SELECT c.name AS customers\nFROM customers c\nLEFT JOIN orders o ON o.customer_id = c.id\nWHERE o.id IS NULL;",
