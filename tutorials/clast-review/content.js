@@ -491,7 +491,7 @@ window.REVIEW = {
         code: "def min_eating_speed(piles, h):\n    def can(k): return sum((p + k - 1)//k for p in piles) <= h\n    lo, hi = 1, max(piles)\n    while lo < hi:\n        mid = (lo + hi)//2\n        if can(mid): hi = mid\n        else: lo = mid + 1\n    return lo",
         gotcha: "The archetype: write the check, prove monotonicity, search the answer space. <code>(p+k-1)//k</code> is ceil-div." },
 
-      { t: "prob", diff: "hard", name: "LRU Cache", pat: "design · hashmap + DLL · LC 146",
+      { t: "prob", diff: "med", name: "LRU Cache", pat: "design · hashmap + DLL · LC 146",
         idea: "OrderedDict (a doubly-linked list in disguise): get moves the key to the end; put evicts from the front when over capacity.",
         lang: "python",
         code: "from collections import OrderedDict\nclass LRUCache:\n    def __init__(self, capacity):\n        self.cap = capacity; self.d = OrderedDict()\n    def get(self, key):\n        if key not in self.d: return -1\n        self.d.move_to_end(key); return self.d[key]\n    def put(self, key, value):\n        if key in self.d: self.d.move_to_end(key)\n        self.d[key] = value\n        if len(self.d) > self.cap: self.d.popitem(last=False)",

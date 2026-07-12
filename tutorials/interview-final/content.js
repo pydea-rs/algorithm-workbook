@@ -1525,7 +1525,7 @@ in the dict — iterate over <code>range(n)</code>, not over the dict, when that
   <tr><td>Shortest path, unweighted</td><td>BFS</td><td>O(V+E)</td></tr>
   <tr><td>Shortest path, weighted, no negatives</td><td>Dijkstra</td><td>O(E log V)</td></tr>
   <tr><td>Negative edges present</td><td>Bellman-Ford</td><td>O(VE)</td></tr>
-  <tr><td>Dependency order / detect cycle in DAG</td><td>Topological sort (Kahn)</td><td>O(V+E)</td></tr>
+  <tr><td>Dependency order / detect cycle in a directed graph</td><td>Topological sort (Kahn)</td><td>O(V+E)</td></tr>
   <tr><td>Connectivity, merging groups online</td><td>Union-Find</td><td>~O(1)/op</td></tr>
   <tr><td>Reachability, exploring everything</td><td>DFS</td><td>O(V+E)</td></tr>
 </table>
@@ -2458,7 +2458,7 @@ snapshot by design).</p>
   (<code>user_profiles</code>) off a hot table. Be ready to justify it.</li>
   <li><strong>Self-reference</strong> — <code>employees.manager_id REFERENCES employees(id)</code>;
   same for category trees. (Traversing them → recursive CTEs; mention, don't derail.)</li>
-  <li><strong>FK actions</strong> — <code>ON DELETE RESTRICT</code> (default-safe),
+  <li><strong>FK actions</strong> — <code>ON DELETE NO ACTION</code>/<code>RESTRICT</code> (default-safe: both block the delete),
   <code>CASCADE</code> (children die with the parent — order_items),
   <code>SET NULL</code> (orphan but keep — orders whose clerk left).</li>
 </ul>
