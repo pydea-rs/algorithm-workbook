@@ -19,7 +19,8 @@
     idx: 0,                  // current stage index
     conf: {},               // stageId -> 'shaky'|'ok'|'solid'
     started: false,
-    seconds: 0              // saved timer value
+    seconds: 0,             // saved timer value
+    autonav: false          // auto-advance to next stage on overscroll (off by default)
   };
 
   function load() {
@@ -35,6 +36,7 @@
           S.conf = o.conf || {};
           S.started = !!o.started;
           S.seconds = o.seconds || 0;
+          S.autonav = !!o.autonav;
         }
       }
     } catch (e) {}
@@ -300,6 +302,7 @@
     $("#next-btn").disabled = S.idx === STAGES.length - 1;
     $("#next-btn").textContent = S.idx === STAGES.length - 2 ? "Finish →" : "Next →";
     paintTrack(); paintDots(); updateReady();
+    updateScrollHint();
   }
 
   function renderCheckpoint(s) {
@@ -363,6 +366,29 @@
     });
   }
 
+  // ---------- auto-advance on scroll ----------
+  // Fires only when a scroll gesture STARTS at the very bottom of the page and
+  // keeps pushing down — otherwise the user is just scrolling through content.
+  function isAtBottom() {
+    var doc = document.documentElement;
+    var y = window.scrollY != null ? window.scrollY : window.pageYOffset;
+    return (doc.scrollHeight - window.innerHeight - y) <= 2;   // px precision
+  }
+  function updateScrollHint() {
+    var hint = $("#scroll-hint");
+    if (!hint) return;
+    var show = S.autonav &&
+      !$("#app").classList.contains("hidden") &&
+      S.idx < STAGES.length - 1 &&
+      isAtBottom();
+    hint.classList.toggle("show", show);
+  }
+  var _hintRaf = 0;
+  function onScrollTick() {
+    if (_hintRaf) return;
+    _hintRaf = requestAnimationFrame(function () { _hintRaf = 0; updateScrollHint(); });
+  }
+
   // ---------- navigation ----------
   function go(i) {
     if (i < 0 || i >= STAGES.length) return;
@@ -392,6 +418,7 @@
     document.body.setAttribute("data-mode", S.mode);
     $all("[data-set-theme]").forEach(function (b) { b.classList.toggle("active", b.getAttribute("data-set-theme") === S.theme); });
     $all("[data-set-motion]").forEach(function (b) { b.classList.toggle("active", b.getAttribute("data-set-motion") === S.motion); });
+    $all("[data-set-autonav]").forEach(function (b) { b.classList.toggle("active", (b.getAttribute("data-set-autonav") === "on") === S.autonav); });
     paintModeButtons();
   }
 
@@ -449,6 +476,7 @@
           S.mode = d.mode || S.mode; S.theme = d.theme || S.theme;
           S.motion = d.motion || S.motion; S.conf = d.conf || {};
           S.idx = typeof d.idx === "number" ? d.idx : 0; S.seconds = d.seconds || 0;
+          if ("autonav" in d) S.autonav = !!d.autonav;
           save(); applyPrefs();
           if (S.started) { buildTrack(); buildDots(); renderStage(); }
           toast("Imported");
@@ -479,12 +507,55 @@
 
     // mode + theme + motion setters (delegate)
     document.addEventListener("click", function (e) {
-      var t = e.target.closest("[data-set-mode],[data-set-theme],[data-set-motion]");
+      var t = e.target.closest("[data-set-mode],[data-set-theme],[data-set-motion],[data-set-autonav]");
       if (!t) return;
       if (t.hasAttribute("data-set-mode")) setMode(t.getAttribute("data-set-mode"));
       if (t.hasAttribute("data-set-theme")) { S.theme = t.getAttribute("data-set-theme"); save(); applyPrefs(); }
       if (t.hasAttribute("data-set-motion")) { S.motion = t.getAttribute("data-set-motion"); save(); applyPrefs(); }
+      if (t.hasAttribute("data-set-autonav")) { S.autonav = t.getAttribute("data-set-autonav") === "on"; save(); applyPrefs(); updateScrollHint(); }
     });
+
+    // ---- auto-advance on scroll (only when S.autonav is on) ----
+    window.addEventListener("scroll", onScrollTick, { passive: true });
+    window.addEventListener("resize", updateScrollHint);
+
+    var lastAutoNav = 0;
+    function autonavActive() {
+      return S.autonav &&
+        !$("#app").classList.contains("hidden") &&
+        $("#settings").classList.contains("hidden") &&
+        S.idx < STAGES.length - 1;
+    }
+    // wheel / trackpad: a gesture "begins" after a >200ms quiet gap; capture the
+    // scroll position at that instant, and only advance if it started at the bottom.
+    var wLast = 0, gStartBottom = false, gDelta = 0, gFired = false;
+    window.addEventListener("wheel", function (e) {
+      if (!autonavActive()) return;
+      var now = Date.now();
+      if (now - wLast > 200) { gStartBottom = isAtBottom(); gDelta = 0; gFired = false; }
+      wLast = now;
+      var d = e.deltaY || 0;
+      if (e.deltaMode === 1) d *= 16;            // lines -> px
+      else if (e.deltaMode === 2) d *= window.innerHeight; // pages -> px
+      if (d > 0) gDelta += d;
+      else if (d < 0) { gStartBottom = false; gDelta = 0; }   // scrolling up cancels intent
+      if (gStartBottom && !gFired && gDelta >= 45 && isAtBottom() && now - lastAutoNav > 600) {
+        gFired = true; lastAutoNav = now; go(S.idx + 1);
+      }
+    }, { passive: true });
+    // touch: touchstart is the gesture start — capture whether we're at the bottom.
+    var tY = 0, tStartBottom = false, tFired = false;
+    window.addEventListener("touchstart", function (e) {
+      if (!e.touches || !e.touches[0]) return;
+      tY = e.touches[0].clientY; tStartBottom = isAtBottom(); tFired = false;
+    }, { passive: true });
+    window.addEventListener("touchmove", function (e) {
+      if (!autonavActive() || tFired || !e.touches || !e.touches[0]) return;
+      var dy = tY - e.touches[0].clientY;   // finger moving up => wants content below
+      if (tStartBottom && dy >= 60 && isAtBottom() && Date.now() - lastAutoNav > 600) {
+        tFired = true; lastAutoNav = Date.now(); go(S.idx + 1);
+      }
+    }, { passive: true });
 
     $("#prev-btn").addEventListener("click", function () { go(S.idx - 1); });
     $("#next-btn").addEventListener("click", function () { go(S.idx + 1); });

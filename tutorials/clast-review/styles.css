@@ -447,6 +447,28 @@ body[data-motion="reduced"] * { animation: none !important; transition: none !im
 .mini.danger { color: var(--bad); border-color: color-mix(in srgb, var(--bad) 40%, transparent); }
 .modal-foot { display: flex; justify-content: space-between; padding: 14px 20px; border-top: 1px solid var(--line); }
 
+/* auto-advance scroll hint */
+.scroll-hint {
+  position: fixed; left: 50%; bottom: 72px; z-index: 15;
+  transform: translateX(-50%) translateY(8px);
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--ink-dim); background: color-mix(in srgb, var(--panel) 90%, transparent);
+  border: 1px solid var(--line); border-radius: 999px; padding: 6px 15px;
+  backdrop-filter: blur(6px); box-shadow: var(--shadow);
+  opacity: 0; pointer-events: none; visibility: hidden;
+  transition: opacity .3s ease, transform .3s ease, visibility .3s;
+}
+.scroll-hint em { font-style: normal; color: var(--signal); }
+.scroll-hint .sh-dot {
+  width: 6px; height: 6px; border-radius: 50%; background: var(--signal);
+  animation: shPulse 1.4s ease-in-out infinite;
+}
+.scroll-hint.show { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
+@keyframes shPulse { 0%,100% { transform: translateY(0); opacity: .5; } 50% { transform: translateY(2px); opacity: 1; } }
+body[data-motion="reduced"] .scroll-hint .sh-dot { animation: none; }
+@media (max-width: 860px) { .scroll-hint { bottom: 68px; } }
+
 /* toast */
 .toast {
   position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);

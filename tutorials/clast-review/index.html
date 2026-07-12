@@ -123,6 +123,13 @@
           </div>
         </div>
         <div class="set-row">
+          <div><div class="set-t">Auto-advance on scroll</div><div class="set-h">When you're at the bottom of a section, scroll down again to jump to the next.</div></div>
+          <div class="seg" role="group">
+            <button class="seg-btn" data-set-autonav="on">On</button>
+            <button class="seg-btn" data-set-autonav="off">Off</button>
+          </div>
+        </div>
+        <div class="set-row">
           <div><div class="set-t">Data</div><div class="set-h">Progress &amp; confidence are stored in this browser.</div></div>
           <div class="io">
             <button id="export-btn" class="mini">Export</button>
@@ -136,6 +143,10 @@
         <button class="mini primary" data-close>Done</button>
       </div>
     </div>
+  </div>
+
+  <div id="scroll-hint" class="scroll-hint" aria-hidden="true">
+    <span class="sh-dot"></span>scroll again <em>for the next stage ↓</em>
   </div>
 
   <div id="toast" class="toast hidden"></div>
