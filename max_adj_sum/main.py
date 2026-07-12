@@ -7,3 +7,5 @@ def max_window_sum(nums, k):
         temp_s += nums[i] - nums[i - k]
         max_s = max(max_s, temp_s)
     return max_s
+
+print(max_window_sum([-1, 3, -2, 3, 4], 2))
