@@ -53,6 +53,7 @@ TUTORIAL_CHILDREN = [
     {"slug": "quickref",        "title": "Syntax Quick-Ref"},
     {"slug": "last-review",     "title": "Last Review"},
     {"slug": "clast-review",    "title": "Last Review [Claude]"},
+    {"slug": "finale",          "title": "Finale — 2h Drill [Claude]"},
 ]
 TUTORIALS_DIR = "tutorials"
 

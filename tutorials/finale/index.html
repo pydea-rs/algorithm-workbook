@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Finale — 2-Hour Final Drill [Claude]</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body data-theme="dark">
+
+  <!-- Boot -->
+  <div id="boot" class="boot">
+    <div class="boot-inner">
+      <div class="boot-tag">FINAL DRILL</div>
+      <h1 class="boot-title">Finale</h1>
+      <p class="boot-sub">Two focused hours. Review what you know, close the gaps you skipped, and solve — for real, in the sandbox — a curated set built from your own journey: the questions you marked missed, the lectures you flagged must-know, and the two tasks you barely touched (SQL &amp; design).</p>
+      <div class="boot-plan" id="boot-plan"></div>
+      <button id="boot-start" class="boot-start">Start the drill →</button>
+      <div class="boot-foot" id="boot-foot"></div>
+    </div>
+  </div>
+
+  <!-- App -->
+  <div id="app" class="app hidden">
+    <aside id="rail" class="rail">
+      <div class="rail-head">
+        <div class="rail-tag">FINALE</div>
+        <div class="rail-sub">2-hour final drill</div>
+      </div>
+      <nav id="nav" class="nav" aria-label="Sections"></nav>
+      <div class="rail-foot">
+        <button id="theme-btn" class="mini" title="Toggle theme">◐ Theme</button>
+        <span id="pyodide-status" class="status-pill status-idle">Python: not loaded</span>
+      </div>
+    </aside>
+
+    <main id="main" class="main">
+      <header class="top">
+        <button id="menu-btn" class="mini only-mobile" aria-label="Menu">☰</button>
+        <div class="top-crumb" id="crumb">Launch</div>
+        <div class="top-spacer"></div>
+        <div class="top-prog" id="top-prog"></div>
+      </header>
+
+      <section id="view" class="view"></section>
+
+      <footer class="foot">
+        <button id="prev-btn" class="foot-btn ghost">← Prev</button>
+        <button id="done-btn" class="foot-btn mark">Mark reviewed ✓</button>
+        <button id="next-btn" class="foot-btn primary">Next →</button>
+      </footer>
+    </main>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="../../sync.js"></script>
+  <script src="content.js"></script>
+  <script src="runner.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

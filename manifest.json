@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-12T22:31:35Z",
+  "generated": "2026-07-13T09:31:33Z",
   "folders": [
     {
       "name": "1st_missing",
@@ -142,6 +142,24 @@
           "ext": "py",
           "kind": "code",
           "size": 137
+        }
+      ]
+    },
+    {
+      "name": "combination_sum",
+      "kind": "code",
+      "files": [
+        {
+          "name": "main.py",
+          "ext": "py",
+          "kind": "code",
+          "size": 613
+        },
+        {
+          "name": "messedup.py",
+          "ext": "py",
+          "kind": "code",
+          "size": 821
         }
       ]
     },
@@ -578,6 +596,24 @@
       ]
     },
     {
+      "name": "n_queens",
+      "kind": "code",
+      "files": [
+        {
+          "name": "bitmasks.py",
+          "ext": "py",
+          "kind": "code",
+          "size": 664
+        },
+        {
+          "name": "main.py",
+          "ext": "py",
+          "kind": "code",
+          "size": 948
+        }
+      ]
+    },
+    {
       "name": "nprimes",
       "kind": "code",
       "files": [
@@ -609,7 +645,7 @@
           "name": "main.py",
           "ext": "py",
           "kind": "code",
-          "size": 522
+          "size": 529
         },
         {
           "name": "question.md",
@@ -782,6 +818,30 @@
       ]
     },
     {
+      "name": "squar-word",
+      "kind": "code",
+      "files": [
+        {
+          "name": "main.py",
+          "ext": "py",
+          "kind": "code",
+          "size": 889
+        }
+      ]
+    },
+    {
+      "name": "subsets",
+      "kind": "code",
+      "files": [
+        {
+          "name": "main.py",
+          "ext": "py",
+          "kind": "code",
+          "size": 554
+        }
+      ]
+    },
+    {
       "name": "substring-of-all-chars",
       "kind": "code",
       "files": [
@@ -890,6 +950,11 @@
           "slug": "clast-review",
           "title": "Last Review [Claude]",
           "entry": "tutorials/clast-review/index.html"
+        },
+        {
+          "slug": "finale",
+          "title": "Finale \u2014 2h Drill [Claude]",
+          "entry": "tutorials/finale/index.html"
         }
       ]
     },
