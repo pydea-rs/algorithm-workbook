@@ -28,12 +28,13 @@
       exam: "Monday · 13 Jul · 13:30 · Google Meet · 3 tasks (algorithms · SQL · design)",
       // Ordered by leverage: guaranteed tasks you barely touched come first.
       plan: [
-        "Launch (6m) — mindset, the 6-step template, time budget",
-        "SQL I & II (26m) — your biggest gap; a guaranteed task",
-        "Trees · Graphs · DP (34m) — read but never drilled",
-        "Rapid review (30m) — the patterns you marked missed",
-        "Design (14m) — schema, indexes, OOP, back-of-envelope",
-        "Cheat sheets + your recalled references (10m)"
+        "Launch — mindset, the 6-step template, time budget",
+        "SQL I & II — your biggest gap; a guaranteed task",
+        "Binary search · Trees · Graphs · DP · Heaps · Linked lists — the algorithm core",
+        "Rapid review — windows, backtracking, bits/math, parsing (the ones you missed)",
+        "Design — schema, indexes, OOP, back-of-envelope",
+        "Cheat sheets + your recalled references",
+        "Every module ends with a collapsed “Go deeper” — open it only if time allows"
       ]
     },
 
@@ -67,6 +68,19 @@
       /* ---------------------------------------------------------- LAUNCH */
       {
         id: "launch",
+        deeper: [
+          { t: "call", tone: "tip", html: "<b>Clarifying questions — the full checklist.</b> Pick the three or four that fit; asking them is free signal:" },
+          { t: "list", items: [
+            "Input size &amp; value ranges? (this picks your target complexity)",
+            "Sorted? Duplicates allowed? Negatives / zero / empty input?",
+            "One answer or all answers? Any valid one, or a specific tie-break?",
+            "Mutate in place or return new? Is the input reusable afterwards?",
+            "Case-sensitive? Unicode vs ASCII? Leading/trailing whitespace?",
+            "What should happen on invalid input or no solution?"
+          ]},
+          { t: "call", tone: "key", html: "<b>Narrate the invariant, not just the step.</b> \"I move the shorter wall because it's the limiting side, so moving the taller one can't increase the area.\" \"I use a set so membership is O(1).\" That one sentence is what separates a hire from a maybe." },
+          { t: "p", html: "<b>When you're stuck:</b> say so, restate the last thing you're sure of, and shrink the problem — solve it for n=1, or for sorted input, or without the awkward constraint, then generalise. A voiced partial insight beats silence every time." }
+        ],
         name: "Launch",
         tag: "mindset · 6 min",
         kicker: "Before you touch the keyboard",
@@ -89,6 +103,13 @@
       /* ---------------------------------------------------------- SQL I */
       {
         id: "sql1",
+        deeper: [
+          { t: "call", tone: "tip", html: "<b>Your keyword-order note, as a real query</b> — see where each clause bites:" },
+          { t: "code", lang: "sql", code: "SELECT department, COUNT(*)\nFROM employees JOIN departments ON employees.dept_id = departments.id\nWHERE salary > 50000        -- per-row filter, BEFORE grouping\nGROUP BY department\nHAVING COUNT(*) >= 5        -- group filter, AFTER grouping\nORDER BY department\nLIMIT 10;" },
+          { t: "call", tone: "tip", html: "<b>Anti-join</b> — rows with NO match (customers who never ordered), two ways:" },
+          { t: "code", lang: "sql", code: "-- LEFT JOIN + IS NULL\nSELECT c.name FROM customers c\nLEFT JOIN orders o ON o.customer_id = c.id\nWHERE o.id IS NULL;\n\n-- NOT EXISTS (NULL-safe, usually cleanest)\nSELECT name FROM customers c\nWHERE NOT EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.id);" },
+          { t: "p", html: "<b>NULL facts to say aloud:</b> <code>COUNT(*)</code> counts rows, <code>COUNT(col)</code> skips NULLs. <code>NOT IN</code> with any NULL in the subquery returns <b>zero rows</b> — prefer <code>NOT EXISTS</code>. <code>x = NULL</code> is never true; use <code>IS NULL</code>." }
+        ],
         name: "SQL I — shape & filter",
         tag: "GUARANTEED TASK · your biggest gap · 13 min",
         kicker: "You practised one SQL question. This is a full task. Fix that now.",
@@ -138,6 +159,13 @@
       /* ---------------------------------------------------------- SQL II */
       {
         id: "sql2",
+        deeper: [
+          { t: "call", tone: "tip", html: "<b>Running total</b> with an explicit window frame:" },
+          { t: "code", lang: "sql", code: "SELECT day, amount,\n       SUM(amount) OVER (ORDER BY day\n         ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS running_total\nFROM sales;" },
+          { t: "call", tone: "tip", html: "<b>Month-over-month delta</b> with LAG:" },
+          { t: "code", lang: "sql", code: "SELECT month, revenue,\n       revenue - LAG(revenue) OVER (ORDER BY month) AS mom_change\nFROM monthly;" },
+          { t: "p", html: "<b>Nth-highest per group:</b> swap <code>rn = 1</code> for <code>rn = N</code> with ROW_NUMBER (unique positions), or <code>rk = N</code> with DENSE_RANK if ties should share the rank. The consecutive-numbers problem also has a <b>self-join</b> form (<code>l1 JOIN l2 ON l2.id=l1.id+1 JOIN l3 ON l3.id=l1.id+2 WHERE l1.num=l2.num AND l2.num=l3.num</code>) — LAG just scans once and reads cleaner." }
+        ],
         name: "SQL II — windows & ranking",
         tag: "GUARANTEED TASK · 13 min",
         kicker: "Top-N-per-group and 'consecutive' are the two window patterns interviewers love.",
@@ -183,9 +211,59 @@
         ]
       },
 
+      /* ---------------------------------------------------------- BINARY SEARCH */
+      {
+        id: "binsearch",
+        name: "Binary search",
+        tag: "you saved 4 links on this · core algo · 10 min",
+        kicker: "Not just sorted arrays — any monotonic yes/no boundary.",
+        brief: [
+          { t: "call", tone: "key", html: "<b>When it applies</b> (your saved note): whenever a <b>monotonic predicate</b> exists — some threshold below which the answer is “no” and at/above which it's “yes”. The array needn't literally be sorted; the <i>feasibility</i> must be monotone." },
+          { t: "call", tone: "key", html: "<b>Three modes</b> (your note) — don't mix them, that's where off-by-ones come from:" },
+          { t: "table", head: ["Mode", "Loop", "Use"], rows: [
+            ["Exact", "while lo &lt;= hi; return on hit", "find a specific value"],
+            ["Boundary", "while lo &lt; hi; hi=mid / lo=mid+1", "first index that satisfies P"],
+            ["On the answer", "binary-search the answer value", "min/max value that's feasible"]
+          ]},
+          { t: "code", lang: "python", code: "# boundary: first index where predicate P is True\nlo, hi = 0, n            # half-open; hi is the 'not found' sentinel\nwhile lo < hi:\n    mid = (lo + hi) // 2\n    if P(mid): hi = mid  # mid might be the answer -> keep it in range\n    else:      lo = mid + 1\nreturn lo" },
+          { t: "call", tone: "tip", html: "<b>Search on the answer</b> (Koko / ships / cows — your saved refs): binary-search the answer between lo/hi and test each candidate with a <code>feasible(mid)</code> helper. That's the drill below." }
+        ],
+        questions: [
+          {
+            id: "q_koko", lang: "python", fn: "min_eating_speed",
+            title: "Problem B2",
+            prompt: "Koko eats bananas. <code>piles[i]</code> is a pile's size; she picks a speed <code>k</code> (bananas/hour) and eats from one pile per hour — if a pile is smaller than k she still spends that whole hour on it. Return the <b>minimum integer speed</b> k so she finishes every pile within <code>h</code> hours.",
+            pattern: "Binary search on the answer (speed); feasibility = total hours ≤ h",
+            hint: "The answer is in [1, max(piles)]. hours(k) = sum of ceil(pile / k). Find the smallest k with hours(k) <= h using the boundary template.",
+            starter: "def min_eating_speed(piles, h):\n    lo, hi = 1, max(piles)\n    def hours(k):\n        # total hours at speed k  (use ceil division)\n        return 0\n    while lo < hi:\n        mid = (lo + hi) // 2\n        # tighten lo / hi\n        pass\n    return lo",
+            solution: "def min_eating_speed(piles, h):\n    lo, hi = 1, max(piles)\n    def hours(k):\n        return sum((p + k - 1) // k for p in piles)\n    while lo < hi:\n        mid = (lo + hi) // 2\n        if hours(mid) <= h:\n            hi = mid\n        else:\n            lo = mid + 1\n    return lo",
+            tests: [
+              { args: [[3, 6, 7, 11], 8], expected: 4 },
+              { args: [[30, 11, 23, 4, 20], 5], expected: 30 },
+              { args: [[30, 11, 23, 4, 20], 6], expected: 23 }
+            ],
+            note: "Ceil division without importing math: (p + k - 1) // k. Feasibility is monotone — a faster speed never needs more hours — which is exactly why binary search is valid here. Say that out loud."
+          }
+        ],
+        deeper: [
+          { t: "call", tone: "tip", html: "<b>Rotated sorted array</b> (your note) — figure out which half is sorted, then whether the target sits inside it:" },
+          { t: "code", lang: "python", code: "lo, hi = 0, len(nums) - 1\nwhile lo <= hi:\n    mid = (lo + hi) // 2\n    if nums[mid] == target: return mid\n    if nums[lo] <= nums[mid]:                  # left half sorted\n        if nums[lo] <= target < nums[mid]: hi = mid - 1\n        else: lo = mid + 1\n    else:                                      # right half sorted\n        if nums[mid] < target <= nums[hi]: lo = mid + 1\n        else: hi = mid - 1\nreturn -1" },
+          { t: "call", tone: "tip", html: "<b>Median of two sorted arrays</b> (your saved ref): binary-search a partition of the <i>smaller</i> array so the two halves balance and <code>maxLeft ≤ minRight</code>. O(log min(m,n)). The ±infinity sentinels at the partition edges are the fiddly bit — draw the two arrays split by one vertical line." },
+          { t: "call", tone: "trap", html: "<b>Overflow note</b> (your note): in Java/C++ <code>(lo + hi) / 2</code> can overflow 32-bit ints — use <code>lo + (hi - lo) // 2</code>. Python ints never overflow; say so if asked, it shows cross-language awareness." },
+          { t: "p", html: "<b>Why it terminates</b> (your note): with <code>lo &lt; hi</code> and <code>mid = (lo+hi)//2</code>, floor keeps mid below hi, so <code>hi = mid</code> strictly shrinks the range and <code>lo = mid+1</code> grows lo — every branch makes progress. The inclusive template's <code>hi = mid</code> can loop forever on a one-element range; that's the classic mix-the-shapes bug." }
+        ]
+      },
+
       /* ---------------------------------------------------------- TREES */
       {
         id: "trees",
+        deeper: [
+          { t: "call", tone: "tip", html: "<b>Lowest common ancestor</b> — where the two targets split, that node is the answer:" },
+          { t: "code", lang: "python", code: "def lca(root, p, q):\n    if not root or root is p or root is q:\n        return root\n    L = lca(root.left, p, q)\n    R = lca(root.right, p, q)\n    if L and R: return root      # p and q on different sides -> here\n    return L or R                # both on one side -> pass it up" },
+          { t: "call", tone: "tip", html: "<b>Level-order (BFS)</b> — the queue pattern behind right-side-view, zigzag, level sums:" },
+          { t: "code", lang: "python", code: "from collections import deque\ndef level_order(root):\n    out = []; q = deque([root] if root else [])\n    while q:\n        level = []\n        for _ in range(len(q)):        # freeze the count = this level's width\n            n = q.popleft(); level.append(n.val)\n            if n.left:  q.append(n.left)\n            if n.right: q.append(n.right)\n        out.append(level)\n    return out" },
+          { t: "p", html: "<b>Validate-BST, the other way:</b> an inorder traversal of a BST is strictly increasing — walk inorder and check each value &gt; the previous. <b>Serialize/deserialize:</b> preorder with a sentinel (\"#\") for null; on the way back, split the stream and rebuild by consuming tokens left to right." }
+        ],
         name: "Trees",
         tag: "read, never drilled · 12 min",
         kicker: "Almost every tree problem is one of two motions.",
@@ -231,6 +309,13 @@
       /* ---------------------------------------------------------- GRAPHS */
       {
         id: "graphs",
+        deeper: [
+          { t: "call", tone: "tip", html: "<b>Dijkstra</b> — shortest path with non-negative weights, lazy deletion:" },
+          { t: "code", lang: "python", code: "import heapq\ndef dijkstra(graph, src):          # graph[u] = [(v, w), ...]\n    dist = {src: 0}; pq = [(0, src)]\n    while pq:\n        d, u = heapq.heappop(pq)\n        if d > dist.get(u, float('inf')): continue   # stale entry\n        for v, w in graph[u]:\n            nd = d + w\n            if nd < dist.get(v, float('inf')):\n                dist[v] = nd; heapq.heappush(pq, (nd, v))\n    return dist" },
+          { t: "call", tone: "tip", html: "<b>Union-Find</b> — connectivity / merge; path halving + union by size ≈ O(1) amortised per op:" },
+          { t: "code", lang: "python", code: "parent = list(range(n)); size = [1] * n\ndef find(x):\n    while parent[x] != x:\n        parent[x] = parent[parent[x]]   # path halving\n        x = parent[x]\n    return x\ndef union(a, b):\n    ra, rb = find(a), find(b)\n    if ra == rb: return\n    if size[ra] < size[rb]: ra, rb = rb, ra\n    parent[rb] = ra; size[ra] += size[rb]" },
+          { t: "p", html: "<b>Cycle detection, two ways:</b> Kahn (BFS) — if you can't process every node, a cycle blocked the rest. DFS 3-colour — white(unseen)/grey(on the stack)/black(done); reaching a <b>grey</b> node is a back edge = cycle. Kahn also hands you a valid topological order for free." }
+        ],
         name: "Graphs",
         tag: "barely read · never drilled · 12 min",
         kicker: "Grid flood-fill and topological sort cover most of what shows up.",
@@ -281,6 +366,15 @@
       /* ---------------------------------------------------------- DP */
       {
         id: "dp",
+        deeper: [
+          { t: "call", tone: "tip", html: "<b>Longest increasing subsequence</b> in O(n log n) — patience piles with bisect:" },
+          { t: "code", lang: "python", code: "import bisect\ndef length_of_lis(nums):\n    tails = []              # tails[i] = smallest tail of an LIS of length i+1\n    for x in nums:\n        i = bisect.bisect_left(tails, x)\n        if i == len(tails): tails.append(x)\n        else: tails[i] = x\n    return len(tails)" },
+          { t: "call", tone: "tip", html: "<b>Word break</b> — dp[i] = “the prefix of length i is splittable”:" },
+          { t: "code", lang: "python", code: "def word_break(s, words):\n    ws = set(words); dp = [True] + [False] * len(s)\n    for i in range(1, len(s) + 1):\n        for j in range(i):\n            if dp[j] and s[j:i] in ws:\n                dp[i] = True; break\n    return dp[len(s)]" },
+          { t: "call", tone: "tip", html: "<b>Edit distance</b> — 2-D DP rolled down to one row:" },
+          { t: "code", lang: "python", code: "def edit_distance(a, b):\n    prev = list(range(len(b) + 1))\n    for i in range(1, len(a) + 1):\n        cur = [i] + [0] * len(b)\n        for j in range(1, len(b) + 1):\n            cur[j] = prev[j-1] if a[i-1] == b[j-1] else 1 + min(prev[j], cur[j-1], prev[j-1])\n        prev = cur\n    return prev[-1]" },
+          { t: "p", html: "<b>The four questions</b> to ask every DP: what's the <i>state</i> (which indices / remaining capacity fully describe a subproblem)? the <i>transition</i> (which smaller states feed it)? the <i>base case</i>? and the <i>order</i> that makes every dependency ready before you need it? Grid DP (unique paths, min path sum) is just the 2-D version of the same recipe." }
+        ],
         name: "Dynamic programming",
         tag: "never read · high value · 12 min",
         kicker: "You skipped this module. Here's the whole idea in one screen.",
@@ -324,9 +418,96 @@
         ]
       },
 
+      /* ---------------------------------------------------------- HEAPS & TOP-K */
+      {
+        id: "heaps",
+        name: "Heaps & top-K",
+        tag: "you marked F09 missed · never drilled heaps · 10 min",
+        kicker: "The frequency-games ladder you saved — sort vs heap vs bucket.",
+        brief: [
+          { t: "call", tone: "key", html: "<b>The top-K ladder</b> (your saved ref) — always name the trade you're making:" },
+          { t: "table", head: ["Approach", "Cost", "When"], rows: [
+            ["sort by count", "O(n log n)", "simplest; fine for small n"],
+            ["size-K min-heap", "O(n log k)", "k ≪ n; or a stream"],
+            ["bucket by frequency", "O(n)", "counts are ≤ n, so index by count"]
+          ]},
+          { t: "code", lang: "python", code: "import heapq\nheapq.heappush(h, x); heapq.heappop(h)   # min-heap, O(log n)\nheapq.heapify(lst)                        # O(n), in place\nheapq.nlargest(k, iterable, key=...)      # top-k convenience\n# max-heap: push -x, negate on the way out -> largest = -heapq.heappop(h)" },
+          { t: "call", tone: "trap", html: "<b>Tuple-comparison crash:</b> pushing <code>(priority, obj)</code> is fine until two priorities tie and Python falls back to comparing the objects — if they aren't orderable it throws. Add a unique tiebreaker: <code>(priority, counter, obj)</code>." }
+        ],
+        questions: [
+          {
+            id: "q_topk", lang: "python", fn: "top_k_frequent",
+            title: "Problem H2",
+            prompt: "Given <code>nums</code> and an integer <code>k</code>, return the <code>k</code> most frequent elements (in any order).",
+            pattern: "Count, then take the k highest (heap / most_common / bucket)",
+            hint: "Counter(nums) gives frequencies; most_common(k) returns the k highest as (value, count) pairs. For strict O(n), bucket by frequency.",
+            starter: "def top_k_frequent(nums, k):\n    from collections import Counter\n    # count, then pick the k most frequent\n    return []",
+            solution: "def top_k_frequent(nums, k):\n    from collections import Counter\n    c = Counter(nums)\n    return [x for x, _ in c.most_common(k)]",
+            tests: [
+              { args: [[1, 1, 1, 2, 2, 3], 2], expected: [1, 2], equality: "set" },
+              { args: [[1], 1], expected: [1], equality: "set" }
+            ],
+            note: "most_common uses a heap under the hood. If they push for guaranteed O(n), describe the bucket method: an array where the index IS the frequency, then read from the high end until you have k."
+          }
+        ],
+        deeper: [
+          { t: "call", tone: "tip", html: "<b>Two heaps = running median</b> — a max-heap for the low half, a min-heap for the high half, kept balanced:" },
+          { t: "code", lang: "python", code: "import heapq\nlo = []   # max-heap (store negatives) — the smaller half\nhi = []   # min-heap — the larger half\ndef add(x):\n    heapq.heappush(lo, -x)\n    heapq.heappush(hi, -heapq.heappop(lo))    # funnel lo's max into hi\n    if len(hi) > len(lo):\n        heapq.heappush(lo, -heapq.heappop(hi))\ndef median():\n    if len(lo) > len(hi): return -lo[0]\n    return (-lo[0] + hi[0]) / 2" },
+          { t: "call", tone: "tip", html: "<b>Bucket-sort top-K</b> in O(n) — frequencies can't exceed n, so use frequency as an index:" },
+          { t: "code", lang: "python", code: "from collections import Counter\ndef top_k(nums, k):\n    c = Counter(nums); buckets = [[] for _ in range(len(nums) + 1)]\n    for val, freq in c.items(): buckets[freq].append(val)\n    out = []\n    for freq in range(len(buckets) - 1, 0, -1):\n        for val in buckets[freq]:\n            out.append(val)\n            if len(out) == k: return out\n    return out" },
+          { t: "p", html: "<b>Your “most frequent” note:</b> <code>Counter(s).most_common(2)</code> is the one-liner; the manual version sorts <code>counter.keys()</code> by <code>counter[ch]</code> descending and slices the top two. Both are correct — the point is to state the cost (O(n log n) sort vs O(n) bucket)." }
+        ]
+      },
+
+      /* ---------------------------------------------------------- LINKED LISTS */
+      {
+        id: "linkedlists",
+        name: "Linked lists",
+        tag: "you marked F78 missed · quick reflexes · 8 min",
+        kicker: "Three reflexes cover most of it: dummy head, two pointers, reverse.",
+        brief: [
+          { t: "call", tone: "key", html: "<b>Dummy head</b> kills the empty-list / new-head edge case — build behind a throwaway node and return <code>dummy.next</code>." },
+          { t: "code", lang: "python", code: "# fast & slow -> middle (your note)\nslow = fast = head\nwhile fast and fast.next:\n    slow = slow.next\n    fast = fast.next.next\n# when fast hits the end, slow is the middle (2nd middle if even length)" },
+          { t: "code", lang: "python", code: "# reverse a list (your note)\nprev = None\nwhile head:\n    nxt = head.next\n    head.next = prev\n    prev = head\n    head = nxt\nreturn prev" },
+          { t: "call", tone: "tip", html: "In the sandbox, lists are built for you from arrays and your returned node is read back into an array — so just work with <code>.val</code> / <code>.next</code> and return the head." }
+        ],
+        questions: [
+          {
+            id: "q_merge", lang: "python", fn: "merge_lists",
+            title: "Problem L2",
+            prompt: "Merge two <b>sorted</b> linked lists <code>a</code> and <code>b</code> into one sorted list and return its head. (The sandbox builds a and b from arrays and reads your result back to an array.)",
+            pattern: "Dummy head + tail cursor; splice the smaller node each step",
+            hint: "Keep a dummy and a tail. While both are non-empty, attach the smaller node and advance that list; attach the leftover at the end. Return dummy.next.",
+            starter: "def merge_lists(a, b):\n    dummy = ListNode()\n    tail = dummy\n    while a and b:\n        # attach the smaller node, advance it, advance tail\n        pass\n    tail.next = a if a else b\n    return dummy.next",
+            solution: "def merge_lists(a, b):\n    dummy = ListNode()\n    tail = dummy\n    while a and b:\n        if a.val <= b.val:\n            tail.next = a; a = a.next\n        else:\n            tail.next = b; b = b.next\n        tail = tail.next\n    tail.next = a if a else b\n    return dummy.next",
+            tests: [
+              { args: [[1, 2, 4], [1, 3, 4]], expected: [1, 1, 2, 3, 4, 4], prepare: "args[0] = _build_list(args[0]); args[1] = _build_list(args[1])", transform: "result = _linked_to_list(result)" },
+              { args: [[], []], expected: [], prepare: "args[0] = _build_list(args[0]); args[1] = _build_list(args[1])", transform: "result = _linked_to_list(result)" },
+              { args: [[], [5]], expected: [5], prepare: "args[0] = _build_list(args[0]); args[1] = _build_list(args[1])", transform: "result = _linked_to_list(result)" }
+            ],
+            note: "The leftover attach (tail.next = a if a else b) works because at most one list remains and it's already sorted — no need to walk it."
+          }
+        ],
+        deeper: [
+          { t: "call", tone: "tip", html: "<b>Floyd — find the cycle's START</b> (your saved cycle ref): after slow &amp; fast meet, reset one pointer to head and step both one at a time; they collide at the entry node:" },
+          { t: "code", lang: "python", code: "def cycle_start(head):\n    slow = fast = head\n    while fast and fast.next:\n        slow = slow.next; fast = fast.next.next\n        if slow is fast:                 # cycle confirmed\n            p = head\n            while p is not slow:\n                p = p.next; slow = slow.next\n            return p                     # entry of the cycle\n    return None" },
+          { t: "p", html: "<b>Why it works:</b> the head-to-entry distance and the meet-to-entry distance are congruent modulo the cycle length, so two one-step pointers — one from head, one from the meeting point — land on the entry together. <b>fmod vs %</b> (your note): Python <code>%</code> takes the divisor's sign (<code>-7 % 10 == 3</code>); C's <code>fmod</code> takes the dividend's." },
+          { t: "call", tone: "tip", html: "<b>Merge K lists:</b> a min-heap of the K current heads (pop the smallest, push its <code>next</code>) → O(N log K); or pairwise tournament merge → the same bound." }
+        ]
+      },
+
       /* ---------------------------------------------------------- REVIEW: WINDOWS */
       {
         id: "rev_windows",
+        deeper: [
+          { t: "call", tone: "tip", html: "<b>Two Sum</b> (your saved ref) — the archetype of trading space for time:" },
+          { t: "code", lang: "python", code: "def two_sum(nums, target):\n    seen = {}                       # value -> index\n    for i, x in enumerate(nums):\n        if target - x in seen:\n            return [seen[target - x], i]\n        seen[x] = i" },
+          { t: "call", tone: "tip", html: "<b>Longest substring without repeats</b> (your saved ref) — window + last-seen map:" },
+          { t: "code", lang: "python", code: "def length_of_longest(s):\n    last = {}; left = 0; best = 0\n    for i, c in enumerate(s):\n        if c in last and last[c] >= left:\n            left = last[c] + 1        # jump left past the duplicate\n        last[c] = i\n        best = max(best, i - left + 1)\n    return best" },
+          { t: "call", tone: "tip", html: "<b>Longest consecutive sequence</b> (your must-know) — set membership, only start at a run's head:" },
+          { t: "code", lang: "python", code: "def longest_consecutive(nums):\n    s = set(nums); best = 0\n    for x in s:\n        if x - 1 not in s:            # x begins a run\n            y = x\n            while y + 1 in s: y += 1\n            best = max(best, y - x + 1)\n    return best" },
+          { t: "p", html: "<b>Prefix-sum + hashmap</b> (your must-know) — count subarrays summing to k: <code>run += x; ans += seen.get(run-k, 0); seen[run] += 1</code>, seeded <code>{0: 1}</code>. <b>Container with water</b> (your note): the shorter wall bounds the area, so advancing the taller pointer can't help — always move the shorter. <b>Product except self</b>: reuse the output array — prefix products left→right, then a running suffix product right→left." }
+        ],
         name: "Review · windows & two-pointers",
         tag: "you marked these missed · 8 min",
         kicker: "One example to reset the pattern (F03 was on your missed list).",
@@ -356,6 +537,13 @@
       /* ---------------------------------------------------------- REVIEW: BACKTRACKING */
       {
         id: "rev_backtracking",
+        deeper: [
+          { t: "call", tone: "tip", html: "<b>Subsets</b> (include/skip) and <b>permutations</b> (used flag) — the other two shapes:" },
+          { t: "code", lang: "python", code: "def subsets(nums):\n    res = []; path = []\n    def bt(i):\n        if i == len(nums): res.append(path.copy()); return\n        bt(i + 1)                                   # skip nums[i]\n        path.append(nums[i]); bt(i + 1); path.pop()  # include nums[i]\n    bt(0); return res\n\ndef permute(nums):\n    res = []; used = [False] * len(nums); path = []\n    def bt():\n        if len(path) == len(nums): res.append(path.copy()); return\n        for i in range(len(nums)):\n            if used[i]: continue\n            used[i] = True; path.append(nums[i])\n            bt()\n            path.pop(); used[i] = False\n    bt(); return res" },
+          { t: "call", tone: "tip", html: "<b>Optimized N-Queens</b> (your saved ref) — columns and both diagonals as bitmasks; placing a queen is a bit flip:" },
+          { t: "code", lang: "python", code: "def total_n_queens(n):\n    count = 0\n    def bt(row, cols, d1, d2):\n        nonlocal count\n        if row == n: count += 1; return\n        free = ((1 << n) - 1) & ~(cols | d1 | d2)   # 1 = a safe column\n        while free:\n            bit = free & -free                       # lowest safe column\n            free -= bit\n            bt(row + 1, cols | bit, (d1 | bit) << 1, (d2 | bit) >> 1)\n    bt(0, 0, 0, 0)\n    return count" },
+          { t: "p", html: "<b>Combination Sum II</b> (each number usable once, input has duplicates): pass <code>i+1</code> instead of <code>i</code>, and skip duplicate siblings with <code>if i &gt; start and cand[i] == cand[i-1]: continue</code> so the same combination isn't emitted twice." }
+        ],
         name: "Review · backtracking",
         tag: "you marked these missed · 8 min",
         kicker: "Combination Sum (F12) cost you 61 min. Here it is cold.",
@@ -385,6 +573,13 @@
       /* ---------------------------------------------------------- REVIEW: BITS & MATH */
       {
         id: "rev_bitsmath",
+        deeper: [
+          { t: "call", tone: "tip", html: "<b>Your full bit-tricks note:</b>" },
+          { t: "code", lang: "python", code: "x & (1 << i) != 0     # test bit i\nx |= (1 << i)         # set bit i\nx &= ~(1 << i)        # clear bit i\nx ^= (1 << i)         # toggle bit i\nx & -x                # isolate the lowest set bit\nx &= x - 1            # remove the lowest set bit\nx > 0 and x & (x - 1) == 0     # power of two?\nformat(-4 & 0xFF, '08b')       # two's-complement 8-bit view of -4\nchr(ord(c) ^ 0x20)             # toggle a letter's case (letters only)" },
+          { t: "call", tone: "tip", html: "<b>Your full modular-arithmetic note:</b>" },
+          { t: "code", lang: "python", code: "(a + b) % m == ((a % m) + (b % m)) % m\n(a - b) % m == ((a % m) - (b % m)) % m\n(a * b) % m == ((a % m) * (b % m)) % m\n(a ** b) % m == pow(a, b, m)                 # fast modpow, built in\n# 'a / b' under a prime modulus m = multiply by b's inverse:\n(a * pow(b, m - 2, m)) % m                    # = (a / b) mod m,  m prime (Fermat)" },
+          { t: "p", html: "<b>Why the inverse works:</b> when <code>m</code> is prime, Fermat's little theorem gives <code>b^(m-1) ≡ 1 (mod m)</code>, so <code>b^(m-2)</code> is b's inverse mod m — dividing under a modulus becomes multiplying by that inverse. Rarely needed in an interview, but naming it scores points." }
+        ],
         name: "Review · bits & modular math",
         tag: "you marked these missed · 7 min",
         kicker: "Modular exponentiation (F82) and bit tricks (F79/F80).",
@@ -415,6 +610,13 @@
       /* ---------------------------------------------------------- REVIEW: PARSING / REGEX */
       {
         id: "rev_parsing",
+        deeper: [
+          { t: "call", tone: "tip", html: "<b>Your saved regex-tokenizer approach</b> for the calculator — split into numbers and operators, then evaluate:" },
+          { t: "code", lang: "python", code: "import re\ntokens = re.findall(r'\\d+|[+\\-*/()]', s)   # '3+5/2' -> ['3','+','5','/','2']\n# then a single left-to-right scan with a stack (fold * and / immediately)" },
+          { t: "call", tone: "tip", html: "<b>Regex you might reach for</b> (from your saved refs):" },
+          { t: "code", lang: "python", code: "re.fullmatch(r'[A-Za-z_]\\w*', s)           # a valid identifier?\nre.search(r'(?=.*\\d)(?=.*[A-Z]).{8,}', s)  # >=8 chars with a digit and uppercase\nre.sub(r'(\\w+)\\s+(\\w+)', r'\\2 \\1', s)      # swap two words (backreferences)\nre.search(r'\\b(\\w+)\\s+\\1\\b', s)           # a doubled word" },
+          { t: "p", html: "<b>With parentheses,</b> the flat scan isn't enough — either recurse on each parenthesised group (evaluate inside-out) or run two stacks (values &amp; operators) with precedence, applying an operator when the next one is lower-or-equal precedence. Mention it; most “basic calculator” prompts only want the no-paren version." }
+        ],
         name: "Review · parsing & regex",
         tag: "F87 cost you 27 min · 7 min",
         kicker: "The calculator that ran away. Here's the clean version.",
@@ -446,6 +648,12 @@
       /* ---------------------------------------------------------- DESIGN */
       {
         id: "design",
+        deeper: [
+          { t: "call", tone: "tip", html: "<b>Normalization, worked:</b> an <code>orders</code> row that stores <code>customer_name, customer_email</code> repeats that data on every order (update anomaly — change the email in ten places). 3NF: split a <code>customers</code> table, keep only a <code>customer_id</code> FK on orders. Denormalize back <i>only</i> for a measured read win, and say how you'd keep the copy consistent." },
+          { t: "call", tone: "tip", html: "<b>Indexing deeper:</b> a composite index <code>(a, b)</code> serves <code>WHERE a=…</code> and <code>WHERE a=… AND b=…</code> (leftmost prefix) but not <code>WHERE b=…</code> alone. A <b>covering</b> index that includes the selected columns lets a query skip the table entirely. A <b>partial</b> index (<code>… WHERE active</code>) is smaller when you only query a subset. Postgres does <b>not</b> auto-index foreign keys — call that out." },
+          { t: "call", tone: "tip", html: "<b>SOLID, one smell each:</b> S — a class doing two jobs; O — a growing <code>if/elif</code> on a “type” field (add a subclass instead); L — a subclass that breaks the parent's contract (Square is-a Rectangle bites here); I — clients forced to depend on methods they don't use; D — high-level code instantiating a concrete class instead of depending on an interface." },
+          { t: "p", html: "<b>N+1 queries:</b> one query for the list, then one per row (ORM lazy-loading) — fix with a join or eager/prefetch. <b>Cache-aside:</b> read cache → miss → read DB → populate cache; a write invalidates the key. <b>Idempotency:</b> at-least-once delivery means a handler must be safe to run twice (dedupe on a key). <b>ACID isolation</b> ladder: read-committed (Postgres default) → repeatable-read → serializable, trading concurrency for fewer anomalies." }
+        ],
         name: "Design task",
         tag: "GUARANTEED TASK · never practiced · 14 min",
         kicker: "Half discussion, half schema. Talk structure, tradeoffs, and indexes.",
@@ -536,7 +744,7 @@
     ],
 
     /* ---------------------------------------------------------- RECALLED REFERENCES */
-    refsIntro: "Thirteen things you saved and read. One-paragraph jogs — not re-reading, just enough to reload it into memory.",
+    refsIntro: "Thirteen things you saved and read. One-line jogs — not re-reading, just enough to reload each into memory. (The actual approaches from these are folded into the modules' “Go deeper” sections — cycle-start in Linked lists, the binary-search modes and median-of-two-arrays in Binary search, the top-K ladder in Heaps, the N-queens bitmask in Backtracking, the regex tokenizer in Parsing.)",
     refs: [
       { kind: "leetcode", title: "Longest Substring Without Repeating Characters", url: "https://leetcode.com/problems/longest-substring-without-repeating-characters/",
         summary: "Sliding window with a last-seen map. Expand right; when you meet a repeat, jump left to max(left, last_seen[c]+1) so the window never contains a duplicate. Track best length as you go. O(n)." },

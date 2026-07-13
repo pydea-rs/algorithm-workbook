@@ -133,6 +133,12 @@
     if (mod.id === "launch") h += recallGate();
 
     (mod.questions || []).forEach(function (q) { h += question(q); });
+
+    if (mod.deeper && mod.deeper.length) {
+      h += '<details class="recall deeper"><summary>Go deeper — optional extras for when you have time</summary><div class="recall-body">';
+      mod.deeper.forEach(function (b) { h += block(b); });
+      h += "</div></details>";
+    }
     return h;
   }
 

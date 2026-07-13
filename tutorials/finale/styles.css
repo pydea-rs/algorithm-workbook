@@ -163,6 +163,10 @@ table.tbl td { background: var(--panel); }
 .recall summary::-webkit-details-marker { display: none; }
 .recall summary::before { content: "▸ "; color: var(--acc); }
 .recall[open] summary::before { content: "▾ "; }
+.recall.deeper { margin-top: 28px; border-color: var(--amber); }
+.recall.deeper summary { background: var(--amber-dim); color: var(--amber); }
+.recall.deeper summary::before { color: var(--amber); }
+.recall.deeper .recall-body { padding-top: 4px; }
 .recall-body { padding: 8px 16px 14px; }
 .mk { display: flex; gap: 10px; padding: 8px 0; border-bottom: 1px dashed var(--line2); }
 .mk:last-child { border-bottom: 0; }
