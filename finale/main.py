@@ -11,28 +11,36 @@ def polymer_insert(raw: str | List[str], table: str):
 
     raw = list(raw)
     i = 0
-    l = 1
     while i < 40:
         new_str = []
         for j in range(len(raw) - 1):
             pair = f"{raw[j]}{raw[j+1]}"
             eq = equivalents[pair]
-            j += 1
             new_str.extend([raw[j], eq])
         new_str.append(raw[-1])
 
         raw = new_str
         i += 1
-
+    
     max = len(raw)
     counts_dict = defaultdict(int)
     for x in raw:
         counts_dict[x] += 1
+
+    mx, ls = counts_dict[raw[0]], counts_dict[raw[0]]
+
+    for char in counts_dict:
+        if mx < counts_dict[char]:
+            mx = counts_dict[char]
+        if ls > counts_dict[char]:
+            ls = counts_dict[char]
+        
+    return mx - ls
+
     counts = [None] * (max + 1)
 
     for char in counts_dict:
         counts[counts_dict[char]] = char
-
     less = 0;
 
     for count, ch in enumerate(counts):

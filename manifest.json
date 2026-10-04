@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-13T10:13:52Z",
+  "generated": "2026-10-04T04:11:51Z",
   "folders": [
     {
       "name": "1st_missing",
@@ -280,6 +280,30 @@
           "ext": "py",
           "kind": "code",
           "size": 963
+        }
+      ]
+    },
+    {
+      "name": "finale",
+      "kind": "code",
+      "files": [
+        {
+          "name": "commons.py",
+          "ext": "py",
+          "kind": "code",
+          "size": 977
+        },
+        {
+          "name": "main.py",
+          "ext": "py",
+          "kind": "code",
+          "size": 1481
+        },
+        {
+          "name": "modeling.sql",
+          "ext": "sql",
+          "kind": "code",
+          "size": 884
         }
       ]
     },
