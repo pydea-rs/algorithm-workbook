@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-04T04:11:51Z",
+  "generated": "2026-11-24T04:42:54Z",
   "folders": [
     {
       "name": "1st_missing",
@@ -240,6 +240,12 @@
       "kind": "mixed",
       "files": [
         {
+          "name": "Chatgpt-Odoo_Master_Handbook.md",
+          "ext": "md",
+          "kind": "markdown",
+          "size": 7182
+        },
+        {
           "name": "KIMI-Odoo_Coderbyte_Assessment_Complete_Guide.pdf",
           "ext": "pdf",
           "kind": "pdf",
@@ -268,6 +274,12 @@
           "ext": "md",
           "kind": "markdown",
           "size": 109270
+        },
+        {
+          "name": "chatgpt-Odoo_Deep_Preparation_Book.pdf",
+          "ext": "pdf",
+          "kind": "pdf",
+          "size": 16646
         }
       ]
     },
@@ -280,30 +292,6 @@
           "ext": "py",
           "kind": "code",
           "size": 963
-        }
-      ]
-    },
-    {
-      "name": "finale",
-      "kind": "code",
-      "files": [
-        {
-          "name": "commons.py",
-          "ext": "py",
-          "kind": "code",
-          "size": 977
-        },
-        {
-          "name": "main.py",
-          "ext": "py",
-          "kind": "code",
-          "size": 1481
-        },
-        {
-          "name": "modeling.sql",
-          "ext": "sql",
-          "kind": "code",
-          "size": 884
         }
       ]
     },
@@ -928,6 +916,36 @@
           "ext": "py",
           "kind": "code",
           "size": 662
+        }
+      ]
+    },
+    {
+      "name": "tryouts",
+      "kind": "code",
+      "files": [
+        {
+          "name": "endingzeros.py",
+          "ext": "py",
+          "kind": "code",
+          "size": 450
+        },
+        {
+          "name": "palindrome..py",
+          "ext": "py",
+          "kind": "code",
+          "size": 403
+        },
+        {
+          "name": "rpn.py",
+          "ext": "py",
+          "kind": "code",
+          "size": 877
+        },
+        {
+          "name": "truematch.py",
+          "ext": "py",
+          "kind": "code",
+          "size": 1056
         }
       ]
     },
